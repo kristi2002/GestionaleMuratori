@@ -1,0 +1,121 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Support\Database;
+
+final class WarehouseItemModel
+{
+    /** @return array<int,array<string,mixed>> */
+    public function all(string $search = ''): array
+    {
+        if ($search !== '') {
+            $stmt = Database::pdo()->prepare(
+                'SELECT * FROM warehouse_items WHERE name LIKE ? OR sku LIKE ? ORDER BY name'
+            );
+            $like = '%' . $search . '%';
+            $stmt->execute([$like, $like]);
+        } else {
+            $stmt = Database::pdo()->query('SELECT * FROM warehouse_items ORDER BY name');
+        }
+        return $stmt->fetchAll();
+    }
+
+    public function find(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare('SELECT * FROM warehouse_items WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Locking read for use inside a transaction (§4.1/§4.2 — prevents concurrent stock corruption). */
+    public function findForUpdate(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare('SELECT * FROM warehouse_items WHERE id = ? LIMIT 1 FOR UPDATE');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function skuExists(string $sku, ?int $excludeId = null): bool
+    {
+        if ($sku === '') {
+            return false;
+        }
+        $sql    = 'SELECT COUNT(*) FROM warehouse_items WHERE sku = ?';
+        $params = [$sku];
+        if ($excludeId !== null) {
+            $sql      .= ' AND id != ?';
+            $params[]  = $excludeId;
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return ((int) $stmt->fetchColumn()) > 0;
+    }
+
+    public function create(array $data): int
+    {
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO warehouse_items (name, sku, unit, qty_in_stock, reorder_level, is_active)
+             VALUES (:name, :sku, :unit, 0, :reorder_level, 1)'
+        );
+        $stmt->execute([
+            ':name'          => $data['name'],
+            ':sku'           => $data['sku'],
+            ':unit'          => $data['unit'],
+            ':reorder_level' => $data['reorder_level'],
+        ]);
+        return (int) Database::pdo()->lastInsertId();
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            'UPDATE warehouse_items SET name = :name, sku = :sku, unit = :unit, reorder_level = :reorder_level
+             WHERE id = :id'
+        );
+        return $stmt->execute([
+            ':name'          => $data['name'],
+            ':sku'           => $data['sku'],
+            ':unit'          => $data['unit'],
+            ':reorder_level' => $data['reorder_level'],
+            ':id'            => $id,
+        ]);
+    }
+
+    public function setActive(int $id, bool $active): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE warehouse_items SET is_active = ? WHERE id = ?');
+        return $stmt->execute([$active ? 1 : 0, $id]);
+    }
+
+    /**
+     * Recompute qty_in_stock from the stock_movements ledger (§4.1 reconciliation).
+     * Sign convention: in/release/adjustment add, reserve subtracts (adjustment rows
+     * carry their own signed delta). 'out' is intentionally weight-0 here: stock is
+     * already decremented by the matching 'reserve' at intervention creation, and
+     * 'release' (qty_planned - qty_used) corrects it back down to -qty_used net at
+     * completion. 'out' rows stay in the ledger purely as the audit trail consumed
+     * by §5 reporting ("materials used... from ledger out movements").
+     */
+    public function recomputeStock(int $id): string
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT COALESCE(SUM(CASE
+                WHEN type IN ('in', 'release') THEN qty
+                WHEN type = 'reserve' THEN -qty
+                WHEN type = 'adjustment' THEN qty
+                ELSE 0
+             END), 0) FROM stock_movements WHERE item_id = ?"
+        );
+        $stmt->execute([$id]);
+        $total = (string) $stmt->fetchColumn();
+
+        $update = Database::pdo()->prepare('UPDATE warehouse_items SET qty_in_stock = ? WHERE id = ?');
+        $update->execute([$total, $id]);
+
+        return $total;
+    }
+}

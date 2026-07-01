@@ -1,0 +1,10 @@
+# Route all non-file requests through the front controller (Apache / XAMPP).
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Do not list directories.
+Options -Indexes

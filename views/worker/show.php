@@ -1,0 +1,146 @@
+<?php
+use App\Support\Lang;
+use App\Support\Url;
+use App\Support\View;
+
+/** @var array<string,mixed> $intervention */
+/** @var array<int,array<string,mixed>> $materials */
+/** @var array{before:array,during:array,after:array} $photosByType */
+
+$e = static fn (?string $v): string => View::e($v);
+$t = static fn (string $key): string => Lang::get($key);
+
+$status      = $intervention['status'];
+$isOpen      = in_array($status, ['pending', 'in_progress', 'on_hold'], true);
+$canComplete = $status === 'in_progress';
+
+$nextActions = [
+    'pending'     => [['to' => 'in_progress', 'label' => $t('worker.start')]],
+    'in_progress' => [['to' => 'on_hold', 'label' => $t('worker.hold')]],
+    'on_hold'     => [['to' => 'in_progress', 'label' => $t('worker.resume')]],
+];
+?>
+<a href="<?= $e(Url::to('/worker')) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('worker.back_to_list')) ?></a>
+
+<div class="alert alert-warning d-none js-offline-queue-banner" role="status"></div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <h1 class="h5 mb-1"><?= $e($intervention['title']) ?></h1>
+            <span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $status)) ?></span>
+        </div>
+        <p class="small text-muted mb-2"><?= $e($intervention['project_name']) ?> — <?= $e($intervention['client_name']) ?></p>
+        <?php if ($intervention['description']): ?>
+            <p class="mb-2"><?= $e($intervention['description']) ?></p>
+        <?php endif; ?>
+        <?php if ($intervention['scheduled_date']): ?>
+            <p class="small text-muted mb-3">
+                <?= $e($intervention['scheduled_date']) ?>
+                <?= $intervention['scheduled_start_time'] ? ' ' . $e(substr((string) $intervention['scheduled_start_time'], 0, 5)) : '' ?>
+            </p>
+        <?php endif; ?>
+
+        <?php foreach ($nextActions[$status] ?? [] as $action): ?>
+            <button type="button" class="btn btn-success js-intervention-status"
+                    data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/status')) ?>"
+                    data-to-status="<?= $e($action['to']) ?>">
+                <?= $e($action['label']) ?>
+            </button>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+<?php if ($materials === [] && !$isOpen): ?>
+    <!-- no materials, nothing to show -->
+<?php else: ?>
+<div class="card mb-3">
+    <div class="card-header bg-white"><?= $e($t('worker.materials')) ?></div>
+    <div class="card-body">
+        <?php if ($materials === []): ?>
+            <p class="text-muted mb-0"><?= $e($t('worker.no_materials')) ?></p>
+        <?php else: ?>
+            <?php foreach ($materials as $m): ?>
+                <div class="row align-items-center mb-2">
+                    <div class="col-6"><?= $e($m['item_name']) ?> <span class="text-muted small">(<?= $e(Lang::label('units', $m['unit'])) ?>)</span></div>
+                    <div class="col-3 small text-muted"><?= $e($t('worker.qty_planned')) ?>: <?= $e(rtrim(rtrim((string) $m['qty_planned'], '0'), '.')) ?></div>
+                    <div class="col-3">
+                        <?php if ($canComplete): ?>
+                            <input type="number" step="0.001" min="0" class="form-control form-control-sm"
+                                   form="complete-form" name="qty_used[<?= $e((string) $m['id']) ?>]"
+                                   value="<?= $e((string) $m['qty_planned']) ?>" required>
+                        <?php else: ?>
+                            <span class="small"><?= $e($t('worker.qty_used')) ?>: <?= $e($m['qty_used'] !== null ? rtrim(rtrim((string) $m['qty_used'], '0'), '.') : '—') ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php foreach (['before', 'during', 'after'] as $type): ?>
+    <div class="card mb-3">
+        <div class="card-header bg-white"><?= $e($t('worker.photos')) ?> — <?= $e(Lang::label('photo_types', $type)) ?></div>
+        <div class="card-body">
+            <?php if ($photosByType[$type] === []): ?>
+                <p class="text-muted small"><?= $e($t('worker.no_photos')) ?></p>
+            <?php else: ?>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <?php foreach ($photosByType[$type] as $photo): ?>
+                        <a href="<?= $e(Url::to('/worker/photos/' . $photo['id'])) ?>" target="_blank" rel="noopener">
+                            <img src="<?= $e(Url::to('/worker/photos/' . $photo['id'] . '/thumb')) ?>" alt=""
+                                 class="rounded border" style="width:88px;height:88px;object-fit:cover;">
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($isOpen): ?>
+                <form class="js-photo-upload-form" data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/photos')) ?>" data-type="<?= $e($type) ?>">
+                    <div class="alert alert-danger d-none js-photo-error" role="alert"></div>
+                    <div class="input-group">
+                        <input type="file" class="form-control" accept="image/*" capture="environment" required>
+                        <button type="submit" class="btn btn-outline-success"><?= $e($t('worker.upload_photo')) ?></button>
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endforeach; ?>
+
+<?php if ($canComplete): ?>
+<div class="card mb-3">
+    <div class="card-header bg-white"><?= $e($t('worker.signature')) ?></div>
+    <div class="card-body">
+        <?php if ($intervention['client_signature_path']): ?>
+            <p class="small text-success mb-2"><?= $e($t('worker.signature_saved')) ?></p>
+            <img src="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/signature')) ?>" alt="" class="border rounded mb-3" style="max-width:100%;">
+        <?php endif; ?>
+        <div class="alert alert-danger d-none js-signature-error" role="alert"></div>
+        <canvas id="signature-pad" class="border rounded w-100 bg-white" height="160" style="touch-action:none;"></canvas>
+        <div class="mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary js-signature-clear"><?= $e($t('worker.signature_clear')) ?></button>
+            <button type="button" class="btn btn-sm btn-success js-signature-save"
+                    data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/signature')) ?>"
+                    data-empty-message="<?= $e($t('worker.signature_empty')) ?>">
+                <?= $e($t('worker.signature_save')) ?>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header bg-white"><?= $e($t('worker.complete')) ?></div>
+    <div class="card-body">
+        <form id="complete-form" class="js-crud-form" data-base-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/complete')) ?>" data-confirm="<?= $e($t('worker.complete_confirm')) ?>">
+            <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
+            <div class="mb-3">
+                <label class="form-label"><?= $e($t('worker.completion_notes')) ?></label>
+                <textarea class="form-control" name="completion_notes" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success w-100"><?= $e($t('worker.complete')) ?></button>
+        </form>
+    </div>
+</div>
+<?php endif; ?>

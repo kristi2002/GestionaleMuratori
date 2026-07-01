@@ -1,0 +1,157 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Support\Database;
+
+final class InterventionModel
+{
+    /**
+     * @param array{project_id?:int,worker_id?:int,status?:string,date?:string,date_from?:string,date_to?:string,search?:string} $filters
+     * @return array<int,array<string,mixed>>
+     */
+    public function all(array $filters = []): array
+    {
+        $sql    = 'SELECT i.*, p.name AS project_name, c.name AS client_name, w.name AS worker_name
+                    FROM interventions i
+                    JOIN projects p ON p.id = i.project_id
+                    JOIN clients c ON c.id = p.client_id
+                    LEFT JOIN users w ON w.id = i.assigned_worker_id
+                    WHERE 1 = 1';
+        $params = [];
+
+        if (!empty($filters['project_id'])) {
+            $sql      .= ' AND i.project_id = ?';
+            $params[]  = (int) $filters['project_id'];
+        }
+        if (!empty($filters['worker_id'])) {
+            $sql      .= ' AND i.assigned_worker_id = ?';
+            $params[]  = (int) $filters['worker_id'];
+        }
+        if (!empty($filters['status'])) {
+            $sql      .= ' AND i.status = ?';
+            $params[]  = $filters['status'];
+        }
+        if (!empty($filters['date'])) {
+            $sql      .= ' AND i.scheduled_date = ?';
+            $params[]  = $filters['date'];
+        }
+        if (!empty($filters['date_from'])) {
+            $sql      .= ' AND i.scheduled_date >= ?';
+            $params[]  = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $sql      .= ' AND i.scheduled_date <= ?';
+            $params[]  = $filters['date_to'];
+        }
+        if (!empty($filters['search'])) {
+            $sql      .= ' AND i.title LIKE ?';
+            $params[]  = '%' . $filters['search'] . '%';
+        }
+        $sql .= ' ORDER BY i.scheduled_date IS NULL, i.scheduled_date DESC, i.scheduled_start_time, i.id DESC';
+
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function find(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT i.*, p.name AS project_name, p.client_id AS project_client_id,
+                    c.name AS client_name, w.name AS worker_name
+             FROM interventions i
+             JOIN projects p ON p.id = i.project_id
+             JOIN clients c ON c.id = p.client_id
+             LEFT JOIN users w ON w.id = i.assigned_worker_id
+             WHERE i.id = ? LIMIT 1'
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Locking read for use inside a transaction (§4.3 — prevents concurrent transition races). */
+    public function findForUpdate(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare('SELECT * FROM interventions WHERE id = ? LIMIT 1 FOR UPDATE');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Insert a new intervention; status always starts at 'pending' (DB default). */
+    public function create(array $data): int
+    {
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO interventions
+                (project_id, assigned_worker_id, title, description, scheduled_date, scheduled_start_time)
+             VALUES
+                (:project_id, :assigned_worker_id, :title, :description, :scheduled_date, :scheduled_start_time)'
+        );
+        $stmt->execute([
+            ':project_id'          => $data['project_id'],
+            ':assigned_worker_id'  => $data['assigned_worker_id'],
+            ':title'               => $data['title'],
+            ':description'         => $data['description'],
+            ':scheduled_date'      => $data['scheduled_date'],
+            ':scheduled_start_time' => $data['scheduled_start_time'],
+        ]);
+        return (int) Database::pdo()->lastInsertId();
+    }
+
+    /** Basic-field edit only — status changes go through the transition state machine. */
+    public function updateBasic(int $id, array $data): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            'UPDATE interventions SET assigned_worker_id = :assigned_worker_id, title = :title,
+                description = :description, scheduled_date = :scheduled_date,
+                scheduled_start_time = :scheduled_start_time
+             WHERE id = :id'
+        );
+        return $stmt->execute([
+            ':assigned_worker_id'  => $data['assigned_worker_id'],
+            ':title'               => $data['title'],
+            ':description'         => $data['description'],
+            ':scheduled_date'      => $data['scheduled_date'],
+            ':scheduled_start_time' => $data['scheduled_start_time'],
+            ':id'                  => $id,
+        ]);
+    }
+
+    /** Sets the new status; started_at is only ever written once (first pending->in_progress). */
+    public function setStatus(int $id, string $status, ?string $startedAt = null): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            'UPDATE interventions SET status = :status, started_at = COALESCE(started_at, :started_at)
+             WHERE id = :id'
+        );
+        return $stmt->execute([
+            ':status'     => $status,
+            ':started_at' => $startedAt,
+            ':id'         => $id,
+        ]);
+    }
+
+    /** §4.2/§4.4 — completion is the only path to the 'completed' terminal status. */
+    public function markCompleted(int $id, string $completedAt, ?string $completionNotes): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            "UPDATE interventions SET status = 'completed', completed_at = :completed_at,
+                completion_notes = :completion_notes
+             WHERE id = :id"
+        );
+        return $stmt->execute([
+            ':completed_at'      => $completedAt,
+            ':completion_notes'  => $completionNotes,
+            ':id'                => $id,
+        ]);
+    }
+
+    public function setSignaturePath(int $id, string $path): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE interventions SET client_signature_path = ? WHERE id = ?');
+        return $stmt->execute([$path, $id]);
+    }
+}

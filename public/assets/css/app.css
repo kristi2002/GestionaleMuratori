@@ -1,0 +1,37 @@
+:root {
+    --app-green: #2e7d32;
+    --app-green-dark: #1b5e20;
+}
+
+body {
+    background: #f5f6f8;
+}
+
+.app-navbar {
+    background: var(--app-green);
+}
+
+.btn-success {
+    --bs-btn-bg: var(--app-green);
+    --bs-btn-border-color: var(--app-green);
+    --bs-btn-hover-bg: var(--app-green-dark);
+    --bs-btn-hover-border-color: var(--app-green-dark);
+}
+
+.text-success {
+    color: var(--app-green) !important;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+/* Mobile-first: comfortable tap targets for the worker/client apps. */
+@media (max-width: 576px) {
+    .btn,
+    .form-control {
+        font-size: 1.05rem;
+        padding: .6rem .75rem;
+    }
+}
