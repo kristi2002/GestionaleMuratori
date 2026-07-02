@@ -49,14 +49,16 @@ services:
         condition: service_healthy
 
   web:
-    image: caddy:2-alpine
+    # Caddyfile + public/ are baked into the image (deploy/Dockerfile.web):
+    # Coolify can't bind-mount repo files at runtime.
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
     restart: unless-stopped
     # No published ports on purpose: Coolify's proxy routes the domain here.
     environment:
       APP_DOMAIN: ":80"
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./public:/var/www/app/public:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

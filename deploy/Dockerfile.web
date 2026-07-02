@@ -1,0 +1,10 @@
+# Web tier for Coolify deployments: Caddy with the config and the public/
+# assets baked into the image. Coolify's builder clones the repo into a
+# temporary helper container, so bind mounts of repo files (./deploy/Caddyfile,
+# ./public) don't exist on the host at runtime — building them in avoids that.
+# The standalone docker-compose.yml keeps using bind mounts instead.
+
+FROM caddy:2-alpine
+
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY public /var/www/app/public
