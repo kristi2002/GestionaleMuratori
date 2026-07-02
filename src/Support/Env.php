@@ -43,13 +43,17 @@ final class Env
         }
     }
 
+    /**
+     * Real environment variables win over the .env file, so container/test
+     * environments can override a baked-in .env without editing it.
+     */
     public static function get(string $key, ?string $default = null): ?string
     {
-        if (array_key_exists($key, self::$vars)) {
-            return self::$vars[$key];
-        }
         $fromEnv = getenv($key);
-        return $fromEnv !== false ? $fromEnv : $default;
+        if ($fromEnv !== false) {
+            return $fromEnv;
+        }
+        return self::$vars[$key] ?? $default;
     }
 
     public static function bool(string $key, bool $default = false): bool

@@ -99,7 +99,7 @@ $nextActions = [
             <?php foreach ($interventions as $iv): ?>
                 <tr>
                     <td>
-                        <?= $e($iv['title']) ?>
+                        <a href="<?= $e(Url::to('/admin/interventions/' . $iv['id'])) ?>" class="text-decoration-none"><?= $e($iv['title']) ?></a>
                         <div class="small text-muted"><?= $e($iv['client_name']) ?></div>
                     </td>
                     <td><?= $e($iv['project_name']) ?></td>

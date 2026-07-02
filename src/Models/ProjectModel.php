@@ -96,6 +96,13 @@ final class ProjectModel
         return $stmt->execute([$id]);
     }
 
+    public function countByStatus(string $status): int
+    {
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM projects WHERE status = ?');
+        $stmt->execute([$status]);
+        return (int) $stmt->fetchColumn();
+    }
+
     /** Number of interventions linked to this project — used to warn before a cascading delete. */
     public function countInterventions(int $id): int
     {

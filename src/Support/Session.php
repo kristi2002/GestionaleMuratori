@@ -14,12 +14,29 @@ final class Session
             return;
         }
         if (PHP_SAPI !== 'cli') {
+            ini_set('session.use_strict_mode', '1');
             session_set_cookie_params([
                 'httponly' => true,
                 'samesite' => 'Lax',
+                'secure'   => (bool) Config::get('session.secure', false),
                 'path'     => '/',
             ]);
             session_start();
+        }
+    }
+
+    /** True when the authenticated session has been idle longer than $maxIdleSeconds. */
+    public static function idleExpired(int $maxIdleSeconds): bool
+    {
+        $last = self::get('_last_activity');
+        return is_int($last) && (time() - $last) > $maxIdleSeconds;
+    }
+
+    /** Record activity for the idle-timeout check. */
+    public static function touch(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['_last_activity'] = time();
         }
     }
 

@@ -1,109 +1,174 @@
 # Gestionale Muratori — Field Service & Construction Management
 
-Sistema di gestione cantieri, interventi tecnici sul campo, magazzino in tempo reale
-e report per il cliente. Tre ruoli: **Amministratore**, **Operaio**, **Cliente**.
+Management platform for construction sites, on-site technical interventions, real-time
+warehouse inventory and client-facing reports. Three roles, three experiences:
 
-> Tutto il testo rivolto all'utente è in italiano; codice, commenti e nomi delle colonne
-> del database sono in inglese (vedi `lang/it.php`).
+| Role | Experience |
+|------|-----------|
+| **Admin** (Amministratore) | Desktop dashboard: full CRUD on clients, projects, interventions, warehouse; assigns work, manages stock, exports reports, manages users. |
+| **Worker** (Operaio) | Minimalist mobile web app: "My Tasks Today", status changes, actual material quantities, before/during/after photos, client signature capture. |
+| **Client** (Cliente) | Read-only mobile/desktop view of *their* projects only: before/after photos and downloadable PDF/Excel reports. |
+
+> All **user-facing text is Italian** (single source: [lang/it.php](lang/it.php)).
+> Code, comments, and DB column names are English. DB ENUM values stay in English
+> and are translated in the view layer (`in_progress` → *In corso*).
 
 ## Stack
 
-- PHP 8.0+ (sviluppato e testato su XAMPP / PHP 8.0; forward-compatibile con 8.2+)
-- MySQL 8 (InnoDB, utf8mb4) — accesso solo via **PDO** con prepared statement, nessun ORM
-- Frontend: pagine server-rendered + jQuery/AJAX (fasi successive)
-- PDF: mPDF · Excel: PhpSpreadsheet (installati via Composer, usati dalla Fase 7)
+- **PHP 8.2+** — no framework; small custom MVC in `/src` (router, controllers, models, services)
+- **MySQL 8 / MariaDB** (InnoDB, utf8mb4) — raw **PDO** with prepared statements, no ORM
+- **Frontend** — server-rendered PHP views + jQuery/AJAX, Bootstrap 5, mobile-first
+- **PDF** — mPDF · **Excel** — PhpSpreadsheet (Composer)
+- Required PHP extensions: `pdo_mysql`, `gd`, `mbstring`, `zip`, `fileinfo`
 
-## Requisiti
+## Documentation
 
-- XAMPP (o PHP 8.0+ con estensioni `pdo_mysql`, `gd`, `mbstring`, `zip`, `fileinfo`) e MySQL 8 in esecuzione.
-- [Composer](https://getcomposer.org/) per `mpdf/mpdf` e `phpoffice/phpspreadsheet` (report PDF/Excel, Fase 7). Senza `vendor/` installato l'app funziona comunque: solo il download dei report fallisce.
+| Document | Contents |
+|----------|----------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, request lifecycle, folder structure, conventions |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Full schema, inventory ledger semantics, status state machine |
+| [docs/API.md](docs/API.md) | Every route: method, role, parameters, responses |
+| [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) | Production-readiness gap analysis (security, features, ops) |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Phased implementation plan toward production on Hetzner |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Hetzner deployment guide (Docker + bare-metal) |
+| [docs/TESTING.md](docs/TESTING.md) | Test suite and full-flow simulation instructions |
+| [CHANGELOG.md](CHANGELOG.md) | Changes per release/session |
 
-## Struttura cartelle
+## Quick start (local, Windows + XAMPP)
 
-```
-/public      entry point (index.php) + asset
-/src         codice applicativo (Support/, in seguito Controllers/, Models/, Services/)
-/views       template (dalla Fase 2)
-/lang        stringhe UI in italiano (it.php)
-/config      configurazione (config.php legge .env)
-/database    migrazioni (migrations/*.sql) + runner (migrate.php) + seed.php
-/storage     upload (foto, firme) — escluso da git
-```
+XAMPP's PHP is not on PATH — use the full path `C:\xampp\php\php.exe` (shown as `php` below).
 
-## Installazione (XAMPP, Windows)
+1. **Start** Apache and MySQL from the XAMPP control panel.
 
-Il PHP di XAMPP non è sul PATH: usa il percorso completo
-`C:\xampp\php\php.exe` (negli esempi sotto: `php`).
-
-1. **Avvia** Apache e MySQL dal pannello di controllo di XAMPP.
-
-2. **Configura l'ambiente** — copia il file di esempio:
+2. **Configure the environment**:
    ```powershell
    Copy-Item .env.example .env
    ```
-   I valori predefiniti corrispondono a un'installazione XAMPP standard
-   (`root` senza password, database `gestionale_muratori`). Modificali se necessario.
+   Defaults match a standard XAMPP install (`root`, no password, database
+   `gestionale_muratori`). Adjust as needed. **In production set `APP_DEBUG=false`
+   and a dedicated DB user** — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-3. **Crea lo schema** (crea anche il database se non esiste):
+3. **Create the schema** (also creates the database if missing):
    ```powershell
-   C:\xampp\php\php.exe database\migrate.php
+   php database\migrate.php
    ```
 
-4. **Carica i dati di esempio** (seed):
+4. **Load sample data**:
    ```powershell
-   C:\xampp\php\php.exe database\seed.php
+   php database\seed.php
    ```
 
-5. **Installa le dipendenze Composer** (mPDF + PhpSpreadsheet, usate dai report — Fase 7):
+5. **Install Composer dependencies** (mPDF + PhpSpreadsheet for reports):
    ```powershell
    composer install --no-dev
    ```
+   Without `vendor/` the app still runs; only report downloads fail.
 
-6. **Apri la pagina di stato** nel browser:
-   - Se il progetto è sotto `htdocs`: `http://localhost/GestionaleMuratori/public/`
-   - Oppure avvia il server di sviluppo PHP (lo script `public/index.php` fa da
-     router, necessario per le URL pulite tipo `/login`, `/admin`):
+6. **Serve it**:
+   - under `htdocs`: `http://localhost/GestionaleMuratori/public/`
+   - or with the built-in dev server (needed for clean URLs like `/login`):
      ```powershell
-     C:\xampp\php\php.exe -S localhost:8000 -t public public/index.php
+     php -S localhost:8000 -t public public/index.php
      ```
-     e visita `http://localhost:8000/`.
+     then open `http://localhost:8000/`.
 
-   Verrai reindirizzato alla pagina di **accesso**. Effettua il login con una
-   delle credenziali sotto: ogni ruolo viene portato alla propria area
-   (amministratore, operaio, cliente).
+## Seed data & credentials
 
-## Dati di esempio (seed)
+`database/seed.php` is **idempotent** (truncates and reloads). It creates
+1 admin, 2 workers, 2 client companies (+1 login each), 5 projects, 10 warehouse
+items and 6 sample interventions. Password for every account: `password`.
 
-`database/seed.php` è **idempotente** (svuota e ricarica). Crea:
+| Email | Role |
+|-------|------|
+| `admin@gestionale.local`   | Admin |
+| `worker1@gestionale.local` | Worker |
+| `worker2@gestionale.local` | Worker |
+| `client1@gestionale.local` | Client (Edilizia Rossi) |
+| `client2@gestionale.local` | Client (Costruzioni Bianchi) |
 
-- 1 amministratore, 2 operai, 2 referenti cliente
-- 2 clienti (aziende), 5 progetti, 10 articoli di magazzino, 6 interventi di esempio
+## Core business rules (summary — details in [docs/DATA_MODEL.md](docs/DATA_MODEL.md))
 
-**Credenziali** (password per tutti: `password`):
+- **Inventory is a ledger.** `warehouse_items.qty_in_stock` is a cached running total;
+  the source of truth is `stock_movements`. An admin action can recompute (reconcile)
+  the cache from the ledger at any time.
+- **Reserve → commit flow.** Creating an intervention reserves planned materials
+  (`reserve` movement, stock decremented, blocked if insufficient). Worker completion
+  writes `out` for used quantities and `release` for unused surplus — all in one
+  transaction with `SELECT … FOR UPDATE` row locks.
+- **Status state machine** (server-enforced, every change recorded in
+  `intervention_status_history`):
+  `pending → in_progress|cancelled`, `in_progress → on_hold|completed|cancelled`,
+  `on_hold → in_progress|cancelled`; `completed`/`cancelled` are terminal.
+- **Completion gate.** An intervention cannot complete without ≥1 "after" photo and
+  `qty_used` for every linked material. Client signature is optional but supported.
+- **RBAC on every endpoint.** Workers only touch interventions assigned to them;
+  clients only ever see `WHERE projects.client_id = session.client_id`.
 
-| Email | Ruolo |
-|-------|-------|
-| `admin@gestionale.local`   | Amministratore |
-| `worker1@gestionale.local` | Operaio |
-| `worker2@gestionale.local` | Operaio |
-| `client1@gestionale.local` | Cliente (Edilizia Rossi) |
-| `client2@gestionale.local` | Cliente (Costruzioni Bianchi) |
+## Project layout
 
-## Integrità del magazzino
+```
+/public      entry point (index.php), .htaccess, assets (css/js)
+/src         application code
+  /Controllers   Admin/, Worker/, Client/ + Auth, Dashboard
+  /Http          Router + Middleware (AuthGuard, ownership guards)
+  /Models        one class per table, raw PDO
+  /Services      InterventionService (stock + state machine), Report/
+  /Support       Auth, Config, Database, Env, Lang, Request, Response,
+                 Session, Url, Validate, View, Storage/ (StorageInterface)
+/views       PHP templates (layout + per-area folders)
+/lang        it.php — every user-facing string
+/config      config.php (reads .env)
+/database    migrations/*.sql + migrate.php + seed.php
+/storage     uploads (photos, signatures) — git-ignored
+/docs        project documentation
+/tests       test suite (see docs/TESTING.md)
+```
 
-`warehouse_items.qty_in_stock` è un **totale di cache**: la fonte di verità è il
-registro `stock_movements`. Il seed inserisce un movimento `in` pari alla giacenza
-iniziale di ogni articolo, quindi cache e registro coincidono fin dall'inizio
-(criterio §9). La logica di prenotazione/scarico arriva nelle Fasi 4–5.
+## Security model (v1.1)
 
-## Stato avanzamento (fasi)
+- CSRF token required on every POST (`X-CSRF-Token` header, wired automatically
+  in `app.js`); logout is POST-only.
+- Login rate limiting (5 failures/15 min per email, 20 per IP → HTTP 429) with a
+  full authentication audit trail (`login_attempts`).
+- Hardened sessions: strict mode, HttpOnly, SameSite=Lax, `Secure` in production,
+  8-hour idle timeout. Password change page for every role (`/password`).
+- Security headers on every response (nosniff, X-Frame-Options DENY,
+  Referrer-Policy, CSP `'self'`); HSTS via Caddy in production.
+- Debug mode **off by default**; uncaught errors are logged, never shown.
+- Assets self-hosted (no CDN) — the worker app works on sites with bad
+  connectivity and no third party sees your traffic.
 
-- [x] **Fase 1 — Fondazione**: skeleton, config, PDO, migrazioni, seed, README.
-- [x] **Fase 2 — Auth + RBAC**: login/logout AJAX, sessione, guard per ruolo, aree admin/operaio/cliente.
-- [x] **Fase 3 — CRUD Admin**: clienti, progetti e magazzino (tabelle + modali), carichi/rettifiche di magazzino con registro movimenti e riconciliazione della giacenza.
-- [x] **Fase 4 — Interventi + prenotazione**: creazione interventi con materiali pianificati (prenotazione automatica e blocco se la giacenza non basta), assegnazione operaio, macchina a stati per i passaggi di stato (`pending→in_progress→on_hold→…`) con rilascio della giacenza prenotata in caso di annullamento.
-- [x] **Fase 5 — App mobile operaio**: "Le mie attività di oggi", avvio/sospensione/ripresa intervento, completamento con conferma `qty_used` per materiale (scarico + rilascio eccedenza sul registro), upload foto prima/durante/dopo con miniatura generata via GD, firma cliente da canvas. Il completamento è bloccato finché manca una foto "dopo" o la quantità utilizzata di un materiale (§4.4).
-- [x] **Fase 6 — Vista cliente**: elenco progetti del cliente in sola lettura, dettaglio progetto con interventi e galleria foto prima/dopo (le foto "durante" restano interne all'operaio). Nessun accesso a magazzino, costi o dati di altri clienti.
-- [x] **Fase 7 — Report PDF + Excel**: report di progetto scaricabile da admin (tutti i progetti) e cliente (solo i propri). PDF (mPDF) in formato A4 stampabile con intestazione cliente/progetto, tabella interventi, materiali utilizzati (dal registro movimenti `out`, non dai piani), griglia foto prima/dopo per intervento e firma cliente. Excel (PhpSpreadsheet) come export dati equivalente senza immagini.
-- [x] **Fase 8 — Rifiniture**: pagina 500 generica con gestore d'eccezioni globale (mai più uno stack trace grezzo all'utente; in debug l'errore resta visibile), riconciliazione giacenza azionabile dall'admin (ricalcola `qty_in_stock` dal registro e segnala eventuali scostamenti), filtri rapidi "Oggi"/"Questa settimana" per il dispacciamento interventi, upload foto offline-friendly (compressione lato client via canvas prima dell'invio, coda di retry in `localStorage` alla riconnessione). Passata di validazione: scoperto e corretto un possibile overflow silenzioso delle quantità di magazzino (MySQL qui gira senza `STRICT_TRANS_TABLES`, quindi un valore DECIMAL fuori range veniva troncato invece di generare un errore) — ora ogni quantità è validata anche rispetto al limite della colonna, sia in input sia sul totale risultante.
-  - **Non incluso, segnalato come da §8**: coda offline completa via PWA/service worker (esplicitamente uno stretch goal, non richiesto); check-in GPS/orario e ore di manodopera (fuori scope v1 per design dello schema).
+## Testing
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1   # throwaway MySQL 8 in Docker
+C:\xampp\php\php.exe tests\run.php                                  # 174 assertions
+```
+
+The suite runs on its own database and covers the ledger math, the state
+machine, RBAC, CSRF, rate limiting, uploads/reports, and a real concurrency
+race test. Details: [docs/TESTING.md](docs/TESTING.md).
+
+## Production deployment (Hetzner)
+
+One-command Docker stack (Caddy with automatic HTTPS → PHP-FPM → MySQL 8):
+
+```bash
+cp deploy/env.production.example .env   # fill in domain + secrets
+docker compose up -d --build
+docker compose exec app php database/migrate.php
+docker compose exec app php scripts/create-admin.php "Nome" admin@example.com 'password'
+```
+
+Full step-by-step guide (server hardening, backups, restore, updates,
+monitoring): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## Development status
+
+The original 8-phase specification (see [superprompt.md](superprompt.md)) is fully
+implemented, plus the v1.1 production-hardening release: security (CSRF, rate
+limiting, sessions, headers), user management UI, admin intervention detail with
+photos/history, operations dashboard with low-stock alerts, worker task tabs,
+Docker deployment and a 174-assertion automated test suite. History:
+[CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
+remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §5.

@@ -1,0 +1,68 @@
+# Production stack: Caddy (TLS) -> PHP-FPM app -> MySQL 8.
+# Copy deploy/env.production.example to .env, fill in the secrets, then:
+#   docker compose up -d --build
+#   docker compose exec app php database/migrate.php
+# Full guide: docs/DEPLOYMENT.md
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-gestionale_muratori}
+      MYSQL_USER: ${DB_USER:-gestionale}
+      MYSQL_PASSWORD: ${DB_PASS:?set DB_PASS in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:?set DB_ROOT_PASS in .env}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASS}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Gestionale Muratori}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL:-https://${APP_DOMAIN:-localhost}}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Europe/Rome}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:-gestionale_muratori}
+      DB_USER: ${DB_USER:-gestionale}
+      DB_PASS: ${DB_PASS:?set DB_PASS in .env}
+      SESSION_SECURE: ${SESSION_SECURE:-true}
+      ALLOW_NEGATIVE_STOCK: ${ALLOW_NEGATIVE_STOCK:-false}
+    volumes:
+      - uploads:/var/www/app/storage/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public:/var/www/app/public:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  db_data:
+  uploads:
+  caddy_data:
+  caddy_config:

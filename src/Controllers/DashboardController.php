@@ -4,8 +4,12 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\InterventionModel;
+use App\Models\ProjectModel;
+use App\Models\WarehouseItemModel;
 use App\Support\Auth;
 use App\Support\Database;
+use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Url;
@@ -32,7 +36,17 @@ final class DashboardController
     public function admin(Request $request): void
     {
         AuthGuard::require($request, ['admin']);
-        Response::html(View::render('admin/dashboard', ['title' => 'Pannello Amministratore'], 'layout'));
+
+        $today         = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $interventions = new InterventionModel();
+
+        Response::html(View::render('admin/dashboard', [
+            'title'          => Lang::get('admin.dashboard.title'),
+            'activeProjects' => (new ProjectModel())->countByStatus('active'),
+            'openInterventions' => $interventions->countOpen(),
+            'todayByStatus'  => $interventions->countsByStatusForDate($today),
+            'lowStock'       => (new WarehouseItemModel())->lowStock(),
+        ], 'layout'));
     }
 
     /** GET /health — public lightweight readiness probe. */

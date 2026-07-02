@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+.claude
+.claude-flow
+.mcp.json
+vendor
+storage/uploads/*
+!storage/uploads/.gitkeep
+docs
+tests
+*.md

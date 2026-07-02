@@ -92,6 +92,22 @@ final class WarehouseItemModel
     }
 
     /**
+     * Active items at or below their reorder level (dashboard low-stock alert).
+     * Items with reorder_level = 0 are excluded: no threshold configured.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function lowStock(): array
+    {
+        $stmt = Database::pdo()->query(
+            'SELECT * FROM warehouse_items
+             WHERE is_active = 1 AND reorder_level > 0 AND qty_in_stock <= reorder_level
+             ORDER BY qty_in_stock / reorder_level, name'
+        );
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Recompute qty_in_stock from the stock_movements ledger (§4.1 reconciliation).
      * Sign convention: in/release/adjustment add, reserve subtracts (adjustment rows
      * carry their own signed delta). 'out' is intentionally weight-0 here: stock is

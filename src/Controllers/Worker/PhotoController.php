@@ -5,8 +5,8 @@ namespace App\Controllers\Worker;
 
 use App\Http\Middleware\AuthGuard;
 use App\Http\Middleware\InterventionOwnerGuard;
-use App\Models\InterventionModel;
 use App\Models\PhotoModel;
+use App\Services\PhotoStreamService;
 use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Lang;
@@ -100,16 +100,9 @@ final class PhotoController
             return;
         }
 
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
-        $relPath = $original ? $photo['file_path'] : ($photo['thumb_path'] ?? $photo['file_path']);
-        if (!$storage->exists($relPath)) {
+        if (!(new PhotoStreamService())->streamPhoto($photo, $original)) {
             Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
-            return;
         }
-
-        header('Content-Type: ' . (str_ends_with($relPath, '.png') ? 'image/png' : 'image/jpeg'));
-        header('Cache-Control: private, max-age=86400');
-        echo $storage->get($relPath);
     }
 
     private function makeThumbnail(string $srcAbsPath, int $srcImageType, string $destAbsPath): void

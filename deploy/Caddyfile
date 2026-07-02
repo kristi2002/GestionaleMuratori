@@ -1,0 +1,31 @@
+# Reverse proxy + static files + automatic HTTPS (Let's Encrypt).
+# APP_DOMAIN comes from .env via docker-compose:
+#   - a real domain (gestionale.example.com) -> automatic TLS + HSTS
+#   - "http://<server-ip>" or "http://localhost" -> plain HTTP (no certificate)
+
+{$APP_DOMAIN} {
+	root * /var/www/app/public
+	encode gzip
+
+	# Static assets are served by Caddy; everything else goes to PHP-FPM.
+	php_fastcgi app:9000
+	file_server
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# The app already caps uploads at 8 MB; cap the request body accordingly.
+	request_body {
+		max_size 16MB
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

@@ -3,6 +3,10 @@
     'use strict';
 
     var BASE = document.body.getAttribute('data-base') || '';
+    var CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+
+    // Every AJAX request carries the CSRF token; the server rejects POSTs without it.
+    $.ajaxSetup({ headers: { 'X-CSRF-Token': CSRF } });
 
     // Shared AJAX helper. Always flags the request as XHR so the server returns
     // JSON ({ ok, data?, error? }) instead of HTML.
@@ -13,12 +17,22 @@
                 method: method,
                 data: data,
                 dataType: 'json',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': CSRF }
             });
         },
         post: function (path, data) { return this.request('POST', path, data); },
         get: function (path, data) { return this.request('GET', path, data); }
     };
+
+    // --- Logout (POST + CSRF; the navbar button replaces the old GET link) ---
+    $(function () {
+        $(document).on('click', '.js-logout', function () {
+            var url = $(this).data('url');
+            Api.post('/logout', {}).always(function () {
+                window.location.href = url ? url.replace(/\/logout$/, '/login') : (BASE + '/login');
+            });
+        });
+    });
 
     // --- Login form ---------------------------------------------------------
     $(function () {
@@ -56,6 +70,35 @@
             $error.removeClass('d-none').text(msg);
             $submit.prop('disabled', false).text('Accedi');
         }
+    });
+
+    // --- Change password ------------------------------------------------------
+    $(function () {
+        $(document).on('submit', '.js-password-form', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $error = $form.closest('.card-body').find('.js-password-error');
+            var $success = $form.closest('.card-body').find('.js-password-success');
+            var $submit = $form.find('[type="submit"]');
+
+            $error.addClass('d-none').text('');
+            $success.addClass('d-none').text('');
+            $submit.prop('disabled', true);
+
+            Api.post('/password', $form.serialize()).done(function (res) {
+                $submit.prop('disabled', false);
+                if (res && res.ok) {
+                    $form[0].reset();
+                    $success.removeClass('d-none').text('Password aggiornata correttamente.');
+                } else {
+                    $error.removeClass('d-none').text((res && res.error) || 'Errore imprevisto.');
+                }
+            }).fail(function (xhr) {
+                $submit.prop('disabled', false);
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) || 'Errore di connessione.';
+                $error.removeClass('d-none').text(msg);
+            });
+        });
     });
 
     // --- Admin CRUD (clients / projects / warehouse) -------------------------
@@ -142,6 +185,21 @@
                 window.alert(failMessage(xhr));
             });
         });
+
+        // --- Users: the client dropdown only applies to the "client" role --------
+        function syncUserClientField() {
+            var $modal = $('#user-modal');
+            if (!$modal.length) {
+                return;
+            }
+            var isClient = $modal.find('.js-user-role').val() === 'client';
+            $modal.find('.js-user-client-field').toggleClass('d-none', !isClient);
+            if (!isClient) {
+                $modal.find('[name="client_id"]').val('');
+            }
+        }
+        $(document).on('change', '.js-user-role', syncUserClientField);
+        $(document).on('shown.bs.modal', '#user-modal', syncUserClientField);
 
         // --- Warehouse: ledger reconciliation (§4.1) ------------------------------
         $(document).on('click', '.js-reconcile-btn', function () {
@@ -301,7 +359,7 @@
                 processData: false,
                 contentType: false,
                 dataType: 'json',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': CSRF }
             });
         }
 

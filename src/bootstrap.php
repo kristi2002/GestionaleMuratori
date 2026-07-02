@@ -15,3 +15,7 @@ if (is_file($vendorAutoload)) {
 require __DIR__ . '/autoload.php';
 
 \App\Support\Env::load(dirname(__DIR__) . '/.env');
+
+// The scheduling logic ("my tasks today") compares against PHP's current date:
+// pin the timezone to the site's local time regardless of the server default.
+date_default_timezone_set(\App\Support\Env::get('APP_TIMEZONE', 'Europe/Rome') ?? 'Europe/Rome');

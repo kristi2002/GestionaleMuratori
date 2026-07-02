@@ -9,6 +9,7 @@ use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
 use App\Models\PhotoModel;
 use App\Services\InterventionService;
+use App\Services\PhotoStreamService;
 use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Lang;
@@ -23,20 +24,26 @@ final class TaskController
     /** Status buttons the worker UI exposes directly; 'completed' goes through complete(). */
     private const QUICK_TRANSITIONS = ['in_progress', 'on_hold', 'cancelled'];
 
-    /** GET /worker — "My Tasks Today" (§7 phase 5: scheduled_date = today, assigned to me). */
+    /** Tabs of the worker task list (gap F4): today (default), upcoming, done. */
+    private const TABS = ['today', 'upcoming', 'done'];
+
+    /** GET /worker — "My Tasks" (§7 phase 5 + F4 tabs; default: scheduled today, assigned to me). */
     public function today(Request $request): void
     {
         AuthGuard::require($request, ['worker']);
 
+        $tab = (string) $request->input('tab', 'today');
+        if (!in_array($tab, self::TABS, true)) {
+            $tab = 'today';
+        }
+
         $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
-        $interventions = (new InterventionModel())->all([
-            'worker_id' => (int) Auth::id(),
-            'date'      => $today,
-        ]);
+        $interventions = (new InterventionModel())->forWorkerTab((int) Auth::id(), $tab, $today);
 
         Response::html(View::render('worker/today', [
             'title'         => Lang::get('worker.today_title'),
             'interventions' => $interventions,
+            'tab'           => $tab,
         ], 'layout'));
     }
 
@@ -152,15 +159,8 @@ final class TaskController
             return;
         }
 
-        $relPath = $intervention['client_signature_path'];
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
-        if ($relPath === null || !$storage->exists($relPath)) {
+        if (!(new PhotoStreamService())->streamFile($intervention['client_signature_path'])) {
             Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
-            return;
         }
-
-        header('Content-Type: image/png');
-        header('Cache-Control: private, max-age=86400');
-        echo $storage->get($relPath);
     }
 }

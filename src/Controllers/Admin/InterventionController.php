@@ -6,10 +6,12 @@ namespace App\Controllers\Admin;
 use App\Http\Middleware\AuthGuard;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
+use App\Models\PhotoModel;
 use App\Models\ProjectModel;
 use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
 use App\Services\InterventionService;
+use App\Services\PhotoStreamService;
 use App\Support\Auth;
 use App\Support\Lang;
 use App\Support\Request;
@@ -59,6 +61,45 @@ final class InterventionController
             'statuses'      => self::STATUSES,
             'range'         => $range,
         ], 'layout'));
+    }
+
+    /** GET /admin/interventions/{id} — full detail: materials, history, photos, signature (gap F2). */
+    public function show(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model        = new InterventionModel();
+        $intervention = $model->find((int) $id);
+        if ($intervention === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        $photos       = (new PhotoModel())->forIntervention((int) $id);
+        $photosByType = ['before' => [], 'during' => [], 'after' => []];
+        foreach ($photos as $photo) {
+            $photosByType[$photo['type']][] = $photo;
+        }
+
+        Response::html(View::render('admin/interventions/show', [
+            'title'        => $intervention['title'],
+            'intervention' => $intervention,
+            'materials'    => (new InterventionMaterialModel())->forIntervention((int) $id),
+            'history'      => $model->statusHistory((int) $id),
+            'photosByType' => $photosByType,
+        ], 'layout'));
+    }
+
+    /** GET /admin/interventions/{id}/signature — streams the client signature PNG. */
+    public function signature(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $intervention = (new InterventionModel())->find((int) $id);
+        if ($intervention === null
+            || !(new PhotoStreamService())->streamFile($intervention['client_signature_path'])) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+        }
     }
 
     public function store(Request $request): void

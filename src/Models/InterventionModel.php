@@ -154,4 +154,79 @@ final class InterventionModel
         $stmt = Database::pdo()->prepare('UPDATE interventions SET client_signature_path = ? WHERE id = ?');
         return $stmt->execute([$path, $id]);
     }
+
+    /**
+     * Worker task list by tab (gap F4).
+     *  - today:    scheduled for today (any status)
+     *  - upcoming: open tasks scheduled after today, or with no date
+     *  - done:     completed in the last 14 days
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function forWorkerTab(int $workerId, string $tab, string $today): array
+    {
+        $base = 'SELECT i.*, p.name AS project_name, c.name AS client_name
+                 FROM interventions i
+                 JOIN projects p ON p.id = i.project_id
+                 JOIN clients c ON c.id = p.client_id
+                 WHERE i.assigned_worker_id = ?';
+
+        if ($tab === 'upcoming') {
+            $sql = $base . " AND i.status IN ('pending','in_progress','on_hold')
+                             AND (i.scheduled_date > ? OR i.scheduled_date IS NULL)
+                    ORDER BY i.scheduled_date IS NULL, i.scheduled_date, i.scheduled_start_time, i.id";
+            $params = [$workerId, $today];
+        } elseif ($tab === 'done') {
+            $sql = $base . " AND i.status = 'completed'
+                             AND i.completed_at >= DATE_SUB(?, INTERVAL 14 DAY)
+                    ORDER BY i.completed_at DESC";
+            $params = [$workerId, $today];
+        } else { // today
+            $sql = $base . ' AND i.scheduled_date = ?
+                    ORDER BY i.scheduled_start_time, i.id';
+            $params = [$workerId, $today];
+        }
+
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Open (non-terminal) interventions count — dashboard KPI. */
+    public function countOpen(): int
+    {
+        $stmt = Database::pdo()->query(
+            "SELECT COUNT(*) FROM interventions WHERE status IN ('pending','in_progress','on_hold')"
+        );
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array<string,int> status => count for a given scheduled date — dashboard KPI. */
+    public function countsByStatusForDate(string $date): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT status, COUNT(*) AS n FROM interventions WHERE scheduled_date = ? GROUP BY status'
+        );
+        $stmt->execute([$date]);
+
+        $counts = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $counts[(string) $row['status']] = (int) $row['n'];
+        }
+        return $counts;
+    }
+
+    /** Full transition audit for the admin detail page, oldest first. */
+    public function statusHistory(int $id): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT h.*, u.name AS changed_by_name
+             FROM intervention_status_history h
+             JOIN users u ON u.id = h.changed_by
+             WHERE h.intervention_id = ?
+             ORDER BY h.changed_at, h.id'
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetchAll();
+    }
 }

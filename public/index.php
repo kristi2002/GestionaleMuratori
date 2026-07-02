@@ -16,8 +16,10 @@ require dirname(__DIR__) . '/src/bootstrap.php';
 
 use App\Controllers\Admin\ClientController;
 use App\Controllers\Admin\InterventionController;
+use App\Controllers\Admin\PhotoController as AdminPhotoController;
 use App\Controllers\Admin\ProjectController;
 use App\Controllers\Admin\ReportController as AdminReportController;
+use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\WarehouseController;
 use App\Controllers\AuthController;
 use App\Controllers\Client\PhotoController as ClientPhotoController;
@@ -28,6 +30,7 @@ use App\Controllers\Worker\PhotoController;
 use App\Controllers\Worker\TaskController;
 use App\Http\Router;
 use App\Support\Config;
+use App\Support\Csrf;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
@@ -39,6 +42,12 @@ use App\Support\Auth;
 Session::start();
 Lang::load();
 
+// Security headers on every response. HSTS is added at the web-server layer.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: same-origin');
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+
 // Base path: empty under the dev server, the script's dir under Apache.
 $base = PHP_SAPI === 'cli-server'
     ? ''
@@ -46,6 +55,28 @@ $base = PHP_SAPI === 'cli-server'
 Url::setBase($base);
 
 $request = Request::fromGlobals($base);
+
+// Idle-session timeout: expire authenticated sessions after inactivity.
+if (Auth::check() && Session::idleExpired((int) Config::get('session.idle_timeout', 28800))) {
+    Auth::logout();
+    if ($request->wantsJson()) {
+        Response::fail(Lang::get('auth.session_expired'), 401);
+        exit;
+    }
+    Response::redirect(Url::to('/login'));
+    exit;
+}
+Session::touch();
+
+// CSRF: every POST must carry the session token (X-CSRF-Token header or _token field).
+if ($request->isPost() && !Csrf::check(Csrf::fromRequest($request))) {
+    if ($request->wantsJson()) {
+        Response::fail(Lang::get('auth.csrf_invalid'), 403);
+    } else {
+        Response::html(View::render('errors/403', ['title' => 'Accesso negato'], 'layout'), 403);
+    }
+    exit;
+}
 
 View::share([
     'base' => $base,
@@ -56,8 +87,9 @@ $router = new Router();
 $router->get('/',        [DashboardController::class, 'home']);
 $router->get('/login',   [AuthController::class, 'show']);
 $router->post('/login',  [AuthController::class, 'login']);
-$router->get('/logout',  [AuthController::class, 'logout']);
 $router->post('/logout', [AuthController::class, 'logout']);
+$router->get('/password',  [AuthController::class, 'showPassword']);
+$router->post('/password', [AuthController::class, 'changePassword']);
 $router->get('/admin',   [DashboardController::class, 'admin']);
 $router->get('/health',  [DashboardController::class, 'health']);
 
@@ -81,8 +113,18 @@ $router->post('/admin/warehouse/{id}/reconcile', [WarehouseController::class, 'r
 
 $router->get('/admin/interventions',               [InterventionController::class, 'index']);
 $router->post('/admin/interventions',               [InterventionController::class, 'store']);
+$router->get('/admin/interventions/{id}',           [InterventionController::class, 'show']);
 $router->post('/admin/interventions/{id}',          [InterventionController::class, 'update']);
 $router->post('/admin/interventions/{id}/status',   [InterventionController::class, 'status']);
+$router->get('/admin/interventions/{id}/signature', [InterventionController::class, 'signature']);
+
+$router->get('/admin/users',              [UserController::class, 'index']);
+$router->post('/admin/users',             [UserController::class, 'store']);
+$router->post('/admin/users/{id}',        [UserController::class, 'update']);
+$router->post('/admin/users/{id}/toggle', [UserController::class, 'toggleActive']);
+
+$router->get('/admin/photos/{id}',        [AdminPhotoController::class, 'show']);
+$router->get('/admin/photos/{id}/thumb',  [AdminPhotoController::class, 'thumb']);
 
 $router->get('/admin/projects/{id}/report/pdf',    [AdminReportController::class, 'pdf']);
 $router->get('/admin/projects/{id}/report/excel',  [AdminReportController::class, 'excel']);
@@ -112,7 +154,7 @@ try {
     error_log('[' . $request->method . ' ' . $request->path . '] ' . $e->getMessage()
         . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
 
-    if (Config::get('app.debug', true)) {
+    if (Config::get('app.debug', false)) {
         throw $e;
     }
 

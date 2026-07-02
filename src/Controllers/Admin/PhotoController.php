@@ -1,0 +1,35 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controllers\Admin;
+
+use App\Http\Middleware\AuthGuard;
+use App\Models\PhotoModel;
+use App\Services\PhotoStreamService;
+use App\Support\Request;
+use App\Support\Response;
+use App\Support\View;
+
+/** Admin photo streaming (gap F2) — admins may view every photo. */
+final class PhotoController
+{
+    public function show(Request $request, string $id): void
+    {
+        $this->stream($request, $id, true);
+    }
+
+    public function thumb(Request $request, string $id): void
+    {
+        $this->stream($request, $id, false);
+    }
+
+    private function stream(Request $request, string $id, bool $original): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $photo = (new PhotoModel())->find((int) $id);
+        if ($photo === null || !(new PhotoStreamService())->streamPhoto($photo, $original)) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+        }
+    }
+}

@@ -5,3 +5,7 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Test artifacts
+/tests/.uploads/
+/tests/.server.log
