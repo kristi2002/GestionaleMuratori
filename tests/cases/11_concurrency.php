@@ -127,6 +127,63 @@ foreach ([1, 2] as $n) {
 }
 
 // ---------------------------------------------------------------------------
+T::section('E2E: concurrent transfers on the same item (no lost update)');
+
+// Fresh item stocked with 100 at the warehouse via the admin API.
+$r = $admin->post('/admin/warehouse', ['name' => 'Trasfer Race', 'sku' => 'TR-RACE', 'unit' => 'pcs', 'reorder_level' => '0']);
+$xItem = (int) ($r['json']['data']['id'] ?? 0);
+T::ok($xItem > 0, 'race item created');
+$admin->post("/admin/warehouse/{$xItem}/movement", ['type' => 'in', 'qty' => '100', 'note' => 'seed race']);
+$xSite = (int) $pdo->query("SELECT id FROM stock_locations WHERE project_id = 1 AND kind = 'site' LIMIT 1")->fetchColumn();
+
+// Fire two warehouse->site transfers of 30 at the same instant.
+$multiT   = curl_multi_init();
+$handlesT = [];
+foreach ([1, 2] as $n) {
+    $h = curl_init($baseUrl . "/admin/warehouse/{$xItem}/transfer");
+    curl_setopt_array($h, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => http_build_query(['from_location_id' => 1, 'to_location_id' => $xSite, 'qty' => '30']),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => ['X-Requested-With: XMLHttpRequest', 'X-CSRF-Token: ' . $admin->csrf],
+        CURLOPT_COOKIE         => $admin->cookieHeader(),
+    ]);
+    curl_multi_add_handle($multiT, $h);
+    $handlesT[$n] = $h;
+}
+do {
+    $status = curl_multi_exec($multiT, $running);
+    if ($running) {
+        curl_multi_select($multiT);
+    }
+} while ($running && $status === CURLM_OK);
+
+$okT = 0;
+foreach ($handlesT as $n => $h) {
+    if ((int) curl_getinfo($h, CURLINFO_RESPONSE_CODE) === 200) {
+        $okT++;
+    }
+    curl_multi_remove_handle($multiT, $h);
+    curl_close($h);
+}
+curl_multi_close($multiT);
+T::equals(2, $okT, 'both concurrent transfers returned 200');
+
+$whQty   = (float) $pdo->query("SELECT qty FROM stock_balances WHERE item_id = {$xItem} AND location_id = 1")->fetchColumn();
+$siteQty = (float) $pdo->query("SELECT qty FROM stock_balances WHERE item_id = {$xItem} AND location_id = {$xSite}")->fetchColumn();
+T::equals(40.0, $whQty, 'warehouse balance = 100 - 30 - 30 (no lost update)');
+T::equals(60.0, $siteQty, 'site balance = 30 + 30');
+$fullX = (float) $pdo->query(
+    "SELECT COALESCE(SUM(CASE
+        WHEN type IN ('in','release','transfer_in') THEN qty
+        WHEN type IN ('reserve','transfer_out') THEN -qty
+        WHEN type = 'adjustment' THEN qty ELSE 0 END), 0)
+     FROM stock_movements WHERE item_id = {$xItem}"
+)->fetchColumn();
+$sumX = (float) $pdo->query("SELECT COALESCE(SUM(qty), 0) FROM stock_balances WHERE item_id = {$xItem}")->fetchColumn();
+T::equals($fullX, $sumX, 'sum of balances == full ledger after the transfer race');
+
+// ---------------------------------------------------------------------------
 T::section('E2E: PDF embeds photos');
 $r = $admin->get('/admin/projects/1/report/pdf', ['json' => false]);
 T::equals(200, $r['status'], 'project 1 PDF downloads');

@@ -83,3 +83,31 @@ solid and matches the spec. What separates this from a production platform is:
 operational dashboard), **(c)** deployment/backup infrastructure for Hetzner, and
 **(d)** an automated test suite proving the invariants. These are addressed in
 phases in [ROADMAP.md](ROADMAP.md).
+
+---
+
+## 6. v2 gaps — Italian construction platform (assessment 2026-07-06)
+
+v1.1 is production-grade but is a *generic* field-service system. To be the
+"full-fledged platform" the client (an *impresa edile* in the Marche region) needs,
+it must gain the Italian construction legal + operational feature set. Domain detail:
+[DOMAIN_IT.md](DOMAIN_IT.md). Severity here: 🔴 legal/fine risk · 🟠 operational · 🟡 QoL.
+
+| # | Gap | Sev | Status |
+|---|-----|-----|--------|
+| V1 | **Single-location inventory** — no per-site stock; material can't be tracked warehouse→cantiere. | 🟠 | ✅ **closed (this PR)** — `stock_locations`, `stock_balances`, `StockTransferService`, location-aware ledger. |
+| V2 | **`complete()` phantom-release bug** — released surplus for never-reserved materials, inflating stock. | 🔴 | ✅ **closed (this PR)** — release guarded by `is_reserved`; regression-tested. |
+| V3 | **No cost data** — no `unit_cost`, so no valuation / accountant export / S.A.L. pricing. | 🟠 | ⏳ schema landed (`warehouse_items.unit_cost`); export in Phase 6. |
+| V4 | **Badge di Cantiere** — no digital attendance / geolocation (Decreto 332/2026). | 🔴 | ⏳ schema landed (`site_attendance`); feature Phase 4a. |
+| V5 | **Giornale dei Lavori** — no daily works log (DPR 380/2001). | 🔴 | ⏳ schema landed (`daily_logs`+equipment); feature Phase 4b. |
+| V6 | **S.A.L. generator** — no progress-statement documents. | 🔴 | ⏳ schema landed (`sal_documents`/`sal_lines`); feature Phase 4c. |
+| V7 | **Scadenzario Sicurezza** — no expiry tracking for DURC/POS/PSC/Patente a Crediti (D.Lgs. 81/2008). | 🔴 | ⏳ schema landed (`compliance_documents`); feature Phase 4d. |
+| V8 | **No subcontractor role/portal** — subappaltatori can't be managed or given scoped access. | 🟠 | ⏳ schema landed (`subcontractors`, role enum, M:N); portal Phase 3. |
+| V9 | **No true offline mode** — only a photo `localStorage` retry queue; thick-walled sites need PWA. | 🟠 | ⏳ Phase 5. |
+| V10 | **No geolocated photos** — evidence lacks coordinates/time. | 🟡 | ⏳ schema landed (`photos.lat/lng/captured_at`); feature Phase 5a. |
+| V11 | **Hardcoded-Italian report labels** — report builders bypass `lang/it.php`. | 🟡 | ⏳ chipped away as report files are touched (Phase 6). |
+| V12 | **Deploy is plain-Docker only** — client wants Coolify on Hetzner. | 🟠 | ⏳ Phase 7. |
+
+**This PR (v2 foundation)** closes V1 and V2 and lands the schema for V3–V10, so every
+later phase builds on stable tables. Remaining phases are sequenced in
+[ROADMAP.md](ROADMAP.md).

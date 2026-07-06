@@ -66,6 +66,7 @@ $t = static fn (string $key): string => Lang::get($key);
                         <?php endif; ?>
                     </td>
                     <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>#trasferisci"><?= $e($t('admin.warehouse.transfer.action')) ?></a>
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>"><?= $e($t('admin.warehouse.ledger')) ?></a>
                         <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
                                 data-bs-toggle="modal" data-bs-target="#item-modal" data-target-modal="#item-modal"

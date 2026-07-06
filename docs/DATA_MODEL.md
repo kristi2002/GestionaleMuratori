@@ -1,10 +1,13 @@
 # Data model
 
-Source of truth: [database/migrations/001_init.sql](../database/migrations/001_init.sql).
+Source of truth: [database/migrations/](../database/migrations/) — `001_init.sql` and
+`002_login_attempts.sql` for v1, `003`–`009` for the v2 multi-site/platform schema.
 All tables InnoDB, utf8mb4_unicode_ci. ENUM values stay English; the view layer
 translates them via `lang/it.php` (`Lang::label`).
 
-Relations are strict: **Client 1→N Projects 1→N Interventions**.
+Relations are strict: **Client 1→N Projects 1→N Interventions**. v2 adds a
+**Subcontractor** subject (M:N with projects) and a **StockLocation** per project
+(the cantiere), so inventory can move between the warehouse and each site.
 
 ## Tables
 
@@ -15,8 +18,9 @@ Relations are strict: **Client 1→N Projects 1→N Interventions**.
 | name | VARCHAR(190) | |
 | email | VARCHAR(190) UNIQUE | login identifier |
 | password_hash | VARCHAR(255) | `password_hash()` (bcrypt/argon per PHP default) |
-| role | ENUM admin/worker/client | |
+| role | ENUM admin/worker/client/subcontractor | `subcontractor` added in v2 (migration 004) |
 | client_id | FK → clients, NULL | only for role=client (`ON DELETE SET NULL`) |
+| subcontractor_id | FK → subcontractors, NULL | only for role=subcontractor (`ON DELETE SET NULL`), v2 |
 | is_active | TINYINT(1) DEFAULT 1 | inactive users cannot log in |
 | created_at | DATETIME | |
 
@@ -59,7 +63,8 @@ creation), `to_status`, `changed_by` (FK users, RESTRICT), `changed_at`.
 | name | |
 | sku | NULL, UNIQUE |
 | unit | ENUM `pcs`/`kg`/`m`/`l`/`box` |
-| qty_in_stock | DECIMAL(12,3) — **cached** running total (see ledger) |
+| qty_in_stock | DECIMAL(12,3) — **cached** balance at the **main warehouse** (location 1); see ledger |
+| unit_cost | DECIMAL(12,4), NULL — v2 (migration 003); accountant export / S.A.L. pricing |
 | reorder_level | DECIMAL(12,3) — low-stock threshold |
 | is_active | inactive items cannot be planned on new interventions |
 
@@ -72,7 +77,8 @@ Planned/used materials per intervention: `intervention_id` (CASCADE), `item_id`
 | Column | Notes |
 |--------|-------|
 | item_id | FK → warehouse_items, RESTRICT |
-| type | ENUM `in` / `out` / `reserve` / `release` / `adjustment` |
+| location_id | FK → stock_locations, RESTRICT — **v2**; DEFAULT 1 (main warehouse). Pre-v2 rows backfilled to 1 |
+| type | ENUM `in`/`out`/`reserve`/`release`/`adjustment`/`transfer_in`/`transfer_out` (last two v2) |
 | qty | DECIMAL(12,3); `adjustment` carries its own sign, others are positive |
 | intervention_id | NULL for manual movements, SET NULL on intervention delete |
 | user_id | who caused the movement (RESTRICT) |
@@ -93,12 +99,36 @@ IP; a successful login deletes that email's failure rows.
 
 ### migrations
 Bookkeeping table written by `database/migrate.php` (filename + applied_at);
-each `database/migrations/*.sql` file is applied once, in filename order.
+each `database/migrations/*.sql` file is applied once, in filename order. The runner
+splits on `;`+newline, strips only full-line `--` comments, and does **not** wrap a
+file in a transaction (DDL auto-commits) — so each statement must be `;`-newline
+terminated and comments kept on their own lines.
+
+## v2 tables (multi-site + platform schema, migrations 003–009)
+
+Most of these back features that land in later PRs; the schema is created up-front so
+every phase builds on stable tables. Wired and used **now**: `stock_locations`,
+`stock_balances`, and `warehouse_items.unit_cost`.
+
+| Table (migration) | Purpose |
+|-------------------|---------|
+| `stock_locations` (003) | `id, name, kind ENUM('warehouse','site'), project_id NULL (CASCADE), is_active`. Row **id=1** is the main warehouse; every project gets one `site` row (its cantiere). |
+| `stock_balances` (003) | Per-`(item_id, location_id)` cached balance, `UNIQUE(item_id, location_id)`. The location-scoped analogue of `qty_in_stock`; recomputed from the ledger, never written without a movement. |
+| `subcontractors` (004) | `name, vat_or_tax_id, email, phone, notes, is_active`. |
+| `project_subcontractors` (004) | M:N `project_id`↔`subcontractor_id`, `UNIQUE`. |
+| `site_attendance` (005) | Badge di Cantiere: `project_id, user_id?/subcontractor_id?, person_name, entry_at, exit_at?, entry/exit lat/lng, note`. |
+| `daily_logs` / `equipment` / `daily_log_equipment` (006) | Giornale dei Lavori: one row per `(project_id, log_date)` with weather/temps/workers/work, an `is_closed` lock, and an equipment join. |
+| `sal_documents` / `sal_lines` (007) | S.A.L.: numbered progress documents (`draft`/`issued`/`signed`) with priced line items. |
+| `compliance_documents` (008) | Scadenzario Sicurezza: polymorphic `(subject_type, subject_id)`, `doc_type` (DURC/POS/PSC/patente_crediti/…), `issue_date`, `expiry_date` (indexed), `credits`, `file_path`. |
+| `photos.lat/lng/captured_at` (009) | Geolocated photo evidence columns. |
 
 ## Inventory: ledger semantics (the hard part)
 
-`qty_in_stock` is a cache. The truth is `SUM` over `stock_movements`, with this
-**sign convention** (implemented in `WarehouseItemModel::recomputeStock()`):
+`qty_in_stock` is a cache of the **main-warehouse (location 1)** balance; `stock_balances`
+caches every `(item, location)` balance the same way. The truth is `SUM` over
+`stock_movements` filtered by location, with this **sign convention** (implemented in
+`WarehouseItemModel::recomputeStock()` for the warehouse and `StockBalanceModel::recompute()`
+per location):
 
 | type | weight | meaning |
 |------|--------|---------|
@@ -106,12 +136,29 @@ each `database/migrations/*.sql` file is applied once, in filename order.
 | `reserve` | −qty | stock held when an intervention is created |
 | `release` | +qty | reserved stock returned (cancellation, or unused surplus at completion) |
 | `adjustment` | +qty (signed) | manual correction; negative value = write-down |
+| `transfer_in` | +qty | stock arriving at a location (v2) |
+| `transfer_out` | −qty | stock leaving a location (v2) |
 | `out` | **0** | audit trail of actual consumption |
 
 `out` is intentionally weight-0: the physical stock was already decremented by the
 matching `reserve` at creation; at completion, `release` of `(qty_planned − qty_used)`
 corrects the net effect down to exactly −qty_used. `out` rows exist so that reports
 can total *actual* material usage per project (`StockMovementModel::usedByProject`).
+
+**Transfers** are a paired write — `transfer_out` at the source location plus
+`transfer_in` at the destination, of equal qty — so an item's grand total across all
+locations is conserved. `StockTransferService::transfer()` runs the pair in one
+transaction, locks the `warehouse_items` row `FOR UPDATE` (serialising every movement
+for that item), guards the source balance against going negative (unless
+`ALLOW_NEGATIVE_STOCK`), and refreshes both location balances. **Interventions** reserve
+and consume at the main warehouse by default (`InterventionService::create/complete`
+take an optional `locationId`, default 1), so v1 dashboard/low-stock logic is unchanged.
+
+> **v2 fix:** `complete()` now emits the surplus `release` **only for materials that were
+> actually reserved** (`is_reserved = 1`). Previously it released `(qty_planned − qty_used)`
+> for every material row, so a never-reserved row (e.g. imported/seeded with `is_reserved=0`
+> and no offsetting `reserve` movement) added phantom stock. This mirrors the cancel path,
+> which only releases `reservedForUpdate` rows.
 
 **Lifecycle example** (item starts at 100, plan 20, use 15):
 

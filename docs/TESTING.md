@@ -6,8 +6,11 @@ end-to-end simulation of all three roles.
 
 ## Prerequisites
 
-- PHP 8.2 CLI with `curl`, `gd`, `pdo_mysql` (XAMPP's PHP qualifies)
-- Docker (for the throwaway test database)
+- PHP 8.2+ CLI with `curl`, `gd`, `pdo_mysql` (XAMPP's PHP qualifies)
+- A MySQL 8 (or compatible) server the runner can reach — the throwaway container
+  below, or any instance pointed at via `GM_TEST_DB_*`
+- Composer dependencies installed (`composer install`) — mPDF/PhpSpreadsheet are
+  required for the report tests
 
 ## Running
 
@@ -18,6 +21,15 @@ powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1
 
 # 2. Run everything
 C:\xampp\php\php.exe tests\run.php
+```
+
+On Linux/CI the `.ps1` is Windows-only; start the container directly and point the
+runner at it:
+
+```bash
+docker run -d --name gm-test-mysql -e MYSQL_ROOT_PASSWORD=test \
+  -p 127.0.0.1:3307:3306 mysql:8.0
+php tests/run.php   # or: GM_TEST_DB_PORT=3306 php tests/run.php for a local server
 ```
 
 Exit code 0 = all green. The suite **never touches the development database**:
@@ -34,9 +46,10 @@ a scratch uploads dir (`tests/.uploads`, git-ignored). Override the test DB via
 | `tests/cases/02_stock_and_state.php` | Service-level §4 invariants: reservation decrements stock + writes ledger; insufficient stock rolls back atomically; the full status state machine (legal + illegal transitions, `started_at` once, history rows); completion gate (after-photo + qty_used); `out`/`release` math on completion (cache == ledger after every step); cancellation restores stock; reconciliation heals a corrupted cache. |
 | `tests/cases/03_rate_limiter.php` | Login throttling: 5-failure email block (any IP), 20-failure IP block, reset on success. |
 | `tests/cases/10_http_e2e.php` | Boots `php -S` and simulates real clients: security headers, CSRF rejection, self-hosted assets, login errors + rate limiting (HTTP 429), the full RBAC matrix (admin/worker/client × each area), admin CRUD incl. warehouse ledger endpoints (negative-stock and overflow blocks, manual `out` forbidden, reconcile), user management (create/duplicate/deactivate/reset password/self-lockout guard), the complete intervention lifecycle over HTTP (create+reserve → worker start → photo upload with real PNGs → signature → completion gate → stock verification), ownership isolation between workers, client portal scoping (projects, photos, reports), PDF/XLSX downloads (magic bytes), password change, logout, worker tabs, dashboard low-stock alert, and no-PHP-warnings output hygiene. |
-| `tests/cases/11_concurrency.php` | §9 race criterion: two workers complete interventions on the **same warehouse item at the same instant** (`curl_multi`); asserts no lost update and cache == ledger afterwards. Verifies the report PDF actually embeds photo images. |
+| `tests/cases/04_multisite_stock.php` | **v2** multi-site inventory: auto site location per project; warehouse→cantiere transfer moves qty on both sides; qty_in_stock tracks the warehouse balance; total conserved and `Σ location balances == full-ledger recompute`; negative-stock / same-location / invalid-qty guards; reserve→complete keeps caches == ledger; and the **`complete()` non-inflation regression** (a never-reserved `is_reserved=0` material emits no phantom `release`). Uses fresh items to stay isolated from other cases. |
+| `tests/cases/11_concurrency.php` | §9 race criterion: two workers complete interventions on the **same warehouse item at the same instant** (`curl_multi`); asserts no lost update and cache == ledger afterwards. **v2:** two concurrent warehouse→site **transfers** on the same item (no lost update, balances == ledger). Verifies the report PDF actually embeds photo images. |
 
-174 assertions at the time of writing.
+202 assertions at the time of writing (174 v1 + 28 v2).
 
 ## Conventions for new tests
 

@@ -1,5 +1,61 @@
 # Changelog
 
+## 2026-07-06 — v2 foundation: multi-site inventory (Phases 0–2)
+
+First PR of the v2 "full-fledged Italian construction platform" effort. Delivers the
+documentation baseline, the complete v2 database schema, and the multi-site inventory
+feature (plus a confirmed stock-inflation bug fix). Later v2 phases (subcontractor
+portal, legal compliance features, PWA, accountant export, Coolify deploy) follow in
+subsequent PRs — see [docs/ROADMAP.md](docs/ROADMAP.md). Gap IDs reference
+[docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §6.
+
+**Test status: 202 assertions green** (174 v1 + 28 v2) on a fresh database.
+
+### Phase 0 — Documentation baseline
+
+- Corrected `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ARCHITECTURE.md` to current code
+  truth and documented the location ledger + the `complete()` fix.
+- New **`docs/DOMAIN_IT.md`** — Italian construction domain (Badge di Cantiere, Giornale
+  dei Lavori, S.A.L., Scadenzario Sicurezza, DURC/POS/PSC/Patente a Crediti, glossary,
+  decree references) and how each maps to app entities.
+- Rewrote `docs/ROADMAP.md` (v2 9-phase plan, reservation-model decision) and
+  `docs/GAP_ANALYSIS.md` §6 (v2 gaps V1–V12, closed vs. planned).
+
+### Phase 1 — v2 schema, models, seed
+
+- Migrations **`003`–`009`**: `stock_locations` (+ default warehouse id=1),
+  location-aware `stock_movements` (`location_id`, `transfer_in`/`transfer_out` types),
+  `stock_balances` cache, `warehouse_items.unit_cost`; `subcontractors` + `subcontractor`
+  role + `project_subcontractors`; `site_attendance`; `daily_logs`/`equipment`/
+  `daily_log_equipment`; `sal_documents`/`sal_lines`; `compliance_documents`;
+  `photos.lat/lng/captured_at`. Pre-existing ledger rows backfill to the main warehouse.
+- New models `StockLocationModel`, `StockBalanceModel`.
+- Seed extended with the main warehouse, a site location per project, item unit costs,
+  and a subcontractor (+ project assignment).
+
+### Phase 2 — Multi-site inventory (per-location balances + transfers)
+
+- **Location-aware ledger.** `WarehouseItemModel::recomputeStock` now computes the
+  **main-warehouse (location 1)** balance and understands transfer movements;
+  `StockBalanceModel::recompute` does the same per location; `refreshCaches($item,$loc)`
+  keeps both caches reconciled after every movement write.
+- **`StockTransferService`** — moves stock warehouse↔cantiere as a paired
+  `transfer_out`+`transfer_in` write in one transaction, locks the item `FOR UPDATE`,
+  guards the source balance against going negative, refreshes both caches. Total stock
+  across locations is conserved. Route `POST /admin/warehouse/{id}/transfer`; the item
+  detail page shows per-location balances + a transfer form; the list gets a Trasferisci
+  action.
+- **Auto site location** created on project creation (`ProjectController::store`).
+- **Reservation model = additive/site-optional.** `InterventionService::create/complete`
+  take an optional `locationId` (default = main warehouse), so v1 behaviour and all
+  existing tests are unchanged.
+- **Bug fix.** `complete()` now emits the surplus `release` **only for materials that
+  were actually reserved** (`is_reserved = 1`). Previously it released
+  `(qty_planned − qty_used)` for every material, so a never-reserved row (e.g. the seed's
+  `is_reserved=0` materials on the `in_progress` intervention) added phantom stock.
+- **Tests.** New `tests/cases/04_multisite_stock.php` + a concurrent-transfer race in
+  `11_concurrency.php`, including a regression for the `complete()` non-inflation fix.
+
 ## 2026-07-02 — Production hardening & platform completion (v1.1)
 
 Everything below was implemented, tested (174 automated assertions, all green)

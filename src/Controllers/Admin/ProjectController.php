@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
 use App\Models\ProjectModel;
+use App\Models\StockLocationModel;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
@@ -44,6 +45,9 @@ final class ProjectController
         }
 
         $id = (new ProjectModel())->create($data);
+        // Every project gets its own site location so material can be transferred
+        // warehouse -> cantiere and tracked with a per-site balance.
+        (new StockLocationModel())->ensureForProject($id, (string) $data['name']);
         Response::ok(['id' => $id]);
     }
 

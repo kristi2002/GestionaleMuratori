@@ -62,6 +62,7 @@ Conventions:
 | POST | `/admin/warehouse/{id}/toggle` | — | Activate/deactivate. |
 | POST | `/admin/warehouse/{id}/movement` | `type` (`in`\|`adjustment`), `qty` (≠0; `in` must be >0; `adjustment` may be negative), `note` | Manual ledger entry, transaction + row lock; blocks negative stock (configurable) and DECIMAL overflow. → `{ok,data:{qty_in_stock}}`. |
 | POST | `/admin/warehouse/{id}/reconcile` | — | Recompute cache from ledger. → `{ok,data:{before,after,changed,message}}`. |
+| POST | `/admin/warehouse/{id}/transfer` | `from_location_id`*, `to_location_id`*, `qty`* (>0), `note` | **v2** — move stock between locations (warehouse↔cantiere) in one locked transaction. Writes `transfer_out`+`transfer_in`, refreshes both balances. 422 on same location / invalid qty / inactive item or location / insufficient source stock. → `{ok,data:{from_qty,to_qty}}`. The item detail page also shows per-location balances. |
 
 ### Interventions
 | Method | Path | Body / params | Description |

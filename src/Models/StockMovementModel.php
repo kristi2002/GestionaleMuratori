@@ -10,11 +10,13 @@ final class StockMovementModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO stock_movements (item_id, type, qty, intervention_id, user_id, note)
-             VALUES (:item_id, :type, :qty, :intervention_id, :user_id, :note)'
+            'INSERT INTO stock_movements (item_id, location_id, type, qty, intervention_id, user_id, note)
+             VALUES (:item_id, :location_id, :type, :qty, :intervention_id, :user_id, :note)'
         );
         $stmt->execute([
             ':item_id'         => $data['item_id'],
+            // Defaults to the main warehouse so pre-multi-site callers stay correct.
+            ':location_id'     => $data['location_id'] ?? StockLocationModel::MAIN_WAREHOUSE_ID,
             ':type'            => $data['type'],
             ':qty'             => $data['qty'],
             ':intervention_id' => $data['intervention_id'] ?? null,

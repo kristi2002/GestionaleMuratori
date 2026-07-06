@@ -6,6 +6,8 @@ namespace App\Services;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
 use App\Models\PhotoModel;
+use App\Models\StockBalanceModel;
+use App\Models\StockLocationModel;
 use App\Models\StockMovementModel;
 use App\Models\WarehouseItemModel;
 use App\Support\Config;
@@ -33,6 +35,7 @@ final class InterventionService
     private InterventionMaterialModel $materials;
     private WarehouseItemModel $items;
     private StockMovementModel $movements;
+    private StockBalanceModel $balances;
     private PhotoModel $photos;
 
     public function __construct()
@@ -41,16 +44,22 @@ final class InterventionService
         $this->materials      = new InterventionMaterialModel();
         $this->items           = new WarehouseItemModel();
         $this->movements       = new StockMovementModel();
+        $this->balances        = new StockBalanceModel();
         $this->photos           = new PhotoModel();
     }
 
     /**
      * @param array<string,mixed> $data
      * @param array<int,array{item_id:int,qty_planned:string}> $plannedMaterials
+     * @param int $locationId Location the materials are reserved from (default: main warehouse).
      * @throws RuntimeException on insufficient stock or a missing/inactive item
      */
-    public function create(array $data, array $plannedMaterials, int $userId): int
-    {
+    public function create(
+        array $data,
+        array $plannedMaterials,
+        int $userId,
+        int $locationId = StockLocationModel::MAIN_WAREHOUSE_ID
+    ): int {
         $allowNegative = (bool) Config::get('inventory.allow_negative_stock', false);
         $pdo           = Database::pdo();
 
@@ -68,7 +77,12 @@ final class InterventionService
                     throw new RuntimeException(Lang::get('admin.interventions.material_item_invalid'));
                 }
 
-                $remaining = (float) $item['qty_in_stock'] - (float) $material['qty_planned'];
+                // Availability at the reservation location: qty_in_stock is the main
+                // warehouse cache; any other location reads its per-location balance.
+                $available = $locationId === StockLocationModel::MAIN_WAREHOUSE_ID
+                    ? (float) $item['qty_in_stock']
+                    : (float) $this->balances->qty((int) $material['item_id'], $locationId);
+                $remaining = $available - (float) $material['qty_planned'];
                 if (!$allowNegative && $remaining < 0) {
                     throw new RuntimeException(
                         sprintf(Lang::get('admin.interventions.insufficient_stock'), $item['name'])
@@ -83,13 +97,14 @@ final class InterventionService
                 ]);
                 $this->movements->create([
                     'item_id'         => $material['item_id'],
+                    'location_id'     => $locationId,
                     'type'            => 'reserve',
                     'qty'             => $material['qty_planned'],
                     'intervention_id' => $interventionId,
                     'user_id'         => $userId,
                     'note'            => null,
                 ]);
-                $this->items->recomputeStock($material['item_id']);
+                $this->items->refreshCaches((int) $material['item_id'], $locationId);
             }
 
             $pdo->commit();
@@ -126,8 +141,10 @@ final class InterventionService
 
             if ($toStatus === 'cancelled') {
                 foreach ($this->materials->reservedForUpdate($interventionId) as $material) {
+                    // Reservations are held at the main warehouse (see create()); release there.
                     $this->movements->create([
                         'item_id'         => $material['item_id'],
+                        'location_id'     => StockLocationModel::MAIN_WAREHOUSE_ID,
                         'type'            => 'release',
                         'qty'             => $material['qty_planned'],
                         'intervention_id' => $interventionId,
@@ -135,7 +152,7 @@ final class InterventionService
                         'note'            => 'Rilascio per annullamento intervento',
                     ]);
                     $this->materials->markReleased((int) $material['id']);
-                    $this->items->recomputeStock((int) $material['item_id']);
+                    $this->items->refreshCaches((int) $material['item_id'], StockLocationModel::MAIN_WAREHOUSE_ID);
                 }
             }
 
@@ -163,7 +180,8 @@ final class InterventionService
         int $interventionId,
         int $workerId,
         array $qtyUsedByMaterialId,
-        ?string $completionNotes
+        ?string $completionNotes,
+        int $locationId = StockLocationModel::MAIN_WAREHOUSE_ID
     ): void {
         $pdo = Database::pdo();
         $pdo->beginTransaction();
@@ -215,6 +233,7 @@ final class InterventionService
                 if ($qtyUsed > 0) {
                     $this->movements->create([
                         'item_id'         => $itemId,
+                        'location_id'     => $locationId,
                         'type'            => 'out',
                         'qty'             => (string) $qtyUsed,
                         'intervention_id' => $interventionId,
@@ -223,10 +242,15 @@ final class InterventionService
                     ]);
                 }
 
+                // Release the unused remainder ONLY for materials that were actually
+                // reserved. A never-reserved row has no offsetting 'reserve' movement, so
+                // emitting 'release' here would add phantom stock (release adds in the
+                // ledger). This mirrors the cancel path, which releases reservedForUpdate only.
                 $releaseAmt = $qtyPlanned - $qtyUsed;
-                if ($releaseAmt > 0) {
+                if ($releaseAmt > 0 && (int) $material['is_reserved'] === 1) {
                     $this->movements->create([
                         'item_id'         => $itemId,
+                        'location_id'     => $locationId,
                         'type'            => 'release',
                         'qty'             => (string) $releaseAmt,
                         'intervention_id' => $interventionId,
@@ -239,7 +263,7 @@ final class InterventionService
             }
 
             foreach ($itemIds as $itemId) {
-                $this->items->recomputeStock($itemId);
+                $this->items->refreshCaches($itemId, $locationId);
             }
 
             $completedAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
