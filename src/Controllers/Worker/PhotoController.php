@@ -13,6 +13,7 @@ use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Storage\LocalStorage;
+use App\Support\Validate;
 use App\Support\View;
 
 final class PhotoController
@@ -64,6 +65,9 @@ final class PhotoController
             $relThumb = null; // GD failed — stream() falls back to the original
         }
 
+        [$lat, $lng]  = $this->coordinates($request);
+        $capturedAt   = $this->capturedAt($request);
+
         $photoId = (new PhotoModel())->create([
             'intervention_id' => (int) $id,
             'project_id'      => $projectId,
@@ -71,6 +75,9 @@ final class PhotoController
             'file_path'       => $relOriginal,
             'thumb_path'      => $relThumb,
             'uploaded_by'     => Auth::id(),
+            'lat'             => $lat,
+            'lng'             => $lng,
+            'captured_at'     => $capturedAt,
         ]);
 
         Response::ok(['id' => $photoId]);
@@ -103,6 +110,36 @@ final class PhotoController
         if (!(new PhotoStreamService())->streamPhoto($photo, $original)) {
             Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
         }
+    }
+
+    /**
+     * Optional geotag from the capturing device.
+     * @return array{0:string|null,1:string|null} [lat, lng]; both null if absent/invalid.
+     */
+    private function coordinates(Request $request): array
+    {
+        $lat = trim((string) $request->input('lat', ''));
+        $lng = trim((string) $request->input('lng', ''));
+        if (Validate::isLatitude($lat) && Validate::isLongitude($lng)) {
+            return [$lat, $lng];
+        }
+        return [null, null];
+    }
+
+    /** Client-supplied capture time (epoch ms or Y-m-d H:i:s), normalised or null. */
+    private function capturedAt(Request $request): ?string
+    {
+        $raw = trim((string) $request->input('captured_at', ''));
+        if ($raw === '') {
+            return null;
+        }
+        if (ctype_digit($raw)) {
+            // Epoch milliseconds from the browser.
+            $ts = (int) (((int) $raw) / 1000);
+            return $ts > 0 ? date('Y-m-d H:i:s', $ts) : null;
+        }
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $raw);
+        return $dt !== false ? $dt->format('Y-m-d H:i:s') : null;
     }
 
     private function makeThumbnail(string $srcAbsPath, int $srcImageType, string $destAbsPath): void

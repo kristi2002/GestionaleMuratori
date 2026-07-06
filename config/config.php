@@ -44,4 +44,11 @@ return [
     'inventory' => [
         'allow_negative_stock' => Env::bool('ALLOW_NEGATIVE_STOCK', false),
     ],
+    // Giornale dei Lavori weather auto-fill via Open-Meteo (no API key needed).
+    // Disabled in the test suite so daily-log creation never hits the network.
+    'weather' => [
+        'enabled'  => Env::bool('WEATHER_ENABLED', true),
+        'endpoint' => Env::get('WEATHER_ENDPOINT', 'https://api.open-meteo.com/v1/forecast'),
+        'timeout'  => (int) Env::get('WEATHER_TIMEOUT', '5'),
+    ],
 ];

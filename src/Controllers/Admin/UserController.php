@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AuthController;
 use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
+use App\Models\SubcontractorModel;
 use App\Models\UserModel;
 use App\Support\Auth;
 use App\Support\Lang;
@@ -20,7 +21,7 @@ use App\Support\View;
  */
 final class UserController
 {
-    private const ROLES = ['admin', 'worker', 'client'];
+    private const ROLES = ['admin', 'worker', 'client', 'subcontractor'];
 
     public function index(Request $request): void
     {
@@ -33,12 +34,13 @@ final class UserController
         }
 
         Response::html(View::render('admin/users/index', [
-            'title'   => Lang::get('admin.users.title'),
-            'users'   => (new UserModel())->all($search, $role),
-            'clients' => (new ClientModel())->all(),
-            'search'  => $search,
-            'role'    => $role,
-            'roles'   => self::ROLES,
+            'title'          => Lang::get('admin.users.title'),
+            'users'          => (new UserModel())->all($search, $role),
+            'clients'        => (new ClientModel())->all(),
+            'subcontractors' => (new SubcontractorModel())->listActive(),
+            'search'         => $search,
+            'role'           => $role,
+            'roles'          => self::ROLES,
         ], 'layout'));
     }
 
@@ -155,11 +157,23 @@ final class UserController
             $clientId = 0;
         }
 
+        // subcontractor_id is required for subcontractor logins, forbidden otherwise.
+        $subcontractorId = (int) $request->input('subcontractor_id', 0);
+        if ($role === 'subcontractor') {
+            if ($subcontractorId <= 0 || (new SubcontractorModel())->find($subcontractorId) === null) {
+                Response::fail(Lang::get('admin.users.subcontractor_required'), 422);
+                return null;
+            }
+        } else {
+            $subcontractorId = 0;
+        }
+
         return [
-            'name'      => $name,
-            'email'     => $email,
-            'role'      => $role,
-            'client_id' => $clientId > 0 ? $clientId : null,
+            'name'             => $name,
+            'email'            => $email,
+            'role'             => $role,
+            'client_id'        => $clientId > 0 ? $clientId : null,
+            'subcontractor_id' => $subcontractorId > 0 ? $subcontractorId : null,
         ];
     }
 }

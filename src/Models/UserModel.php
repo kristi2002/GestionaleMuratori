@@ -37,10 +37,12 @@ final class UserModel
      */
     public function all(string $search = '', string $role = ''): array
     {
-        $sql    = 'SELECT u.id, u.name, u.email, u.role, u.client_id, u.is_active, u.created_at,
-                          c.name AS client_name
+        $sql    = 'SELECT u.id, u.name, u.email, u.role, u.client_id, u.subcontractor_id,
+                          u.is_active, u.created_at,
+                          c.name AS client_name, s.name AS subcontractor_name
                    FROM users u
                    LEFT JOIN clients c ON c.id = u.client_id
+                   LEFT JOIN subcontractors s ON s.id = u.subcontractor_id
                    WHERE 1 = 1';
         $params = [];
 
@@ -77,15 +79,16 @@ final class UserModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO users (name, email, password_hash, role, client_id, is_active)
-             VALUES (:name, :email, :hash, :role, :client_id, 1)'
+            'INSERT INTO users (name, email, password_hash, role, client_id, subcontractor_id, is_active)
+             VALUES (:name, :email, :hash, :role, :client_id, :subcontractor_id, 1)'
         );
         $stmt->execute([
-            ':name'      => $data['name'],
-            ':email'     => $data['email'],
-            ':hash'      => $data['password_hash'],
-            ':role'      => $data['role'],
-            ':client_id' => $data['client_id'],
+            ':name'             => $data['name'],
+            ':email'            => $data['email'],
+            ':hash'             => $data['password_hash'],
+            ':role'             => $data['role'],
+            ':client_id'        => $data['client_id'],
+            ':subcontractor_id' => $data['subcontractor_id'] ?? null,
         ]);
         return (int) Database::pdo()->lastInsertId();
     }
@@ -94,15 +97,17 @@ final class UserModel
     public function update(int $id, array $data): bool
     {
         $stmt = Database::pdo()->prepare(
-            'UPDATE users SET name = :name, email = :email, role = :role, client_id = :client_id
+            'UPDATE users SET name = :name, email = :email, role = :role,
+                client_id = :client_id, subcontractor_id = :subcontractor_id
              WHERE id = :id'
         );
         return $stmt->execute([
-            ':name'      => $data['name'],
-            ':email'     => $data['email'],
-            ':role'      => $data['role'],
-            ':client_id' => $data['client_id'],
-            ':id'        => $id,
+            ':name'             => $data['name'],
+            ':email'            => $data['email'],
+            ':role'             => $data['role'],
+            ':client_id'        => $data['client_id'],
+            ':subcontractor_id' => $data['subcontractor_id'] ?? null,
+            ':id'               => $id,
         ]);
     }
 

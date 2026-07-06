@@ -32,6 +32,7 @@ warehouse inventory and client-facing reports. Three roles, three experiences:
 | [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) | Production-readiness gap analysis (security, features, ops) |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased implementation plan toward production on Hetzner |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Hetzner deployment guide (Docker + bare-metal) |
+| [docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md) | Coolify-on-Hetzner deployment guide (Docker Compose build pack) |
 | [docs/TESTING.md](docs/TESTING.md) | Test suite and full-flow simulation instructions |
 | [CHANGELOG.md](CHANGELOG.md) | Changes per release/session |
 
@@ -143,7 +144,7 @@ items and 6 sample interventions. Password for every account: `password`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1   # throwaway MySQL 8 in Docker
-C:\xampp\php\php.exe tests\run.php                                  # 202 assertions
+C:\xampp\php\php.exe tests\run.php                                  # 398 assertions
 ```
 
 The suite runs on its own database and covers the ledger math, the state
@@ -170,10 +171,14 @@ The original 8-phase specification (see [superprompt.md](superprompt.md)) is ful
 implemented, plus the v1.1 production-hardening release: security (CSRF, rate
 limiting, sessions, headers), user management UI, admin intervention detail with
 photos/history, operations dashboard with low-stock alerts, worker task tabs, and
-Docker deployment. The **v2 foundation** then added multi-site inventory
-(per-location balances + warehouse↔cantiere transfers, a `complete()` stock-inflation
-fix) and the full v2 schema for the Italian construction feature set — see
-[docs/DOMAIN_IT.md](docs/DOMAIN_IT.md) and the v2 section of
-[docs/ROADMAP.md](docs/ROADMAP.md). A 202-assertion automated test suite backs it.
+Docker deployment. The **v2 platform** then added multi-site inventory (per-location balances +
+warehouse↔cantiere transfers), the **subcontractor portal**, all four Italian legal
+must-haves (**Badge di Cantiere** GPS attendance, **Giornale dei Lavori** with
+Open-Meteo weather auto-fill, **S.A.L.** generator with locked PDF + DL sign-off,
+**Scadenzario Sicurezza** expiry dashboard), **geolocated photos + an offline PWA**,
+and the **accountant Excel export** — deployed via Coolify on Hetzner. See
+[docs/DOMAIN_IT.md](docs/DOMAIN_IT.md), [docs/ROADMAP.md](docs/ROADMAP.md) and
+[docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md). A 398-assertion automated
+test suite backs it.
 History: [CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
 remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §6.

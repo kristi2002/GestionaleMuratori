@@ -37,6 +37,8 @@ putenv('UPLOADS_PATH=' . $UPLOADS);
 putenv('APP_DEBUG=false');
 putenv('APP_URL=http://127.0.0.1:' . $PORT);
 putenv('SESSION_SECURE=false');
+// Keep the Giornale dei Lavori weather auto-fill offline during tests (no Open-Meteo call).
+putenv('WEATHER_ENABLED=false');
 
 require $ROOT . '/src/bootstrap.php';
 

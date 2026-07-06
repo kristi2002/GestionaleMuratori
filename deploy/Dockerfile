@@ -15,8 +15,10 @@ FROM php:8.2-fpm-bookworm
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev \
+        ca-certificates \
  && docker-php-ext-configure gd --with-jpeg --with-freetype \
  && docker-php-ext-install -j"$(nproc)" gd pdo_mysql zip opcache \
+ && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 COPY deploy/php.ini /usr/local/etc/php/conf.d/zz-app.ini

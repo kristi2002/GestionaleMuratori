@@ -5,6 +5,7 @@ use App\Support\View;
 
 /** @var array<int,array<string,mixed>> $users */
 /** @var array<int,array<string,mixed>> $clients */
+/** @var array<int,array<string,mixed>> $subcontractors */
 /** @var string $search */
 /** @var string $role */
 /** @var string[] $roles */
@@ -62,7 +63,7 @@ $t = static fn (string $key): string => Lang::get($key);
                     <td><?= $e($u['name']) ?></td>
                     <td><?= $e($u['email']) ?></td>
                     <td><span class="badge text-bg-light border"><?= $e(Lang::label('roles', $u['role'])) ?></span></td>
-                    <td><?= $e($u['client_name'] ?? '—') ?></td>
+                    <td><?= $e($u['client_name'] ?? $u['subcontractor_name'] ?? '—') ?></td>
                     <td><?= ((int) $u['is_active']) === 1 ? $e($t('common.yes')) : $e($t('common.no')) ?></td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
@@ -118,6 +119,15 @@ $t = static fn (string $key): string => Lang::get($key);
                                 <option value=""><?= $e($t('admin.users.client_placeholder')) ?></option>
                                 <?php foreach ($clients as $c): ?>
                                     <option value="<?= $e((string) $c['id']) ?>"><?= $e($c['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3 js-user-subcontractor-field d-none">
+                            <label class="form-label"><?= $e($t('admin.users.subcontractor')) ?></label>
+                            <select class="form-select" name="subcontractor_id">
+                                <option value=""><?= $e($t('admin.users.subcontractor_placeholder')) ?></option>
+                                <?php foreach ($subcontractors as $s): ?>
+                                    <option value="<?= $e((string) $s['id']) ?>"><?= $e($s['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

@@ -18,14 +18,23 @@ use App\Controllers\Admin\ClientController;
 use App\Controllers\Admin\InterventionController;
 use App\Controllers\Admin\PhotoController as AdminPhotoController;
 use App\Controllers\Admin\ProjectController;
+use App\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Controllers\Admin\ComplianceController;
+use App\Controllers\Admin\DailyLogController;
+use App\Controllers\Admin\ExportController;
 use App\Controllers\Admin\ReportController as AdminReportController;
+use App\Controllers\Admin\SalController;
+use App\Controllers\Admin\SubcontractorController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\WarehouseController;
 use App\Controllers\AuthController;
 use App\Controllers\Client\PhotoController as ClientPhotoController;
 use App\Controllers\Client\ProjectController as ClientProjectController;
 use App\Controllers\Client\ReportController as ClientReportController;
+use App\Controllers\AttendanceController;
 use App\Controllers\DashboardController;
+use App\Controllers\Sub\PhotoController as SubPhotoController;
+use App\Controllers\Sub\ProjectController as SubProjectController;
 use App\Controllers\Worker\PhotoController;
 use App\Controllers\Worker\TaskController;
 use App\Http\Router;
@@ -124,6 +133,40 @@ $router->post('/admin/users',             [UserController::class, 'store']);
 $router->post('/admin/users/{id}',        [UserController::class, 'update']);
 $router->post('/admin/users/{id}/toggle', [UserController::class, 'toggleActive']);
 
+$router->get('/admin/attendance',                    [AdminAttendanceController::class, 'index']);
+
+$router->get('/admin/daily-logs',                    [DailyLogController::class, 'index']);
+$router->post('/admin/daily-logs',                   [DailyLogController::class, 'store']);
+$router->get('/admin/daily-logs/{id}',               [DailyLogController::class, 'show']);
+$router->post('/admin/daily-logs/{id}',              [DailyLogController::class, 'update']);
+$router->post('/admin/daily-logs/{id}/close',        [DailyLogController::class, 'close']);
+$router->post('/admin/daily-logs/{id}/equipment',    [DailyLogController::class, 'equipment']);
+$router->post('/admin/equipment',                    [DailyLogController::class, 'storeEquipment']);
+
+$router->get('/admin/sal',                           [SalController::class, 'index']);
+$router->post('/admin/sal',                          [SalController::class, 'store']);
+$router->get('/admin/sal/{id}',                      [SalController::class, 'show']);
+$router->post('/admin/sal/{id}',                     [SalController::class, 'update']);
+$router->post('/admin/sal/{id}/lines',               [SalController::class, 'addLine']);
+$router->post('/admin/sal/{id}/lines/{lineId}/delete', [SalController::class, 'deleteLine']);
+$router->post('/admin/sal/{id}/issue',               [SalController::class, 'issue']);
+$router->post('/admin/sal/{id}/sign',                [SalController::class, 'sign']);
+$router->get('/admin/sal/{id}/pdf',                  [SalController::class, 'pdf']);
+
+$router->get('/admin/compliance',                    [ComplianceController::class, 'index']);
+$router->post('/admin/compliance',                   [ComplianceController::class, 'store']);
+$router->post('/admin/compliance/{id}',              [ComplianceController::class, 'update']);
+$router->post('/admin/compliance/{id}/delete',       [ComplianceController::class, 'destroy']);
+
+$router->get('/admin/exports',                       [ExportController::class, 'index']);
+$router->get('/admin/exports/accountant',            [ExportController::class, 'accountant']);
+
+$router->get('/admin/subcontractors',                [SubcontractorController::class, 'index']);
+$router->post('/admin/subcontractors',               [SubcontractorController::class, 'store']);
+$router->post('/admin/subcontractors/{id}',          [SubcontractorController::class, 'update']);
+$router->post('/admin/subcontractors/{id}/toggle',   [SubcontractorController::class, 'toggleActive']);
+$router->post('/admin/subcontractors/{id}/projects', [SubcontractorController::class, 'assignProjects']);
+
 $router->get('/admin/photos/{id}',        [AdminPhotoController::class, 'show']);
 $router->get('/admin/photos/{id}/thumb',  [AdminPhotoController::class, 'thumb']);
 
@@ -139,6 +182,15 @@ $router->get('/worker/interventions/{id}/signature',       [TaskController::clas
 $router->post('/worker/interventions/{id}/photos',         [PhotoController::class, 'upload']);
 $router->get('/worker/photos/{id}',                        [PhotoController::class, 'show']);
 $router->get('/worker/photos/{id}/thumb',                  [PhotoController::class, 'thumb']);
+
+$router->get('/attendance',       [AttendanceController::class, 'page']);
+$router->post('/attendance/in',   [AttendanceController::class, 'clockIn']);
+$router->post('/attendance/out',  [AttendanceController::class, 'clockOut']);
+
+$router->get('/sub',                        [SubProjectController::class, 'index']);
+$router->get('/sub/projects/{id}',           [SubProjectController::class, 'show']);
+$router->get('/sub/photos/{id}',             [SubPhotoController::class, 'show']);
+$router->get('/sub/photos/{id}/thumb',       [SubPhotoController::class, 'thumb']);
 
 $router->get('/client',                          [ClientProjectController::class, 'index']);
 $router->get('/client/projects/{id}',             [ClientProjectController::class, 'show']);

@@ -28,11 +28,12 @@ final class Auth
     {
         Session::regenerate();
         Session::set('user', [
-            'id'        => (int) $user['id'],
-            'name'      => (string) $user['name'],
-            'email'     => (string) $user['email'],
-            'role'      => (string) $user['role'],
-            'client_id' => $user['client_id'] !== null ? (int) $user['client_id'] : null,
+            'id'               => (int) $user['id'],
+            'name'             => (string) $user['name'],
+            'email'            => (string) $user['email'],
+            'role'             => (string) $user['role'],
+            'client_id'        => $user['client_id'] !== null ? (int) $user['client_id'] : null,
+            'subcontractor_id' => ($user['subcontractor_id'] ?? null) !== null ? (int) $user['subcontractor_id'] : null,
         ]);
     }
 
@@ -66,14 +67,20 @@ final class Auth
         return self::user()['client_id'] ?? null;
     }
 
+    public static function subcontractorId(): ?int
+    {
+        return self::user()['subcontractor_id'] ?? null;
+    }
+
     /** Absolute path of the landing page for a role. */
     public static function homeFor(?string $role): string
     {
         $path = match ($role) {
-            'admin'  => '/admin',
-            'worker' => '/worker',
-            'client' => '/client',
-            default  => '/login',
+            'admin'         => '/admin',
+            'worker'        => '/worker',
+            'client'        => '/client',
+            'subcontractor' => '/sub',
+            default         => '/login',
         };
         return Url::to($path);
     }

@@ -3,8 +3,37 @@
 > **v1 status: phases A–E delivered on 2026-07-02** (174 automated assertions
 > green; Docker stack build-verified). See [CHANGELOG.md](../CHANGELOG.md).
 >
-> **v2 status: foundation (Phases 0–2) delivered** — see the v2 section below.
-> Phases 3–8 are planned and follow in later PRs.
+> **v2 status: Phases 0–8 delivered** (398 automated assertions green) — see the v2
+> section below. The full Italian construction platform (subcontractor portal, all four
+> legal must-haves, geo-photos + offline PWA, accountant export, Coolify deploy) is live.
+
+---
+
+# Post-v2 — "Cantiere" UI redesign rollout (in progress)
+
+A ground-up visual redesign layered on the existing Bootstrap 5.3 stack (no build
+step, CSP `'self'`, self-hosted assets): concrete-grey neutrals + hi-vis safety-amber
+accent + blueprint steel, light + dark themes, persistent admin sidebar, self-hosted
+Inter + inline SVG icon sprite. See the "Cantiere" entries in [CHANGELOG.md](../CHANGELOG.md).
+
+**Done & verified in-browser (light + dark):** app shell (anthracite topbar + brand
+chip + theme toggle + role-aware admin sidebar), login, dashboard (KPI tiles + real
+14-day trend sparklines), warehouse ledger detail, and all four Phase-4 legal screens
+(Badge di Cantiere register, Giornale dei Lavori, S.A.L. list+detail, Scadenzario).
+
+**Remaining — bring every page to the same bar** (semantic status pills, severity
+stripes where relevant, tabular-mono figures/dates, dark-mode spot-check):
+- [ ] Admin lists/details: clients, projects, **interventions (list + detail)**,
+      warehouse (list), subcontractors, users, exports.
+- [ ] Worker app: today/task tabs, intervention detail + **completion flow** + signature.
+- [ ] Client portal: index, project show, reports.
+- [ ] Subcontractor portal: index, project show.
+- [ ] Cross-cutting: modals/forms, `errors/403|404|500`, and any remaining
+      `card-header bg-white` / stock-blue Bootstrap components.
+- [ ] Reminder: bump `public/sw.js` `VERSION` whenever these asset changes ship
+      (cache-first shell serves stale CSS/JS otherwise).
+
+---
 
 Phases are ordered by risk: security first, then the features that make the
 platform operable by the client, then infrastructure, then the proof (tests).
@@ -46,33 +75,33 @@ the `complete()` phantom-release bug (release only for `is_reserved=1`). Test-ga
 `tests/cases/04_multisite_stock.php` + a transfer-race in `11_concurrency.php`
 (202 assertions green).
 
-## Phase 3 — Subcontractor role & portal (planned)
+## Phase 3 — Subcontractor role & portal ✅
 Register `subcontractor` in `UserController::ROLES` + `Auth::homeFor()` (→ `/sub`);
 admin subcontractor CRUD + project assignment; `Sub\*` controllers +
 `SubcontractorProjectGuard` (assigned projects only, 404 on not-mine). No inventory/cost
 exposure.
 
-## Phase 4 — Legal compliance features (planned)
+## Phase 4 — Legal compliance features ✅
 4a Badge di Cantiere (attendance + geolocation) · 4b Giornale dei Lavori (daily log,
 weather auto-fill via `WeatherService`/Open-Meteo, closed-day immutability) · 4c S.A.L.
 generator (locked PDF via a `SalPdfBuilder`, draft→issued→signed) · 4d Scadenzario
 Sicurezza (compliance CRUD + ≤30-day expiry dashboard widget).
 
-## Phase 5 — Field UX: geo-photos + offline PWA (planned)
+## Phase 5 — Field UX: geo-photos + offline PWA ✅
 Capture `photos.lat/lng/captured_at`; `manifest.json` + `sw.js` (cache-first shell);
 generalise the `localStorage` photo queue into a generic offline queue covering daily
 log + attendance writes.
 
-## Phase 6 — Reporting & exports (planned)
+## Phase 6 — Reporting & exports ✅
 Accountant Excel export (`AccountantExportBuilder`: material cost × `unit_cost`, worker
 hours from attendance); route the remaining hardcoded-Italian report labels through
 `lang/it.php`.
 
-## Phase 7 — Deployment (Coolify on Hetzner) (planned)
+## Phase 7 — Deployment (Coolify on Hetzner) ✅
 Harden `docker-compose.coolify.yml` (persistent volumes, env/secrets, outbound HTTPS for
 weather); new `DEPLOYMENT_COOLIFY.md`.
 
-## Phase 8 — Full test & simulation pass (planned)
+## Phase 8 — Full test & simulation pass ✅
 Extend the suite across all new features; fix→retest until green; live-drive the flows.
 
 ---

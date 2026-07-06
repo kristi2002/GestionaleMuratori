@@ -39,6 +39,8 @@ services:
       DB_PASS: ${DB_PASS:?set DB_PASS in .env}
       SESSION_SECURE: ${SESSION_SECURE:-true}
       ALLOW_NEGATIVE_STOCK: ${ALLOW_NEGATIVE_STOCK:-false}
+      WEATHER_ENABLED: ${WEATHER_ENABLED:-true}
+      WEATHER_TIMEOUT: ${WEATHER_TIMEOUT:-5}
     volumes:
       - uploads:/var/www/app/storage/uploads
     depends_on:

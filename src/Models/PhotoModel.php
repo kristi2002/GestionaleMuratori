@@ -10,8 +10,10 @@ final class PhotoModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO photos (intervention_id, project_id, type, file_path, thumb_path, uploaded_by)
-             VALUES (:intervention_id, :project_id, :type, :file_path, :thumb_path, :uploaded_by)'
+            'INSERT INTO photos
+                (intervention_id, project_id, type, file_path, thumb_path, uploaded_by, lat, lng, captured_at)
+             VALUES
+                (:intervention_id, :project_id, :type, :file_path, :thumb_path, :uploaded_by, :lat, :lng, :captured_at)'
         );
         $stmt->execute([
             ':intervention_id' => $data['intervention_id'],
@@ -20,6 +22,9 @@ final class PhotoModel
             ':file_path'       => $data['file_path'],
             ':thumb_path'      => $data['thumb_path'],
             ':uploaded_by'     => $data['uploaded_by'],
+            ':lat'             => $data['lat'] ?? null,
+            ':lng'             => $data['lng'] ?? null,
+            ':captured_at'     => $data['captured_at'] ?? null,
         ]);
         return (int) Database::pdo()->lastInsertId();
     }

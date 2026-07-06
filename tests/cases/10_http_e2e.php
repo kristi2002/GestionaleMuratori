@@ -210,9 +210,17 @@ T::equals(422, $r['status'], 'completion blocked without after photo');
 
 $png = $makePng();
 $r = $worker3->request('POST', "/worker/interventions/{$e2eIvId}/photos", [
-    'multipart' => ['photo' => new CURLFile($png, 'image/png', 'photo.png'), 'type' => 'before'],
+    'multipart' => [
+        'photo' => new CURLFile($png, 'image/png', 'photo.png'), 'type' => 'before',
+        'lat' => '43.3050000', 'lng' => '13.4530000', 'captured_at' => '1751800000000',
+    ],
 ]);
 T::equals(200, $r['status'], 'before photo uploaded');
+// Geo-photo evidence (v2 Phase 5): coordinates + capture time are persisted.
+$beforePhotoId = (int) ($r['json']['data']['id'] ?? 0);
+$geoRow = $pdo->query("SELECT lat, lng, captured_at FROM photos WHERE id = {$beforePhotoId}")->fetch();
+T::ok($geoRow['lat'] !== null && $geoRow['lng'] !== null, 'photo geotag persisted (lat/lng)');
+T::ok($geoRow['captured_at'] !== null, 'photo capture time persisted');
 $r = $worker3->request('POST', "/worker/interventions/{$e2eIvId}/photos", [
     'multipart' => ['photo' => new CURLFile($png, 'image/png', 'photo.png'), 'type' => 'after'],
 ]);
