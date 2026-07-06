@@ -86,15 +86,20 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                     'id' => $d['id'], 'subject_type' => $d['subject_type'], 'subject_id' => $d['subject_id'],
                     'doc_type' => $d['doc_type'], 'reference' => $d['reference'], 'issue_date' => $d['issue_date'],
                     'expiry_date' => $d['expiry_date'], 'credits' => $d['credits'], 'notes' => $d['notes'],
-                ]; ?>
-                <tr>
+                ];
+                $sev = '';
+                if ($d['expiry_date'] !== null) {
+                    $sev = $d['expiry_date'] < $today ? 'sev-bad' : ($d['expiry_date'] <= $soon ? 'sev-warn' : '');
+                }
+                ?>
+                <tr class="<?= $e($sev) ?>">
                     <td>
                         <span class="badge text-bg-light border"><?= $e(Lang::label('compliance_subject', $d['subject_type'])) ?></span>
                         <?= $e($d['subject_name'] ?? ($d['subject_type'] === 'company' ? $t('admin.compliance.the_company') : '—')) ?>
                     </td>
                     <td><?= $e(Lang::label('compliance_doc', $d['doc_type'])) ?></td>
                     <td><?= $e($d['reference'] ?? '—') ?></td>
-                    <td class="<?= $e($expiryClass($d['expiry_date'])) ?>">
+                    <td class="mono tnum <?= $e($expiryClass($d['expiry_date'])) ?>">
                         <?= $e($d['expiry_date'] ?? '—') ?>
                         <?php if ($d['expiry_date'] !== null && $d['expiry_date'] < $today): ?>
                             <span class="badge text-bg-danger"><?= $e($t('admin.compliance.expired')) ?></span>
@@ -102,7 +107,7 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                             <span class="badge text-bg-warning"><?= $e($t('admin.compliance.expiring')) ?></span>
                         <?php endif; ?>
                     </td>
-                    <td><?= $e($d['credits'] !== null ? (string) $d['credits'] : '—') ?></td>
+                    <td class="mono tnum"><?= $e($d['credits'] !== null ? (string) $d['credits'] : '—') ?></td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
                                 data-bs-toggle="modal" data-bs-target="#compliance-modal" data-target-modal="#compliance-modal"

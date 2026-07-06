@@ -22,6 +22,11 @@ accent, blueprint-steel for links, and disciplined semantic status colours.
   glove-friendly ≥48px field buttons (the amber "Timbra Entrata").
 - Dashboard KPIs and the two alert tables reworked; card headers made theme-aware.
   New `admin.nav.*` labels in `lang/it.php`.
+- **Phase 4 legal-feature pages brought to dashboard standard** — semantic
+  status pills (S.A.L. Bozza/Emesso/Firmato; compliance Scaduto/In scadenza),
+  severity-striped Scadenzario rows, and tabular-mono dates/amounts/credits
+  across Giornale, Scadenzario, attendance register, and S.A.L. Verified in
+  Chrome, light + dark.
 - **No behavioural change** — the 398-assertion suite stays green; only the skin moved.
 
 ## 2026-07-06 — v2 platform: legal compliance, field UX, exports (Phases 3–8)

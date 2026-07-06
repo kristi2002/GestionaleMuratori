@@ -14,6 +14,8 @@ $qty = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
 
 $status  = $document['status'];
 $isDraft = $status === 'draft';
+$salPill = static fn (string $s): string
+    => ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-info', 'signed' => 'text-bg-success'][$s] ?? 'text-bg-secondary';
 $backUrl = Url::to('/admin/sal?project_id=' . $document['project_id']);
 ?>
 <a href="<?= $e($backUrl) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('admin.sal.back')) ?></a>
@@ -25,9 +27,9 @@ $backUrl = Url::to('/admin/sal?project_id=' . $document['project_id']);
                 <h1 class="h5 mb-1"><?= $e($t('admin.sal.title')) ?> n. <?= $e((string) $document['number']) ?></h1>
                 <p class="small text-muted mb-0"><?= $e($document['project_name']) ?> — <?= $e($document['client_name']) ?></p>
             </div>
-            <span class="badge text-bg-light border"><?= $e(Lang::label('sal_status', $status)) ?></span>
+            <span class="badge <?= $e($salPill($status)) ?>"><?= $e(Lang::label('sal_status', $status)) ?></span>
         </div>
-        <p class="h5 mt-2 mb-0"><?= $e($t('admin.sal.amount')) ?>: <strong><?= $e($money($document['amount'])) ?></strong></p>
+        <p class="h5 mt-2 mb-0"><?= $e($t('admin.sal.amount')) ?>: <strong class="mono tnum"><?= $e($money($document['amount'])) ?></strong></p>
     </div>
 </div>
 
@@ -81,10 +83,10 @@ $backUrl = Url::to('/admin/sal?project_id=' . $document['project_id']);
             <?php foreach ($lines as $l): ?>
                 <tr>
                     <td><?= $e($l['description']) ?></td>
-                    <td class="text-end"><?= $e($qty($l['qty'])) ?></td>
-                    <td><?= $e($l['unit']) ?></td>
-                    <td class="text-end"><?= $e($money($l['unit_price'])) ?></td>
-                    <td class="text-end"><?= $e($money($l['amount'])) ?></td>
+                    <td class="text-end mono tnum"><?= $e($qty($l['qty'])) ?></td>
+                    <td class="mono"><?= $e($l['unit']) ?></td>
+                    <td class="text-end mono tnum"><?= $e($money($l['unit_price'])) ?></td>
+                    <td class="text-end mono tnum"><?= $e($money($l['amount'])) ?></td>
                     <?php if ($isDraft): ?>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-danger js-crud-delete"

@@ -63,10 +63,10 @@ $coord = static function ($lat, $lng) use ($e): string {
             <?php endif; ?>
             <?php foreach ($attendance as $a): ?>
                 <tr>
-                    <td><?= $e($a['person_name']) ?></td>
+                    <td class="fw-medium"><?= $e($a['person_name']) ?></td>
                     <td><?= $e($a['subcontractor_name'] ?? $t('admin.attendance.internal')) ?></td>
-                    <td><?= $e($hm($a['entry_at'])) ?></td>
-                    <td><?= $a['exit_at'] !== null ? $e($hm($a['exit_at'])) : '<span class="badge text-bg-success">' . $e($t('attendance.on_site')) . '</span>' ?></td>
+                    <td class="mono tnum"><?= $e($hm($a['entry_at'])) ?></td>
+                    <td class="mono tnum"><?= $a['exit_at'] !== null ? $e($hm($a['exit_at'])) : '<span class="badge text-bg-success">' . $e($t('attendance.on_site')) . '</span>' ?></td>
                     <td>
                         <?= $coord($a['entry_lat'], $a['entry_lng']) ?>
                         <?= $coord($a['exit_lat'], $a['exit_lng']) ?>

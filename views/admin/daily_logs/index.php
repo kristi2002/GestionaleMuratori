@@ -53,7 +53,7 @@ $t = static fn (string $key): string => Lang::get($key);
             <?php endif; ?>
             <?php foreach ($logs as $log): ?>
                 <tr>
-                    <td><?= $e($log['log_date']) ?></td>
+                    <td class="mono tnum fw-bold"><?= $e($log['log_date']) ?></td>
                     <td>
                         <?= $e($log['weather_text'] ?? '—') ?>
                         <?php if ($log['temp_min'] !== null || $log['temp_max'] !== null): ?>

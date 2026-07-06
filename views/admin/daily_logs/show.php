@@ -20,7 +20,7 @@ $backUrl = Url::to('/admin/daily-logs?project_id=' . $log['project_id']);
         <div class="d-flex justify-content-between align-items-start">
             <div>
                 <h1 class="h5 mb-1"><?= $e($log['project_name']) ?></h1>
-                <p class="small text-muted mb-0"><?= $e($t('admin.daily_logs.date')) ?>: <?= $e($log['log_date']) ?></p>
+                <p class="small text-muted mb-0"><?= $e($t('admin.daily_logs.date')) ?>: <span class="mono tnum"><?= $e($log['log_date']) ?></span></p>
             </div>
             <?php if ($closed): ?>
                 <span class="badge text-bg-secondary"><?= $e($t('admin.daily_logs.closed_badge')) ?></span>

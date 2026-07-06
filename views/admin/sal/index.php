@@ -10,6 +10,8 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => number_format((float) $v, 2, ',', '.') . ' €';
+$salPill = static fn (string $s): string
+    => ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-info', 'signed' => 'text-bg-success'][$s] ?? 'text-bg-secondary';
 ?>
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
@@ -53,10 +55,10 @@ $money = static fn ($v): string => number_format((float) $v, 2, ',', '.') . ' �
             <?php endif; ?>
             <?php foreach ($documents as $d): ?>
                 <tr>
-                    <td>#<?= $e((string) $d['number']) ?></td>
-                    <td><?= $e($d['period_from'] ?? '—') ?><?= $d['period_to'] ? ' — ' . $e($d['period_to']) : '' ?></td>
-                    <td><?= $e($money($d['amount'])) ?></td>
-                    <td><span class="badge text-bg-light border"><?= $e(Lang::label('sal_status', $d['status'])) ?></span></td>
+                    <td class="mono fw-bold">#<?= $e((string) $d['number']) ?></td>
+                    <td class="mono tnum"><?= $e($d['period_from'] ?? '—') ?><?= $d['period_to'] ? ' — ' . $e($d['period_to']) : '' ?></td>
+                    <td class="mono tnum"><?= $e($money($d['amount'])) ?></td>
+                    <td><span class="badge <?= $e($salPill($d['status'])) ?>"><?= $e(Lang::label('sal_status', $d['status'])) ?></span></td>
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/sal/' . $d['id'])) ?>"><?= $e($t('admin.sal.open')) ?></a>
                     </td>

@@ -215,6 +215,8 @@ a.card:hover { border-color:var(--gm-ink-2); text-decoration:none; }
 .text-bg-success { background:color-mix(in srgb, var(--gm-ok) 16%, transparent)!important; color:var(--gm-ok)!important; }
 .text-bg-danger  { background:color-mix(in srgb, var(--gm-bad) 16%, transparent)!important; color:var(--gm-bad)!important; }
 .text-bg-warning { background:color-mix(in srgb, var(--gm-warn) 18%, transparent)!important; color:var(--gm-warn)!important; }
+.text-bg-info    { background:color-mix(in srgb, var(--gm-steel) 16%, transparent)!important; color:var(--gm-steel)!important; }
+.text-bg-secondary { background:var(--gm-surface-2)!important; color:var(--gm-ink-2)!important; }
 .text-bg-light   { background:var(--gm-surface-2)!important; color:var(--gm-ink-2)!important; }
 .badge.border { border-color:var(--gm-line)!important; }
 
