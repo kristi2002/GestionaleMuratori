@@ -34,6 +34,62 @@
         get: function (path, data) { return this.request('GET', path, data); }
     };
 
+    // --- KPI sparklines ------------------------------------------------------
+    // Draws every <canvas data-spark="n,n,..." data-c="ok|bad|warn|steel|amber">
+    // with an area fill, line, and an emphasised endpoint. Colours are read from
+    // the live theme tokens, so a redraw after the theme toggle recolours cleanly.
+    function sparkColor(key) {
+        var map = { ok: '--gm-ok', bad: '--gm-bad', warn: '--gm-warn', steel: '--gm-steel', amber: '--gm-amber' };
+        var cs = getComputedStyle(document.documentElement);
+        return (cs.getPropertyValue(map[key] || '--gm-steel').trim()) || '#2C6E9B';
+    }
+    function drawSparks() {
+        var list = document.querySelectorAll('canvas[data-spark]');
+        for (var k = 0; k < list.length; k++) {
+            var cv = list[k];
+            var pts = (cv.getAttribute('data-spark') || '').split(',').map(Number)
+                .filter(function (n) { return !isNaN(n); });
+            if (pts.length < 2) { continue; }
+            var c = sparkColor(cv.getAttribute('data-c'));
+            var dpr = window.devicePixelRatio || 1;
+            var w = cv.clientWidth || 200;
+            var h = cv.clientHeight || 34;
+            cv.width = w * dpr;
+            cv.height = h * dpr;
+            var ctx = cv.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, w, h);
+            var min = Math.min.apply(null, pts);
+            var max = Math.max.apply(null, pts);
+            var rng = (max - min) || 1;
+            var pad = 3;
+            var X = function (i) { return pad + i * (w - pad * 2) / (pts.length - 1); };
+            var Y = function (v) { return pad + (1 - (v - min) / rng) * (h - pad * 2); };
+            ctx.beginPath();
+            ctx.moveTo(X(0), h);
+            for (var i = 0; i < pts.length; i++) { ctx.lineTo(X(i), Y(pts[i])); }
+            ctx.lineTo(X(pts.length - 1), h);
+            ctx.closePath();
+            ctx.fillStyle = c + '22';
+            ctx.fill();
+            ctx.beginPath();
+            for (var j = 0; j < pts.length; j++) {
+                if (j) { ctx.lineTo(X(j), Y(pts[j])); } else { ctx.moveTo(X(j), Y(pts[j])); }
+            }
+            ctx.strokeStyle = c;
+            ctx.lineWidth = 2;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(X(pts.length - 1), Y(pts[pts.length - 1]), 2.6, 0, 7);
+            ctx.fillStyle = c;
+            ctx.fill();
+        }
+    }
+    window.GM_drawSparks = drawSparks;
+    $(function () { drawSparks(); });
+    $(window).on('resize', drawSparks);
+
     // --- Logout (POST + CSRF; the navbar button replaces the old GET link) ---
     $(function () {
         $(document).on('click', '.js-logout', function () {
@@ -53,6 +109,7 @@
             var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
             root.setAttribute('data-bs-theme', next);
             document.cookie = 'gm_theme=' + next + ';path=/;max-age=31536000;samesite=lax';
+            drawSparks(); // token colours changed — recolour the sparklines
         });
 
         $(document).on('click', '.js-sidebar-toggle', function () {

@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ComplianceDocumentModel;
 use App\Models\InterventionModel;
 use App\Models\ProjectModel;
+use App\Models\SiteAttendanceModel;
 use App\Models\WarehouseItemModel;
 use App\Support\Auth;
 use App\Support\Database;
@@ -38,8 +39,26 @@ final class DashboardController
     {
         AuthGuard::require($request, ['admin']);
 
-        $today         = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $todayDt       = new \DateTimeImmutable('today');
+        $today         = $todayDt->format('Y-m-d');
         $interventions = new InterventionModel();
+
+        // 14-day trend window, zero-filled so a quiet day reads as 0, not a gap.
+        $days  = 14;
+        $start = $todayDt->modify('-' . ($days - 1) . ' days');
+        $from  = $start->format('Y-m-d');
+        $dates = [];
+        for ($i = 0; $i < $days; $i++) {
+            $dates[] = $start->modify('+' . $i . ' days')->format('Y-m-d');
+        }
+        $fill = static fn (array $counts): array
+            => array_map(static fn (string $d): int => $counts[$d] ?? 0, $dates);
+
+        $trends = [
+            'scheduled' => $fill($interventions->dailyCounts('scheduled_date', $from, $today)),
+            'completed' => $fill($interventions->dailyCounts('completed_at', $from, $today)),
+            'onsite'    => $fill((new SiteAttendanceModel())->dailyClockIns($from, $today)),
+        ];
 
         Response::html(View::render('admin/dashboard', [
             'title'          => Lang::get('admin.dashboard.title'),
@@ -48,6 +67,8 @@ final class DashboardController
             'todayByStatus'  => $interventions->countsByStatusForDate($today),
             'lowStock'       => (new WarehouseItemModel())->lowStock(),
             'expiringDocs'   => (new ComplianceDocumentModel())->expiringSoon(30),
+            'trends'         => $trends,
+            'trendDays'      => $days,
             'today'          => $today,
         ], 'layout'));
     }

@@ -105,6 +105,27 @@ final class SiteAttendanceModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Per-day clock-in counts over a date window (by DATE(entry_at)), for the
+     * dashboard "presenze" trend sparkline.
+     *
+     * @return array<string,int> 'Y-m-d' => count (only non-zero days present)
+     */
+    public function dailyClockIns(string $from, string $to): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT DATE(entry_at) AS d, COUNT(*) AS n FROM site_attendance
+             WHERE DATE(entry_at) BETWEEN ? AND ? GROUP BY d'
+        );
+        $stmt->execute([$from, $to]);
+
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['d']] = (int) $row['n'];
+        }
+        return $out;
+    }
+
     /** Distinct workers currently on site for a project (admin "who's here now"). */
     public function countPresent(int $projectId): int
     {

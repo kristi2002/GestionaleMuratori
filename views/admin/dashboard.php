@@ -51,6 +51,33 @@ $kpis = [
     <?php endforeach; ?>
 </div>
 
+<?php
+$trends = $trends ?? [];
+$trendCards = [
+    ['admin.dashboard.trend_scheduled', $trends['scheduled'] ?? [], 'steel'],
+    ['admin.dashboard.trend_completed', $trends['completed'] ?? [], 'ok'],
+    ['admin.dashboard.trend_onsite', $trends['onsite'] ?? [], 'amber'],
+];
+?>
+<h2 class="h6 text-muted mt-4 mb-2"><?= $e($t('admin.dashboard.trend_title')) ?></h2>
+<div class="row g-3">
+    <?php foreach ($trendCards as [$labelKey, $series, $color]): ?>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-baseline gap-2">
+                        <span class="gm-eyebrow"><?= $e($t($labelKey)) ?></span>
+                        <span class="tnum fw-bold fs-5"><?= $e((string) array_sum($series)) ?></span>
+                    </div>
+                    <canvas class="gm-spark mt-2" height="34"
+                            data-spark="<?= $e(implode(',', array_map('strval', $series))) ?>"
+                            data-c="<?= $e($color) ?>"></canvas>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+</div>
+
 <?php if ($expiringDocs !== []): ?>
     <div class="card mt-3 border-danger">
         <div class="card-header text-danger"><?= $e($t('admin.dashboard.expiring_title')) ?></div>

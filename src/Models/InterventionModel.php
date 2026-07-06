@@ -216,6 +216,33 @@ final class InterventionModel
         return $counts;
     }
 
+    /**
+     * Per-day intervention counts over a date window, for the dashboard trend
+     * sparklines. $column is whitelisted to avoid injection: 'scheduled_date'
+     * counts by planned day; 'completed_at' counts real completions per day.
+     *
+     * @return array<string,int> 'Y-m-d' => count (only non-zero days present)
+     */
+    public function dailyCounts(string $column, string $from, string $to): array
+    {
+        if ($column === 'completed_at') {
+            $sql = 'SELECT DATE(completed_at) AS d, COUNT(*) AS n FROM interventions
+                    WHERE completed_at IS NOT NULL AND DATE(completed_at) BETWEEN ? AND ?
+                    GROUP BY d';
+        } else {
+            $sql = 'SELECT scheduled_date AS d, COUNT(*) AS n FROM interventions
+                    WHERE scheduled_date BETWEEN ? AND ? GROUP BY d';
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute([$from, $to]);
+
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['d']] = (int) $row['n'];
+        }
+        return $out;
+    }
+
     /** Full transition audit for the admin detail page, oldest first. */
     public function statusHistory(int $id): array
     {

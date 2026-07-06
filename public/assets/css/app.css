@@ -263,6 +263,24 @@ tr.sev-warn > td:first-child { box-shadow:inset 3px 0 0 var(--gm-warn); }
 /* Sparkline canvas (ready for when we track history) */
 canvas.gm-spark { display:block; width:100%; height:34px; }
 
+/* Bootstrap bakes some component colours from $primary as literal hex at build
+   time, so overriding --bs-primary at runtime misses them. Re-point the ones we
+   actually use to the amber accent (checkboxes/switches, pills, list/dropdown
+   active states) so nothing renders in stock Bootstrap blue. */
+.nav-pills { --bs-nav-pills-link-active-bg:var(--gm-amber); }
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link { color:var(--gm-on-amber); }
+.nav-pills .nav-link { color:var(--gm-steel); }
+.form-check-input:checked { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); }
+.form-check-input:focus { border-color:var(--gm-amber);
+  box-shadow:0 0 0 .2rem color-mix(in srgb, var(--gm-amber) 28%, transparent); }
+.form-switch .form-check-input:checked { background-color:var(--gm-amber); }
+.list-group-item.active { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); color:var(--gm-on-amber); }
+.dropdown-item.active, .dropdown-item:active { background-color:var(--gm-amber); color:var(--gm-on-amber); }
+.page-link { color:var(--gm-steel); }
+.page-item.active .page-link { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); color:var(--gm-on-amber); }
+.progress { --bs-progress-bar-bg:var(--gm-amber); }
+.spinner-border, .spinner-grow { color:var(--gm-amber); }
+
 /* Icon buttons in the topbar + theme-toggle icon swap (show the target theme) */
 .btn-icon { padding:.34rem .5rem; line-height:1; border-radius:8px; }
 [data-bs-theme="light"] .ic-sun  { display:none; }
