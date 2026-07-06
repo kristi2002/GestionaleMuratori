@@ -117,10 +117,19 @@ $nextActions = [
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
                     <?php foreach ($photosByType[$type] as $photo): ?>
-                        <a href="<?= $e(Url::to('/admin/photos/' . $photo['id'])) ?>" target="_blank" rel="noopener">
-                            <img src="<?= $e(Url::to('/admin/photos/' . $photo['id'] . '/thumb')) ?>" alt=""
-                                 class="rounded border" style="width:88px;height:88px;object-fit:cover;">
-                        </a>
+                        <div class="text-center">
+                            <a href="<?= $e(Url::to('/admin/photos/' . $photo['id'])) ?>" target="_blank" rel="noopener">
+                                <img src="<?= $e(Url::to('/admin/photos/' . $photo['id'] . '/thumb')) ?>" alt=""
+                                     class="rounded border" style="width:88px;height:88px;object-fit:cover;">
+                            </a>
+                            <?php if (($photo['captured_at'] ?? null) !== null): ?>
+                                <div class="text-muted" style="font-size:.7rem;"><?= $e(substr((string) $photo['captured_at'], 0, 16)) ?></div>
+                            <?php endif; ?>
+                            <?php if (($photo['lat'] ?? null) !== null && ($photo['lng'] ?? null) !== null): ?>
+                                <a class="small" style="font-size:.7rem;" target="_blank" rel="noopener"
+                                   href="https://www.openstreetmap.org/?mlat=<?= $e((string) $photo['lat']) ?>&mlon=<?= $e((string) $photo['lng']) ?>">📍 GPS</a>
+                            <?php endif; ?>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>

@@ -18,4 +18,16 @@ final class Validate
     {
         return $raw !== '' && is_numeric($raw) && abs((float) $raw) <= self::MAX_DECIMAL;
     }
+
+    /** WGS84 latitude in [-90, 90]. Empty is invalid; callers treat GPS as optional. */
+    public static function isLatitude(string $raw): bool
+    {
+        return $raw !== '' && is_numeric($raw) && (float) $raw >= -90.0 && (float) $raw <= 90.0;
+    }
+
+    /** WGS84 longitude in [-180, 180]. */
+    public static function isLongitude(string $raw): bool
+    {
+        return $raw !== '' && is_numeric($raw) && (float) $raw >= -180.0 && (float) $raw <= 180.0;
+    }
 }

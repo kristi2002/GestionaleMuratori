@@ -82,21 +82,23 @@ try {
 
     // --- Users ---------------------------------------------------------------
     $userStmt = $pdo->prepare(
-        'INSERT INTO users (name, email, password_hash, role, client_id, is_active)
-         VALUES (:name, :email, :hash, :role, :client_id, 1)'
+        'INSERT INTO users (name, email, password_hash, role, client_id, subcontractor_id, is_active)
+         VALUES (:name, :email, :hash, :role, :client_id, :subcontractor_id, 1)'
     );
+    // [name, email, role, client_id, subcontractor_id]
     $users = [
-        ['Mario Amministratore', 'admin@gestionale.local', 'admin', null],
-        ['Luca Operaio',         'worker1@gestionale.local', 'worker', null],
-        ['Giuseppe Muratore',    'worker2@gestionale.local', 'worker', null],
-        ['Referente Rossi',      'client1@gestionale.local', 'client', $clientIds[0]],
-        ['Referente Bianchi',    'client2@gestionale.local', 'client', $clientIds[1]],
+        ['Mario Amministratore', 'admin@gestionale.local', 'admin', null, null],
+        ['Luca Operaio',         'worker1@gestionale.local', 'worker', null, null],
+        ['Giuseppe Muratore',    'worker2@gestionale.local', 'worker', null, null],
+        ['Referente Rossi',      'client1@gestionale.local', 'client', $clientIds[0], null],
+        ['Referente Bianchi',    'client2@gestionale.local', 'client', $clientIds[1], null],
+        ['Referente Impianti Marche', 'sub1@gestionale.local', 'subcontractor', null, $subcontractorIds[0]],
     ];
     $userIds = [];
     foreach ($users as $u) {
         $userStmt->execute([
             ':name' => $u[0], ':email' => $u[1], ':hash' => $pass,
-            ':role' => $u[2], ':client_id' => $u[3],
+            ':role' => $u[2], ':client_id' => $u[3], ':subcontractor_id' => $u[4],
         ]);
         $userIds[$u[1]] = (int) $pdo->lastInsertId();
     }
@@ -106,23 +108,32 @@ try {
 
     // --- Projects ------------------------------------------------------------
     $projectStmt = $pdo->prepare(
-        'INSERT INTO projects (client_id, name, location, start_date, end_date, invoice_reference, status)
-         VALUES (:client_id, :name, :location, :start, :end, :invoice, :status)'
+        'INSERT INTO projects (client_id, name, location, lat, lng, start_date, end_date, invoice_reference, status)
+         VALUES (:client_id, :name, :location, :lat, :lng, :start, :end, :invoice, :status)'
     );
+    // [client_id, name, location, lat, lng, start, end, invoice, status] — coords enable
+    // the Giornale dei Lavori weather auto-fill (Open-Meteo).
     $projects = [
-        [$clientIds[0], 'Ristrutturazione Villa Rossi', 'Milano',  '2026-05-01', null,         'FATT-2026-001', 'active'],
-        [$clientIds[0], 'Nuovo Capannone Rossi',        'Monza',   '2026-06-10', null,         'FATT-2026-014', 'active'],
-        [$clientIds[1], 'Condominio Via Bianchi 12',    'Torino',  '2026-04-15', null,         'FATT-2026-007', 'active'],
-        [$clientIds[1], 'Ufficio Bianchi Centro',       'Torino',  '2026-03-01', null,         'FATT-2026-003', 'on_hold'],
-        [$clientIds[1], 'Magazzino Bianchi',            'Novara',  '2026-01-10', '2026-04-30', 'FATT-2026-002', 'closed'],
+        [$clientIds[0], 'Ristrutturazione Villa Rossi', 'Milano',  '45.4642000', '9.1900000', '2026-05-01', null,         'FATT-2026-001', 'active'],
+        [$clientIds[0], 'Nuovo Capannone Rossi',        'Monza',   '45.5845000', '9.2744000', '2026-06-10', null,         'FATT-2026-014', 'active'],
+        [$clientIds[1], 'Condominio Via Bianchi 12',    'Torino',  '45.0703000', '7.6869000', '2026-04-15', null,         'FATT-2026-007', 'active'],
+        [$clientIds[1], 'Ufficio Bianchi Centro',       'Torino',  '45.0703000', '7.6869000', '2026-03-01', null,         'FATT-2026-003', 'on_hold'],
+        [$clientIds[1], 'Magazzino Bianchi',            'Novara',  '45.4469000', '8.6222000', '2026-01-10', '2026-04-30', 'FATT-2026-002', 'closed'],
     ];
     $projectIds = [];
     foreach ($projects as $p) {
         $projectStmt->execute([
             ':client_id' => $p[0], ':name' => $p[1], ':location' => $p[2],
-            ':start' => $p[3], ':end' => $p[4], ':invoice' => $p[5], ':status' => $p[6],
+            ':lat' => $p[3], ':lng' => $p[4],
+            ':start' => $p[5], ':end' => $p[6], ':invoice' => $p[7], ':status' => $p[8],
         ]);
         $projectIds[] = (int) $pdo->lastInsertId();
+    }
+
+    // --- Equipment catalog (Giornale dei Lavori) -----------------------------
+    $equipStmt = $pdo->prepare('INSERT INTO equipment (name, is_active) VALUES (:name, 1)');
+    foreach (['Betoniera', 'Gru a torre', 'Escavatore', 'Ponteggio', 'Autocarro'] as $equipName) {
+        $equipStmt->execute([':name' => $equipName]);
     }
 
     // --- Stock locations -----------------------------------------------------
@@ -258,6 +269,37 @@ try {
     // Completed intervention records what was planned/used (no movements pre-baked).
     $matStmt->execute([':intervention_id' => $interventionIds[3], ':item_id' => $itemIds[5], ':qty_planned' => '50.000', ':qty_used' => '48.000']);
 
+    // --- Compliance documents (Scadenzario Sicurezza) ------------------------
+    // Dates are relative to "today" so the ≤30-day dashboard widget always has
+    // one expiring and one already-expired item to show.
+    $todayDt = new DateTimeImmutable($today);
+    $compStmt = $pdo->prepare(
+        'INSERT INTO compliance_documents
+            (subject_type, subject_id, doc_type, reference, issue_date, expiry_date, credits, notes, created_by)
+         VALUES (:st, :sid, :dt, :ref, :issue, :expiry, :credits, :notes, :by)'
+    );
+    $compliance = [
+        // [subject_type, subject_id, doc_type, reference, issue(+/-days), expiry(+/-days), credits]
+        ['company', null, 'DURC', 'DURC-2026-Q3', -80, 20, null],                       // expiring soon
+        ['company', null, 'patente_crediti', 'PAT-IMPRESA', -300, 400, 90],             // credits license
+        ['subcontractor', $subcontractorIds[0], 'DURC', 'DURC-SUB-001', -120, -3, null],// EXPIRED
+        ['worker', $worker1Id, 'visita_medica', 'VM-LUCA-2026', -30, 335, null],        // valid
+        ['worker', $worker2Id, 'formazione', 'CORSO-PONTEGGI', -400, 25, null],         // expiring soon
+    ];
+    foreach ($compliance as $c) {
+        $compStmt->execute([
+            ':st'     => $c[0],
+            ':sid'    => $c[1],
+            ':dt'     => $c[2],
+            ':ref'    => $c[3],
+            ':issue'  => $todayDt->modify(($c[4] >= 0 ? '+' : '') . $c[4] . ' days')->format('Y-m-d'),
+            ':expiry' => $todayDt->modify(($c[5] >= 0 ? '+' : '') . $c[5] . ' days')->format('Y-m-d'),
+            ':credits' => $c[6],
+            ':notes'  => null,
+            ':by'     => $adminId,
+        ]);
+    }
+
     $pdo->commit();
 } catch (\Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -282,3 +324,4 @@ echo "  worker1@gestionale.local (operaio)\n";
 echo "  worker2@gestionale.local (operaio)\n";
 echo "  client1@gestionale.local (cliente - Edilizia Rossi)\n";
 echo "  client2@gestionale.local (cliente - Costruzioni Bianchi)\n";
+echo "  sub1@gestionale.local    (subappaltatore - Impianti Marche)\n";

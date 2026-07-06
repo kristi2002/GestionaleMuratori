@@ -1,5 +1,79 @@
 # Changelog
 
+## 2026-07-06 — v2 platform: legal compliance, field UX, exports (Phases 3–8)
+
+Builds the full application layer on top of the v2 schema: the subcontractor portal,
+all four Italian legal must-haves (Badge di Cantiere, Giornale dei Lavori, S.A.L.,
+Scadenzario Sicurezza), geolocated photo evidence + an offline PWA, the accountant
+Excel export, and Coolify deployment hardening.
+
+**Test status: 398 assertions green** (202 prior + 196 new) on a fresh database.
+
+### Phase 3 — Subcontractor role & portal
+
+- `subcontractor` registered in `UserController::ROLES` and `Auth::homeFor` (→ `/sub`);
+  users can be linked to a subcontractor company (`users.subcontractor_id`).
+- Admin **`SubcontractorController`** — CRUD + M:N project assignment
+  (`SubcontractorModel`, `ProjectSubcontractorModel`, `syncProjects`).
+- **`Sub\*` portal** (`/sub`, `/sub/projects/{id}`, photo streaming) behind
+  `SubcontractorProjectGuard` — assigned projects only, 404 on not-mine, **no
+  inventory/cost exposure**. Seed adds a `sub1@gestionale.local` login.
+
+### Phase 4a — Badge di Cantiere Digitale (Decreto 332/2026)
+
+- **`SiteAttendanceModel`** + shared **`AttendanceController`** — field clock in/out
+  (`/attendance`) for workers and subcontractors with best-effort GPS; single open
+  attendance enforced; WGS84 coordinate validation (`Validate::isLatitude/isLongitude`).
+- Admin register `GET /admin/attendance` (per project + day, GPS map links).
+
+### Phase 4b — Giornale dei Lavori (DPR 380/2001)
+
+- **`DailyLogModel`/`EquipmentModel`** + **`DailyLogController`** — one log per
+  `(project, date)`, equipment join, **closed-day immutability** (edits/close/equipment
+  rejected once `is_closed`).
+- **`WeatherService`** — Open-Meteo auto-fill (WMO→Italian map), best-effort, disabled
+  in tests via `WEATHER_ENABLED=false`. Seed adds project coordinates + an equipment catalog.
+
+### Phase 4c — Generatore di S.A.L.
+
+- **`SalDocumentModel`/`SalLineModel`** + **`SalController`** — per-project numbered
+  documents, priced line items (optionally from `warehouse_items.unit_cost`),
+  `draft → issued → signed` state machine; **`SalPdfBuilder`** renders the locked PDF on
+  issue; DL signature captured (canvas PNG). Issued documents are frozen.
+
+### Phase 4d — Scadenzario Sicurezza (D.Lgs. 81/2008)
+
+- **`ComplianceDocumentModel`** + **`ComplianceController`** — CRUD over polymorphic
+  subjects (worker/company/subcontractor/project), doc types (DURC/POS/PSC/patente_crediti/…),
+  `credits` for the Patente a Crediti. Dashboard widget surfaces documents expiring
+  **≤30 days** (or already expired), highlighted red.
+
+### Phase 5 — Field UX: geo-photos + offline PWA
+
+- Photo upload now captures `photos.lat/lng/captured_at` (shown on the admin
+  intervention detail with an OpenStreetMap link).
+- Installable PWA: `manifest.webmanifest`, `sw.js` (cache-first shell), `offline.html`,
+  app icons; SW registered scope-aware in `app.js`.
+- Generic offline write queue for the Badge di Cantiere (timbrature persisted in
+  `localStorage`, replayed on reconnect), alongside the existing photo queue.
+
+### Phase 6 — Accountant export
+
+- **`AccountantExportDataService`/`AccountantExportBuilder`** + **`ExportController`** —
+  monthly `.xlsx` (`/admin/exports/accountant?month=YYYY-MM`) with material cost
+  (qty × `unit_cost`), worker hours (from attendance), and per-cantiere cost centres.
+
+### Phase 7 — Coolify deployment
+
+- App image adds `ca-certificates` (outbound HTTPS for Open-Meteo); `WEATHER_ENABLED`/
+  `WEATHER_TIMEOUT` wired through both compose files and `env.production.example`.
+- New **`docs/DEPLOYMENT_COOLIFY.md`** — end-to-end Coolify-on-Hetzner guide.
+
+### Phase 8 — Tests & docs
+
+- New cases: `05`–`09` (unit: subcontractor, attendance, daily log, S.A.L., compliance)
+  and `12`–`18` (HTTP e2e for each feature + PWA shell + accountant export). Docs updated.
+
 ## 2026-07-06 — v2 foundation: multi-site inventory (Phases 0–2)
 
 First PR of the v2 "full-fledged Italian construction platform" effort. Delivers the

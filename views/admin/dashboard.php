@@ -7,6 +7,8 @@ use App\Support\View;
 /** @var int $openInterventions */
 /** @var array<string,int> $todayByStatus */
 /** @var array<int,array<string,mixed>> $lowStock */
+/** @var array<int,array<string,mixed>> $expiringDocs */
+/** @var string $today */
 /** @var array|null $user */
 
 $e = static fn (?string $v): string => View::e($v);
@@ -14,6 +16,7 @@ $t = static fn (string $key): string => Lang::get($key);
 $qty = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
 
 $todayTotal = array_sum($todayByStatus);
+$expiringDocs = $expiringDocs ?? [];
 ?>
 <h1 class="h4 mb-1"><?= $e($t('admin.dashboard.title')) ?></h1>
 <p class="text-muted mb-3"><?= $e($t('admin.dashboard.welcome')) ?> <?= $e($user['name'] ?? '') ?>.</p>
@@ -58,7 +61,53 @@ $todayTotal = array_sum($todayByStatus);
             </div>
         </a>
     </div>
+    <div class="col-6 col-lg-3">
+        <a class="card text-decoration-none h-100 <?= $expiringDocs !== [] ? 'border-danger' : '' ?>" href="<?= $e(Url::to('/admin/compliance?expiring=1')) ?>">
+            <div class="card-body">
+                <div class="display-6 fw-bold <?= $expiringDocs !== [] ? 'text-danger' : 'text-success' ?>"><?= $e((string) count($expiringDocs)) ?></div>
+                <div class="small text-muted"><?= $e($t('admin.dashboard.expiring_docs')) ?></div>
+            </div>
+        </a>
+    </div>
 </div>
+
+<?php if ($expiringDocs !== []): ?>
+    <div class="card mt-3 border-danger">
+        <div class="card-header bg-white text-danger"><?= $e($t('admin.dashboard.expiring_title')) ?></div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th><?= $e($t('admin.compliance.subject')) ?></th>
+                        <th><?= $e($t('admin.compliance.doc_type')) ?></th>
+                        <th><?= $e($t('admin.compliance.expiry')) ?></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($expiringDocs as $doc): ?>
+                    <tr>
+                        <td>
+                            <span class="badge text-bg-light border"><?= $e(Lang::label('compliance_subject', $doc['subject_type'])) ?></span>
+                            <?= $e($doc['subject_name'] ?? ($doc['subject_type'] === 'company' ? $t('admin.compliance.the_company') : '—')) ?>
+                        </td>
+                        <td><?= $e(Lang::label('compliance_doc', $doc['doc_type'])) ?></td>
+                        <td class="fw-bold <?= $doc['expiry_date'] < $today ? 'text-danger' : 'text-warning' ?>">
+                            <?= $e($doc['expiry_date']) ?>
+                            <?php if ($doc['expiry_date'] < $today): ?>
+                                <span class="badge text-bg-danger"><?= $e($t('admin.compliance.expired')) ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/compliance')) ?>"><?= $e($t('admin.dashboard.open')) ?></a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
 
 <?php if ($lowStock !== []): ?>
     <div class="card mt-3 border-danger">
@@ -98,6 +147,12 @@ $todayTotal = array_sum($todayByStatus);
         [$t('admin.projects.title'), $t('admin.projects.subtitle'), '/admin/projects'],
         [$t('admin.warehouse.title'), $t('admin.warehouse.subtitle'), '/admin/warehouse'],
         [$t('admin.interventions.title'), $t('admin.interventions.subtitle'), '/admin/interventions'],
+        [$t('admin.subcontractors.title'), $t('admin.subcontractors.subtitle'), '/admin/subcontractors'],
+        [$t('admin.attendance.title'), $t('admin.attendance.subtitle'), '/admin/attendance'],
+        [$t('admin.daily_logs.title'), $t('admin.daily_logs.subtitle'), '/admin/daily-logs'],
+        [$t('admin.sal.title'), $t('admin.sal.subtitle'), '/admin/sal'],
+        [$t('admin.compliance.title'), $t('admin.compliance.subtitle'), '/admin/compliance'],
+        [$t('admin.exports.title'), $t('admin.exports.subtitle'), '/admin/exports'],
         [$t('admin.users.title'), $t('admin.users.subtitle'), '/admin/users'],
         [$t('admin.dashboard.reports'), $t('admin.dashboard.reports_subtitle'), '/admin/projects'],
     ];

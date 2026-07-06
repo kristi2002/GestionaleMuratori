@@ -6,10 +6,12 @@ entities. The client is a reconstruction firm in the **Marche** region (post-sis
 2016), so the compliance surface below is not optional paperwork: missing or expired
 documents can trigger fines or a site shutdown.
 
-> Scope note: this PR (v2 foundation) lands the **schema** for every item below plus
-> the multi-site inventory that several of them build on. The user-facing features
-> (attendance UI, daily-log form, S.A.L. generator, compliance dashboard) arrive in
-> later PRs — see [ROADMAP.md](ROADMAP.md).
+> Scope note: the v2 foundation landed the **schema** for every item below plus the
+> multi-site inventory. The user-facing features — the Badge di Cantiere clock in/out
+> (`/attendance`) + admin register, the Giornale dei Lavori form with Open-Meteo weather
+> and closed-day lock, the S.A.L. generator (locked PDF + DL sign-off), and the
+> Scadenzario Sicurezza CRUD + ≤30-day dashboard widget — are now **delivered** (v2
+> Phases 3–8). See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](../CHANGELOG.md).
 
 ## Legal obligations
 

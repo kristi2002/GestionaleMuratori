@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\ComplianceDocumentModel;
 use App\Models\InterventionModel;
 use App\Models\ProjectModel;
 use App\Models\WarehouseItemModel;
@@ -46,6 +47,8 @@ final class DashboardController
             'openInterventions' => $interventions->countOpen(),
             'todayByStatus'  => $interventions->countsByStatusForDate($today),
             'lowStock'       => (new WarehouseItemModel())->lowStock(),
+            'expiringDocs'   => (new ComplianceDocumentModel())->expiringSoon(30),
+            'today'          => $today,
         ], 'layout'));
     }
 

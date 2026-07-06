@@ -8,6 +8,16 @@
     // Every AJAX request carries the CSRF token; the server rejects POSTs without it.
     $.ajaxSetup({ headers: { 'X-CSRF-Token': CSRF } });
 
+    // Register the service worker (installable, offline-capable app shell). Scoped
+    // to BASE so it works at a domain root or under a subdirectory. Best-effort.
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register(BASE + '/sw.js', { scope: BASE + '/' }).catch(function () {
+                // No SW (e.g. insecure origin) — the app still works fully online.
+            });
+        });
+    }
+
     // Shared AJAX helper. Always flags the request as XHR so the server returns
     // JSON ({ ok, data?, error? }) instead of HTML.
     window.Api = {
@@ -186,20 +196,46 @@
             });
         });
 
-        // --- Users: the client dropdown only applies to the "client" role --------
+        // --- Users: the client / subcontractor dropdowns are role-specific --------
         function syncUserClientField() {
             var $modal = $('#user-modal');
             if (!$modal.length) {
                 return;
             }
-            var isClient = $modal.find('.js-user-role').val() === 'client';
+            var role = $modal.find('.js-user-role').val();
+            var isClient = role === 'client';
+            var isSub = role === 'subcontractor';
             $modal.find('.js-user-client-field').toggleClass('d-none', !isClient);
+            $modal.find('.js-user-subcontractor-field').toggleClass('d-none', !isSub);
             if (!isClient) {
                 $modal.find('[name="client_id"]').val('');
+            }
+            if (!isSub) {
+                $modal.find('[name="subcontractor_id"]').val('');
             }
         }
         $(document).on('change', '.js-user-role', syncUserClientField);
         $(document).on('shown.bs.modal', '#user-modal', syncUserClientField);
+
+        // --- Compliance: subject dropdown depends on the subject type ------------
+        // Only the matching subject <select> is shown AND enabled, so exactly one
+        // subject_id is serialized (disabled fields are not submitted). 'company'
+        // has no subject.
+        function syncComplianceSubject() {
+            var $modal = $('#compliance-modal');
+            if (!$modal.length) {
+                return;
+            }
+            var type = $modal.find('.js-compliance-subject-type').val();
+            $modal.find('.js-compliance-subject').each(function () {
+                var $wrap = $(this);
+                var match = $wrap.hasClass('js-compliance-subject-' + type);
+                $wrap.toggleClass('d-none', !match);
+                $wrap.find('select').prop('disabled', !match);
+            });
+        }
+        $(document).on('change', '.js-compliance-subject-type', syncComplianceSubject);
+        $(document).on('shown.bs.modal', '#compliance-modal', syncComplianceSubject);
 
         // --- Warehouse: ledger reconciliation (§4.1) ------------------------------
         $(document).on('click', '.js-reconcile-btn', function () {
@@ -348,10 +384,33 @@
             return new Blob([bytes], { type: mime });
         }
 
-        function uploadPhotoBlob(url, type, blob) {
+        // Best-effort device geotag (photos): resolves {lat,lng} or {} without any UI.
+        function capturePhotoCoords() {
+            return new Promise(function (resolve) {
+                if (!navigator.geolocation) {
+                    resolve({});
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    resolve({ lat: pos.coords.latitude.toFixed(7), lng: pos.coords.longitude.toFixed(7) });
+                }, function () {
+                    resolve({});
+                }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+            });
+        }
+
+        function uploadPhotoBlob(url, type, blob, meta) {
+            meta = meta || {};
             var data = new FormData();
             data.append('photo', blob, 'photo.jpg');
             data.append('type', type);
+            if (meta.lat != null && meta.lng != null) {
+                data.append('lat', meta.lat);
+                data.append('lng', meta.lng);
+            }
+            if (meta.captured_at != null) {
+                data.append('captured_at', meta.captured_at);
+            }
             return $.ajax({
                 url: BASE + url,
                 method: 'POST',
@@ -363,16 +422,16 @@
             });
         }
 
-        function queuePhotoForRetry(url, type, dataUrl) {
+        function queuePhotoForRetry(url, type, dataUrl, meta) {
             var queue = loadPhotoQueue();
-            queue.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, type: type, dataUrl: dataUrl });
+            queue.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, type: type, dataUrl: dataUrl, meta: meta || {} });
             savePhotoQueue(queue);
             updateQueueBanner();
         }
 
         function flushPhotoQueue() {
             loadPhotoQueue().forEach(function (item) {
-                uploadPhotoBlob(item.url, item.type, dataUrlToBlob(item.dataUrl)).always(function () {
+                uploadPhotoBlob(item.url, item.type, dataUrlToBlob(item.dataUrl), item.meta || {}).always(function () {
                     // Drop on any definite server response (success or validation
                     // rejection) — only a .fail() with no response means "still
                     // offline," which leaves the item queued for the next retry.
@@ -408,8 +467,17 @@
             $error.addClass('d-none').text('');
             $submit.prop('disabled', true);
 
-            compressImageToDataUrl($file[0].files[0], 1600, 0.8).then(function (dataUrl) {
-                uploadPhotoBlob(url, type, dataUrlToBlob(dataUrl)).done(function (res) {
+            // Geotag + capture time travel with the photo (S.A.L. evidence), and are
+            // preserved in the offline queue so a reconnected upload keeps its metadata.
+            Promise.all([
+                compressImageToDataUrl($file[0].files[0], 1600, 0.8),
+                capturePhotoCoords()
+            ]).then(function (results) {
+                var dataUrl = results[0];
+                var meta = results[1] || {};
+                meta.captured_at = Date.now();
+
+                uploadPhotoBlob(url, type, dataUrlToBlob(dataUrl), meta).done(function (res) {
                     if (res && res.ok) {
                         window.location.reload();
                     } else {
@@ -423,7 +491,7 @@
                         $submit.prop('disabled', false);
                         return;
                     }
-                    queuePhotoForRetry(url, type, dataUrl);
+                    queuePhotoForRetry(url, type, dataUrl, meta);
                     showPhotoMessage($error, 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.', true);
                     $submit.prop('disabled', false);
                     $form[0].reset();
@@ -520,5 +588,95 @@
                 });
             });
         }
+
+        // --- Badge di Cantiere: clock in/out with best-effort GPS ----------------
+        // Geolocation is optional: if the browser denies it or times out we still
+        // record the timbratura (timestamp only), so a worker is never blocked.
+        function withGeolocation(callback) {
+            var $geo = $('.js-attendance-geo');
+            if (!navigator.geolocation) {
+                callback({});
+                return;
+            }
+            $geo.removeClass('d-none');
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                $geo.addClass('d-none');
+                callback({ lat: pos.coords.latitude.toFixed(7), lng: pos.coords.longitude.toFixed(7) });
+            }, function () {
+                $geo.addClass('d-none');
+                callback({}); // denied / unavailable — proceed without coordinates
+            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+        }
+
+        // Generic offline write queue (localStorage) for simple JSON POSTs — used by
+        // the Badge di Cantiere so a timbratura on a no-signal site is not lost; it
+        // replays automatically on reconnect. (Photos have their own binary queue.)
+        var ACTION_QUEUE_KEY = 'gm_action_queue_v1';
+        function loadActionQueue() {
+            try { return JSON.parse(window.localStorage.getItem(ACTION_QUEUE_KEY) || '[]'); } catch (e) { return []; }
+        }
+        function saveActionQueue(q) {
+            try { window.localStorage.setItem(ACTION_QUEUE_KEY, JSON.stringify(q)); } catch (e) { /* best-effort */ }
+        }
+        function queueAction(url, data) {
+            var q = loadActionQueue();
+            q.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, data: data });
+            saveActionQueue(q);
+        }
+        function flushActionQueue() {
+            loadActionQueue().forEach(function (item) {
+                Api.post(item.url, item.data).done(function () {
+                    saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
+                }).fail(function (xhr) {
+                    if (xhr.status > 0) { // definite server response — drop it, not "offline"
+                        saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
+                    }
+                });
+            });
+        }
+        $(window).on('online', flushActionQueue);
+        flushActionQueue();
+
+        function postAttendance(url, data, $btn) {
+            var $error = $('.js-attendance-error');
+            $error.addClass('d-none').text('');
+            $btn.prop('disabled', true);
+            Api.post(url, data).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    $error.removeClass('d-none').text((res && res.error) || 'Errore imprevisto.');
+                    $btn.prop('disabled', false);
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 0) {
+                    // Offline — persist the timbratura and sync on reconnect.
+                    queueAction(url, data);
+                    $error.removeClass('d-none alert-danger').addClass('alert-warning')
+                        .text('Sei offline: la timbratura è stata salvata e verrà inviata alla riconnessione.');
+                    $btn.prop('disabled', false);
+                    return;
+                }
+                $error.removeClass('d-none alert-warning').addClass('alert-danger').text(failMessage(xhr));
+                $btn.prop('disabled', false);
+            });
+        }
+
+        $(document).on('click', '.js-attendance-in', function () {
+            var $btn = $(this);
+            var projectId = $('.js-attendance-project').val();
+            $btn.prop('disabled', true);
+            withGeolocation(function (coords) {
+                postAttendance($btn.data('url'), $.extend({ project_id: projectId }, coords), $btn);
+            });
+        });
+
+        $(document).on('click', '.js-attendance-out', function () {
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            withGeolocation(function (coords) {
+                postAttendance($btn.data('url'), coords, $btn);
+            });
+        });
     });
 }(jQuery));
