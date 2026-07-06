@@ -26,7 +26,8 @@ warehouse inventory and client-facing reports. Three roles, three experiences:
 | Document | Contents |
 |----------|----------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, request lifecycle, folder structure, conventions |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Full schema, inventory ledger semantics, status state machine |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Full schema (v1 + v2 tables), inventory ledger semantics, status state machine |
+| [docs/DOMAIN_IT.md](docs/DOMAIN_IT.md) | Italian construction domain: legal obligations, glossary, entity mapping |
 | [docs/API.md](docs/API.md) | Every route: method, role, parameters, responses |
 | [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) | Production-readiness gap analysis (security, features, ops) |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased implementation plan toward production on Hetzner |
@@ -142,7 +143,7 @@ items and 6 sample interventions. Password for every account: `password`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1   # throwaway MySQL 8 in Docker
-C:\xampp\php\php.exe tests\run.php                                  # 174 assertions
+C:\xampp\php\php.exe tests\run.php                                  # 202 assertions
 ```
 
 The suite runs on its own database and covers the ledger math, the state
@@ -168,7 +169,11 @@ monitoring): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 The original 8-phase specification (see [superprompt.md](superprompt.md)) is fully
 implemented, plus the v1.1 production-hardening release: security (CSRF, rate
 limiting, sessions, headers), user management UI, admin intervention detail with
-photos/history, operations dashboard with low-stock alerts, worker task tabs,
-Docker deployment and a 174-assertion automated test suite. History:
-[CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
-remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §5.
+photos/history, operations dashboard with low-stock alerts, worker task tabs, and
+Docker deployment. The **v2 foundation** then added multi-site inventory
+(per-location balances + warehouse↔cantiere transfers, a `complete()` stock-inflation
+fix) and the full v2 schema for the Italian construction feature set — see
+[docs/DOMAIN_IT.md](docs/DOMAIN_IT.md) and the v2 section of
+[docs/ROADMAP.md](docs/ROADMAP.md). A 202-assertion automated test suite backs it.
+History: [CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
+remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §6.

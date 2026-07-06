@@ -110,6 +110,7 @@ $router->post('/admin/warehouse/{id}',           [WarehouseController::class, 'u
 $router->post('/admin/warehouse/{id}/toggle',    [WarehouseController::class, 'toggleActive']);
 $router->post('/admin/warehouse/{id}/movement',  [WarehouseController::class, 'addMovement']);
 $router->post('/admin/warehouse/{id}/reconcile', [WarehouseController::class, 'reconcile']);
+$router->post('/admin/warehouse/{id}/transfer',  [WarehouseController::class, 'transfer']);
 
 $router->get('/admin/interventions',               [InterventionController::class, 'index']);
 $router->post('/admin/interventions',               [InterventionController::class, 'store']);

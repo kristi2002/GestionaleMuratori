@@ -109,29 +109,45 @@ final class WarehouseItemModel
 
     /**
      * Recompute qty_in_stock from the stock_movements ledger (§4.1 reconciliation).
-     * Sign convention: in/release/adjustment add, reserve subtracts (adjustment rows
-     * carry their own signed delta). 'out' is intentionally weight-0 here: stock is
-     * already decremented by the matching 'reserve' at intervention creation, and
-     * 'release' (qty_planned - qty_used) corrects it back down to -qty_used net at
-     * completion. 'out' rows stay in the ledger purely as the audit trail consumed
-     * by §5 reporting ("materials used... from ledger out movements").
+     * qty_in_stock tracks the MAIN WAREHOUSE (location 1) balance: every pre-multi-site
+     * movement lives at location 1, and interventions reserve there by default, so this
+     * stays the "how much do we hold in the depot" figure the dashboard/low-stock use.
+     * Sign convention: in/release/transfer_in add, reserve/transfer_out subtract,
+     * adjustment carries its own signed delta. 'out' is intentionally weight-0 here:
+     * stock is already decremented by the matching 'reserve' at intervention creation,
+     * and 'release' (qty_planned - qty_used) corrects it back to -qty_used net at
+     * completion. 'out' rows stay in the ledger purely as the §5 reporting audit trail.
      */
     public function recomputeStock(int $id): string
     {
         $stmt = Database::pdo()->prepare(
             "SELECT COALESCE(SUM(CASE
-                WHEN type IN ('in', 'release') THEN qty
-                WHEN type = 'reserve' THEN -qty
+                WHEN type IN ('in', 'release', 'transfer_in') THEN qty
+                WHEN type IN ('reserve', 'transfer_out') THEN -qty
                 WHEN type = 'adjustment' THEN qty
                 ELSE 0
-             END), 0) FROM stock_movements WHERE item_id = ?"
+             END), 0) FROM stock_movements WHERE item_id = ? AND location_id = ?"
         );
-        $stmt->execute([$id]);
+        $stmt->execute([$id, StockLocationModel::MAIN_WAREHOUSE_ID]);
         $total = (string) $stmt->fetchColumn();
 
         $update = Database::pdo()->prepare('UPDATE warehouse_items SET qty_in_stock = ? WHERE id = ?');
         $update->execute([$total, $id]);
 
         return $total;
+    }
+
+    /**
+     * Refresh the stock caches after a movement at $locationId: always the
+     * per-(item, location) balance, plus qty_in_stock when the movement touched the
+     * main warehouse. Call this from every writer that inserts a stock_movements row,
+     * inside its transaction, so no cache drifts from the ledger.
+     */
+    public function refreshCaches(int $itemId, int $locationId): void
+    {
+        (new StockBalanceModel())->recompute($itemId, $locationId);
+        if ($locationId === StockLocationModel::MAIN_WAREHOUSE_ID) {
+            $this->recomputeStock($itemId);
+        }
     }
 }

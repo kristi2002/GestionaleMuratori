@@ -25,8 +25,12 @@ $pass = password_hash('password', PASSWORD_DEFAULT);
 $today = (new DateTimeImmutable('today'))->format('Y-m-d');
 
 $dataTables = [
-    'photos', 'stock_movements', 'intervention_materials', 'intervention_status_history',
-    'interventions', 'warehouse_items', 'projects', 'users', 'clients',
+    'photos', 'stock_balances', 'stock_movements',
+    'compliance_documents', 'sal_lines', 'sal_documents',
+    'daily_log_equipment', 'daily_logs', 'equipment', 'site_attendance',
+    'project_subcontractors', 'intervention_materials', 'intervention_status_history',
+    'interventions', 'warehouse_items', 'stock_locations', 'projects',
+    'users', 'subcontractors', 'clients',
 ];
 
 // --- Reset (FK-safe) ---------------------------------------------------------
@@ -57,6 +61,23 @@ try {
             ':phone' => $c[3], ':address' => $c[4], ':notes' => $c[5],
         ]);
         $clientIds[] = (int) $pdo->lastInsertId();
+    }
+
+    // --- Subcontractors (companies working under the main contractor) --------
+    $subStmt = $pdo->prepare(
+        'INSERT INTO subcontractors (name, vat_or_tax_id, email, phone, notes, is_active)
+         VALUES (:name, :vat, :email, :phone, :notes, 1)'
+    );
+    $subcontractors = [
+        ['Impianti Marche S.r.l.', 'IT02223334445', 'info@impiantimarche.it', '+39 071 998877', 'Impianti elettrici e idraulici.'],
+    ];
+    $subcontractorIds = [];
+    foreach ($subcontractors as $s) {
+        $subStmt->execute([
+            ':name' => $s[0], ':vat' => $s[1], ':email' => $s[2],
+            ':phone' => $s[3], ':notes' => $s[4],
+        ]);
+        $subcontractorIds[] = (int) $pdo->lastInsertId();
     }
 
     // --- Users ---------------------------------------------------------------
@@ -104,40 +125,79 @@ try {
         $projectIds[] = (int) $pdo->lastInsertId();
     }
 
+    // --- Stock locations -----------------------------------------------------
+    // Default main warehouse is id=1 (the implicit location of every 'in' movement
+    // below and the balance warehouse_items.qty_in_stock tracks). Each project also
+    // gets its own site location so material can be transferred warehouse->cantiere.
+    $pdo->prepare(
+        "INSERT INTO stock_locations (id, name, kind, project_id, is_active)
+         VALUES (1, 'Magazzino Centrale', 'warehouse', NULL, 1)"
+    )->execute();
+    $siteLocStmt = $pdo->prepare(
+        "INSERT INTO stock_locations (name, kind, project_id, is_active)
+         VALUES (:name, 'site', :project_id, 1)"
+    );
+    $siteLocationIds = [];
+    foreach ($projectIds as $idx => $projectId) {
+        $siteLocStmt->execute([':name' => 'Cantiere: ' . $projects[$idx][1], ':project_id' => $projectId]);
+        $siteLocationIds[$projectId] = (int) $pdo->lastInsertId();
+    }
+
+    // --- Subcontractor assignments (M:N) -------------------------------------
+    $psStmt = $pdo->prepare(
+        'INSERT INTO project_subcontractors (project_id, subcontractor_id) VALUES (:project_id, :subcontractor_id)'
+    );
+    $psStmt->execute([':project_id' => $projectIds[0], ':subcontractor_id' => $subcontractorIds[0]]);
+
     // --- Warehouse items (+ initial `in` movement keeping the ledger honest) -
     $itemStmt = $pdo->prepare(
-        'INSERT INTO warehouse_items (name, sku, unit, qty_in_stock, reorder_level, is_active)
-         VALUES (:name, :sku, :unit, :qty, :reorder, 1)'
+        'INSERT INTO warehouse_items (name, sku, unit, qty_in_stock, reorder_level, unit_cost, is_active)
+         VALUES (:name, :sku, :unit, :qty, :reorder, :unit_cost, 1)'
     );
     $moveStmt = $pdo->prepare(
         'INSERT INTO stock_movements (item_id, type, qty, intervention_id, user_id, note)
          VALUES (:item_id, :type, :qty, NULL, :user_id, :note)'
     );
+    // [name, sku, unit, qty_in_stock, reorder_level, unit_cost]
     $items = [
-        ['Cemento Portland 25kg', 'CEM-25',  'pcs', '200.000', '40.000'],
-        ['Sabbia fine',           'SAB-01',  'kg',  '5000.000','500.000'],
-        ['Mattoni forati 8x25x25','MAT-825', 'pcs', '10000.000','1000.000'],
-        ['Calce idraulica',       'CAL-IDR', 'kg',  '800.000', '100.000'],
-        ['Tondino acciaio 12mm',  'ACC-12',  'm',   '1500.000','200.000'],
-        ['Piastrelle gres 60x60', 'GRE-6060','box', '300.000', '30.000'],
-        ['Colla per piastrelle',  'COL-PIA', 'kg',  '600.000', '80.000'],
-        ['Tubo PVC 100mm',        'PVC-100', 'm',   '400.000', '50.000'],
-        ['Idropittura bianca',    'VER-IDR', 'l',   '250.000', '40.000'],
-        ['Guanti da lavoro',      'DPI-GNT', 'pcs', '500.000', '50.000'],
+        ['Cemento Portland 25kg', 'CEM-25',  'pcs', '200.000', '40.000',  '6.5000'],
+        ['Sabbia fine',           'SAB-01',  'kg',  '5000.000','500.000', '0.0450'],
+        ['Mattoni forati 8x25x25','MAT-825', 'pcs', '10000.000','1000.000','0.4800'],
+        ['Calce idraulica',       'CAL-IDR', 'kg',  '800.000', '100.000', '0.3200'],
+        ['Tondino acciaio 12mm',  'ACC-12',  'm',   '1500.000','200.000', '1.1500'],
+        ['Piastrelle gres 60x60', 'GRE-6060','box', '300.000', '30.000',  '24.9000'],
+        ['Colla per piastrelle',  'COL-PIA', 'kg',  '600.000', '80.000',  '0.8500'],
+        ['Tubo PVC 100mm',        'PVC-100', 'm',   '400.000', '50.000',  '3.4000'],
+        ['Idropittura bianca',    'VER-IDR', 'l',   '250.000', '40.000',  '2.7000'],
+        ['Guanti da lavoro',      'DPI-GNT', 'pcs', '500.000', '50.000',  '1.2000'],
     ];
     $itemIds = [];
     foreach ($items as $it) {
         $itemStmt->execute([
             ':name' => $it[0], ':sku' => $it[1], ':unit' => $it[2],
-            ':qty' => $it[3], ':reorder' => $it[4],
+            ':qty' => $it[3], ':reorder' => $it[4], ':unit_cost' => $it[5],
         ]);
         $itemId = (int) $pdo->lastInsertId();
         $itemIds[] = $itemId;
+        // Initial stock lands in the main warehouse (location_id defaults to 1).
         $moveStmt->execute([
             ':item_id' => $itemId, ':type' => 'in', ':qty' => $it[3],
             ':user_id' => $adminId, ':note' => 'Giacenza iniziale',
         ]);
     }
+
+    // --- Per-location balance cache (mirror of the ledger, at the warehouse) --
+    $pdo->exec(
+        "INSERT INTO stock_balances (item_id, location_id, qty)
+         SELECT item_id, location_id, COALESCE(SUM(CASE
+                WHEN type IN ('in', 'release', 'transfer_in') THEN qty
+                WHEN type IN ('reserve', 'transfer_out') THEN -qty
+                WHEN type = 'adjustment' THEN qty
+                ELSE 0
+            END), 0)
+         FROM stock_movements
+         GROUP BY item_id, location_id"
+    );
 
     // --- Interventions -------------------------------------------------------
     $intStmt = $pdo->prepare(

@@ -10,9 +10,10 @@ return [
     'app_name' => 'Gestionale Muratori',
 
     'roles' => [
-        'admin'  => 'Amministratore',
-        'worker' => 'Operaio',
-        'client' => 'Cliente',
+        'admin'         => 'Amministratore',
+        'worker'        => 'Operaio',
+        'client'        => 'Cliente',
+        'subcontractor' => 'Subappaltatore',
     ],
 
     'intervention_status' => [
@@ -38,17 +39,24 @@ return [
     ],
 
     'movement_types' => [
-        'in'         => 'Carico',
-        'out'        => 'Scarico',
-        'reserve'    => 'Prenotazione',
-        'release'    => 'Rilascio',
-        'adjustment' => 'Rettifica',
+        'in'           => 'Carico',
+        'out'          => 'Scarico',
+        'reserve'      => 'Prenotazione',
+        'release'      => 'Rilascio',
+        'adjustment'   => 'Rettifica',
+        'transfer_in'  => 'Trasferimento in entrata',
+        'transfer_out' => 'Trasferimento in uscita',
     ],
 
     'photo_types' => [
         'before' => 'Prima',
         'during' => 'Durante',
         'after'  => 'Dopo',
+    ],
+
+    'stock_location_kinds' => [
+        'warehouse' => 'Magazzino',
+        'site'      => 'Cantiere',
     ],
 
     'common' => [
@@ -205,6 +213,23 @@ return [
             'reconcile'         => 'Riconcilia giacenza',
             'reconcile_clean'   => 'Giacenza verificata: nessuna discrepanza rispetto al registro.',
             'reconcile_fixed'   => 'Giacenza corretta: era %s, ora %s (ricalcolata dal registro movimenti).',
+            'balances_by_location' => 'Giacenze per ubicazione',
+            'location'          => 'Ubicazione',
+            'no_balances'       => 'Nessuna giacenza registrata per questo articolo.',
+            'transfer' => [
+                'title'              => 'Trasferisci stock',
+                'action'             => 'Trasferisci',
+                'from_location'      => 'Da ubicazione',
+                'to_location'        => 'A ubicazione',
+                'qty'                => 'Quantità',
+                'note'               => 'Nota',
+                'submit'             => 'Esegui trasferimento',
+                'same_location'      => 'Le ubicazioni di origine e destinazione devono essere diverse.',
+                'qty_invalid'        => 'Inserisci una quantità positiva valida.',
+                'item_invalid'       => 'Articolo non valido o non attivo.',
+                'location_invalid'   => 'Ubicazione non valida o non attiva.',
+                'insufficient_stock' => 'Giacenza insufficiente nell\'ubicazione di origine.',
+            ],
         ],
 
         'interventions' => [

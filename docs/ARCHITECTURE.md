@@ -58,9 +58,11 @@ Caddy/nginx/Apache or `php -S`
 ### `src/Models` — one class per table, raw PDO
 `ClientModel`, `ProjectModel`, `UserModel`, `InterventionModel`,
 `InterventionMaterialModel`, `WarehouseItemModel`, `StockMovementModel`,
-`PhotoModel`. Locking variants (`findForUpdate`, `reservedForUpdate`,
-`forInterventionForUpdate`) exist for every read that participates in a stock or
-status transaction.
+`PhotoModel`, and (v2) `StockLocationModel`, `StockBalanceModel`. Locking variants
+(`findForUpdate`, `reservedForUpdate`, `forInterventionForUpdate`) exist for every
+read that participates in a stock or status transaction. `WarehouseItemModel::refreshCaches($item, $location)`
+is the single coordination point after any movement write: it recomputes the
+`(item, location)` balance and, when the location is the main warehouse, `qty_in_stock`.
 
 ### `src/Services` — business logic
 - **`InterventionService`** — the heart of the system:
@@ -72,6 +74,14 @@ status transaction.
   - `complete()` — completion gate (§ after-photo + qty_used), `out` + surplus
     `release` movements, cache recompute, history row — one transaction.
   - `'completed'` is *only* reachable through `complete()`, never `transition()`.
+  - v2: `create()`/`complete()` take an optional `locationId` (default = main
+    warehouse); `complete()` releases the unused surplus **only for materials that
+    were actually reserved** (`is_reserved = 1`), so never-reserved rows can't
+    inflate stock.
+- **`StockTransferService`** (v2) — moves stock between two locations
+  (warehouse↔cantiere) as a paired `transfer_out`+`transfer_in` write in one
+  transaction; locks the item row `FOR UPDATE`, guards the source balance, and
+  refreshes both location caches. Total stock across locations is conserved.
 - **`Services\Report`** — `ReportDataService` (shared data gathering),
   `PdfReportBuilder` (mPDF over `views/reports/pdf.php`), `ExcelReportBuilder`
   (PhpSpreadsheet, data-only export), `ReportFilename`.

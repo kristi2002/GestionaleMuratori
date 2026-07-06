@@ -4,8 +4,11 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\StockBalanceModel;
+use App\Models\StockLocationModel;
 use App\Models\StockMovementModel;
 use App\Models\WarehouseItemModel;
+use App\Services\StockTransferService;
 use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Database;
@@ -14,6 +17,7 @@ use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
 use App\Support\View;
+use RuntimeException;
 
 final class WarehouseController
 {
@@ -50,6 +54,8 @@ final class WarehouseController
             'title'     => $item['name'],
             'item'      => $item,
             'movements' => (new StockMovementModel())->forItem((int) $id),
+            'balances'  => (new StockBalanceModel())->forItem((int) $id),
+            'locations' => (new StockLocationModel())->all(true),
         ], 'layout'));
     }
 
@@ -153,13 +159,16 @@ final class WarehouseController
             }
 
             (new StockMovementModel())->create([
-                'item_id' => (int) $id,
-                'type'    => $type,
-                'qty'     => $rawQty,
-                'user_id' => Auth::id(),
-                'note'    => $note,
+                'item_id'     => (int) $id,
+                'location_id' => StockLocationModel::MAIN_WAREHOUSE_ID,
+                'type'        => $type,
+                'qty'         => $rawQty,
+                'user_id'     => Auth::id(),
+                'note'        => $note,
             ]);
-            $newTotal = $itemModel->recomputeStock((int) $id);
+            // Manual movements always land in the main warehouse; refresh both caches.
+            $itemModel->refreshCaches((int) $id, StockLocationModel::MAIN_WAREHOUSE_ID);
+            $newTotal = (string) $itemModel->find((int) $id)['qty_in_stock'];
 
             $pdo->commit();
             Response::ok(['qty_in_stock' => $newTotal]);
@@ -210,6 +219,47 @@ final class WarehouseController
             }
             throw $e;
         }
+    }
+
+    /**
+     * POST /admin/warehouse/{id}/transfer — move stock from one location to another
+     * (warehouse -> cantiere or back). The service runs the whole move in one locked
+     * transaction and keeps every balance cache reconciled with the ledger.
+     */
+    public function transfer(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $itemModel = new WarehouseItemModel();
+        $item      = $itemModel->find((int) $id);
+        if ($item === null) {
+            Response::fail(Lang::get('admin.warehouse.not_found'), 404);
+            return;
+        }
+
+        $fromLoc = (int) $request->input('from_location_id', 0);
+        $toLoc   = (int) $request->input('to_location_id', 0);
+        $qty     = trim((string) $request->input('qty', ''));
+        $note    = trim((string) $request->input('note', ''));
+
+        try {
+            (new StockTransferService())->transfer(
+                (int) $id,
+                $fromLoc,
+                $toLoc,
+                $qty,
+                (int) Auth::id(),
+                $note !== '' ? $note : null
+            );
+        } catch (RuntimeException $e) {
+            Response::fail($e->getMessage(), 422);
+            return;
+        }
+
+        Response::ok([
+            'from_qty' => (new StockBalanceModel())->qty((int) $id, $fromLoc),
+            'to_qty'   => (new StockBalanceModel())->qty((int) $id, $toLoc),
+        ]);
     }
 
     /** @return array<string,mixed>|null Validated fields, or null if a fail response was already sent. */

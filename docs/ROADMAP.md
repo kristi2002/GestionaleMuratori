@@ -1,13 +1,83 @@
 # Roadmap — from v1 to production platform on Hetzner
 
-> **Status: phases A–E delivered on 2026-07-02** (174 automated assertions
-> green; Docker stack build-verified). See [CHANGELOG.md](../CHANGELOG.md) for
-> what shipped. Only the "Out of scope" section at the bottom remains open.
+> **v1 status: phases A–E delivered on 2026-07-02** (174 automated assertions
+> green; Docker stack build-verified). See [CHANGELOG.md](../CHANGELOG.md).
+>
+> **v2 status: foundation (Phases 0–2) delivered** — see the v2 section below.
+> Phases 3–8 are planned and follow in later PRs.
 
 Phases are ordered by risk: security first, then the features that make the
 platform operable by the client, then infrastructure, then the proof (tests).
 Each phase ends runnable and verified. Gap IDs reference
 [GAP_ANALYSIS.md](GAP_ANALYSIS.md).
+
+---
+
+# v2 — Full-fledged Italian construction platform
+
+Goal: a legally-compliant, offline-capable, **multi-site** platform for an *impresa
+edile* in the Marche region — Badge di Cantiere, Giornale dei Lavori, S.A.L.,
+Scadenzario Sicurezza, per-site inventory, subcontractor portal, PWA, accountant
+export, deployed via **Coolify on Hetzner**. Domain background in
+[DOMAIN_IT.md](DOMAIN_IT.md).
+
+**Reservation model (decision):** *additive, site-optional*. Interventions keep
+reserving from the main warehouse (location 1) by default, so `qty_in_stock` and every
+v1 invariant/test stay valid; per-site balances + transfers are added underneath, and
+`InterventionService::create/complete` take an optional `locationId`. A future
+"site-first" default (material must be transferred to the cantiere before an
+intervention can consume it) is a one-line default change, deliberately deferred.
+
+## Phase 0 — Documentation baseline ✅ (this PR)
+Docs corrected to code truth; new [DOMAIN_IT.md](DOMAIN_IT.md); v2 scope captured here
+and in [GAP_ANALYSIS.md](GAP_ANALYSIS.md).
+
+## Phase 1 — v2 schema, models, seed ✅ (this PR)
+Migrations `003`–`009` (stock locations + location-aware ledger + balances + unit_cost;
+subcontractors + role; site attendance; daily logs + equipment; S.A.L.; compliance;
+photo geo). New `StockLocationModel`, `StockBalanceModel`. Seed extended with the main
+warehouse, per-project site locations, item unit costs, and a subcontractor.
+
+## Phase 2 — Multi-site inventory ✅ (this PR)
+Location-aware `recomputeStock` (+ `transfer_in/out`), `StockBalanceModel::recompute`,
+`StockTransferService` (warehouse↔cantiere transfers, one locked transaction, negative
+guard), auto site-location on project create, warehouse transfer UI + route. **Fixed**
+the `complete()` phantom-release bug (release only for `is_reserved=1`). Test-gated:
+`tests/cases/04_multisite_stock.php` + a transfer-race in `11_concurrency.php`
+(202 assertions green).
+
+## Phase 3 — Subcontractor role & portal (planned)
+Register `subcontractor` in `UserController::ROLES` + `Auth::homeFor()` (→ `/sub`);
+admin subcontractor CRUD + project assignment; `Sub\*` controllers +
+`SubcontractorProjectGuard` (assigned projects only, 404 on not-mine). No inventory/cost
+exposure.
+
+## Phase 4 — Legal compliance features (planned)
+4a Badge di Cantiere (attendance + geolocation) · 4b Giornale dei Lavori (daily log,
+weather auto-fill via `WeatherService`/Open-Meteo, closed-day immutability) · 4c S.A.L.
+generator (locked PDF via a `SalPdfBuilder`, draft→issued→signed) · 4d Scadenzario
+Sicurezza (compliance CRUD + ≤30-day expiry dashboard widget).
+
+## Phase 5 — Field UX: geo-photos + offline PWA (planned)
+Capture `photos.lat/lng/captured_at`; `manifest.json` + `sw.js` (cache-first shell);
+generalise the `localStorage` photo queue into a generic offline queue covering daily
+log + attendance writes.
+
+## Phase 6 — Reporting & exports (planned)
+Accountant Excel export (`AccountantExportBuilder`: material cost × `unit_cost`, worker
+hours from attendance); route the remaining hardcoded-Italian report labels through
+`lang/it.php`.
+
+## Phase 7 — Deployment (Coolify on Hetzner) (planned)
+Harden `docker-compose.coolify.yml` (persistent volumes, env/secrets, outbound HTTPS for
+weather); new `DEPLOYMENT_COOLIFY.md`.
+
+## Phase 8 — Full test & simulation pass (planned)
+Extend the suite across all new features; fix→retest until green; live-drive the flows.
+
+---
+
+# v1 phases (delivered 2026-07-02)
 
 ## Phase A — Repo hygiene & security hardening (S1–S7, S9, T2)
 
@@ -100,7 +170,9 @@ with migrations applied; backup script produces a restorable archive.
 Update README, ARCHITECTURE, DATA_MODEL, API for everything added; write
 TESTING.md and DEPLOYMENT.md finals; full CHANGELOG for review.
 
-## Out of scope (needs client decision)
+## Out of scope for v1 (now folded into v2 above)
 
-PWA/service-worker offline mode, S3 storage, labor hours & GPS check-in,
-multi-tenancy, invoicing/cost module, e-mail notifications (needs SMTP account).
+PWA/service-worker offline mode, GPS check-in, labor hours, and the cost/export
+module were v1 "out of scope" items — all are now planned in the v2 phases above.
+Still genuinely out of scope: S3 storage, multi-tenancy, e-mail notifications
+(needs an SMTP account).

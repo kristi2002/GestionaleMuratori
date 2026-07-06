@@ -5,9 +5,12 @@ use App\Support\View;
 
 /** @var array<string,mixed> $item */
 /** @var array<int,array<string,mixed>> $movements */
+/** @var array<int,array<string,mixed>> $balances */
+/** @var array<int,array<string,mixed>> $locations */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
+$num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
 ?>
 <a href="<?= $e(Url::to('/admin/warehouse')) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('admin.warehouse.back_to_list')) ?></a>
 
@@ -56,6 +59,58 @@ $t = static fn (string $key): string => Lang::get($key);
                         <input type="text" class="form-control" name="note">
                     </div>
                     <button type="submit" class="btn btn-success w-100"><?= $e($t('admin.warehouse.add_movement')) ?></button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-white"><?= $e($t('admin.warehouse.balances_by_location')) ?></div>
+            <ul class="list-group list-group-flush">
+                <?php if ($balances === []): ?>
+                    <li class="list-group-item small text-muted"><?= $e($t('admin.warehouse.no_balances')) ?></li>
+                <?php endif; ?>
+                <?php foreach ($balances as $b): ?>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <span class="small">
+                            <?= $e($b['location_name']) ?>
+                            <span class="badge text-bg-light border ms-1"><?= $e(Lang::label('stock_location_kinds', $b['location_kind'])) ?></span>
+                        </span>
+                        <span class="fw-bold"><?= $e($num((string) $b['qty'])) ?> <?= $e(Lang::label('units', $item['unit'])) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h2 class="h6 mb-3"><?= $e($t('admin.warehouse.transfer.title')) ?></h2>
+                <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
+                <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/warehouse/' . $item['id'] . '/transfer')) ?>">
+                    <div class="mb-3">
+                        <label class="form-label"><?= $e($t('admin.warehouse.transfer.from_location')) ?></label>
+                        <select class="form-select" name="from_location_id" required>
+                            <?php foreach ($locations as $loc): ?>
+                                <option value="<?= $e((string) $loc['id']) ?>"<?= (int) $loc['id'] === 1 ? ' selected' : '' ?>><?= $e($loc['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $e($t('admin.warehouse.transfer.to_location')) ?></label>
+                        <select class="form-select" name="to_location_id" required>
+                            <?php foreach ($locations as $loc): ?>
+                                <option value="<?= $e((string) $loc['id']) ?>"><?= $e($loc['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $e($t('admin.warehouse.transfer.qty')) ?></label>
+                        <input type="number" step="0.001" min="0" class="form-control" name="qty" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $e($t('admin.warehouse.transfer.note')) ?></label>
+                        <input type="text" class="form-control" name="note">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><?= $e($t('admin.warehouse.transfer.submit')) ?></button>
                 </form>
             </div>
         </div>
