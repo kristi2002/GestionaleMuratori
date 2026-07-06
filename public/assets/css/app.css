@@ -1,37 +1,276 @@
-:root {
-    --app-green: #2e7d32;
-    --app-green-dark: #1b5e20;
+/* ============================================================================
+   Gestionale Muratori — "Cantiere" design system
+   Concrete-grey neutrals · hi-vis safety amber accent · blueprint steel.
+   Layered on Bootstrap 5.3 via CSS custom properties. No build step.
+   Themes: light (default) + dark, driven by [data-bs-theme] (server cookie).
+   ========================================================================== */
+
+/* ---- Self-hosted Inter (CSP-safe, offline-friendly; no CDN) -------------- */
+@font-face { font-family:"Inter"; font-style:normal; font-weight:400; font-display:swap;
+  src:url("../fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:500; font-display:swap;
+  src:url("../fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:600; font-display:swap;
+  src:url("../fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:700; font-display:swap;
+  src:url("../fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:800; font-display:swap;
+  src:url("../fonts/inter-latin-800-normal.woff2") format("woff2"); }
+
+/* ---- Design tokens: LIGHT (default) ------------------------------------- */
+:root, [data-bs-theme="light"] {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --gm-ground:#EDEFF2;        /* concrete canvas */
+  --gm-surface:#FFFFFF;       /* cards */
+  --gm-surface-2:#F5F6F8;     /* subtle fills, table head */
+  --gm-anthracite:#1E232B;    /* nav bands, sidebar */
+  --gm-anthracite-2:#262C36;  /* sidebar hover */
+  --gm-ink:#171A1F;           /* primary text */
+  --gm-ink-2:#5A616B;         /* muted text */
+  --gm-line:#D6DAE0;          /* hairlines */
+
+  --gm-amber:#F5A300;         /* the one accent */
+  --gm-amber-strong:#E08C00;
+  --gm-on-amber:#2A1D00;      /* text on amber */
+  --gm-steel:#2C6E9B;         /* links / info */
+  --gm-steel-strong:#215979;
+
+  --gm-ok:#1F8A4C; --gm-warn:#E07C10; --gm-bad:#D33A2C;
+
+  --gm-shadow:0 1px 2px rgba(20,26,35,.06), 0 4px 16px rgba(20,26,35,.07);
+  --gm-radius:10px;
+
+  /* map Bootstrap to the palette */
+  --bs-body-bg:var(--gm-ground);
+  --bs-body-color:var(--gm-ink);
+  --bs-body-font-family:var(--font-sans);
+  --bs-border-color:var(--gm-line);
+  --bs-secondary-color:var(--gm-ink-2);
+  --bs-secondary-bg:var(--gm-surface-2);
+  --bs-tertiary-bg:var(--gm-surface-2);
+  --bs-emphasis-color:var(--gm-ink);
+  --bs-primary:var(--gm-amber);
+  --bs-primary-rgb:245,163,0;
+  --bs-success:var(--gm-ok);
+  --bs-success-rgb:31,138,76;
+  --bs-warning-rgb:224,124,16;
+  --bs-danger:var(--gm-bad);
+  --bs-danger-rgb:211,58,44;
+  --bs-link-color:var(--gm-steel);
+  --bs-link-color-rgb:44,110,155;
+  --bs-link-hover-color:var(--gm-steel-strong);
+  --bs-heading-color:var(--gm-ink);
 }
 
+/* ---- Design tokens: DARK ------------------------------------------------ */
+[data-bs-theme="dark"] {
+  --gm-ground:#101317;
+  --gm-surface:#191D23;
+  --gm-surface-2:#14171C;
+  --gm-anthracite:#0B0D11;
+  --gm-anthracite-2:#1A1F27;
+  --gm-ink:#E7EAEE;
+  --gm-ink-2:#99A1AC;
+  --gm-line:#2A2F37;
+
+  --gm-amber:#FFB020;
+  --gm-amber-strong:#FFC24D;
+  --gm-on-amber:#241800;
+  --gm-steel:#6FB2DC;
+  --gm-steel-strong:#8CC4E6;
+
+  --gm-ok:#46C07E; --gm-warn:#F0973B; --gm-bad:#EF6A5C;
+  --gm-shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+
+  --bs-body-bg:var(--gm-ground);
+  --bs-body-color:var(--gm-ink);
+  --bs-border-color:var(--gm-line);
+  --bs-secondary-color:var(--gm-ink-2);
+  --bs-secondary-bg:var(--gm-surface-2);
+  --bs-tertiary-bg:var(--gm-surface-2);
+  --bs-emphasis-color:#fff;
+  --bs-primary:var(--gm-amber);
+  --bs-primary-rgb:255,176,32;
+  --bs-success:var(--gm-ok);
+  --bs-success-rgb:70,192,126;
+  --bs-danger:var(--gm-bad);
+  --bs-danger-rgb:239,106,92;
+  --bs-link-color:var(--gm-steel);
+  --bs-link-color-rgb:111,178,220;
+  --bs-link-hover-color:var(--gm-steel-strong);
+  --bs-heading-color:var(--gm-ink);
+  --bs-emphasis-color-rgb:255,255,255;
+}
+
+/* ---- Base --------------------------------------------------------------- */
 body {
-    background: #f5f6f8;
+  background:var(--gm-ground);
+  color:var(--gm-ink);
+  font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em;
+}
+h1,h2,h3,h4,h5,.h1,.h2,.h3,.h4,.h5 { font-weight:800; letter-spacing:-.02em; text-wrap:balance; }
+.display-6 { font-weight:800; letter-spacing:-.03em; }
+.text-muted, .text-body-secondary { color:var(--gm-ink-2)!important; }
+.font-mono, .tnum { font-family:var(--font-mono); }
+.tnum { font-variant-numeric:tabular-nums; }
+code, kbd, .mono { font-family:var(--font-mono); }
+a { text-decoration:none; }
+a:hover { text-decoration:underline; }
+:focus-visible { outline:2px solid var(--gm-steel); outline-offset:2px; }
+
+/* mono micro-label — the "title-block / site-marking" vernacular */
+.gm-eyebrow { font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.1em;
+  font-size:.7rem; font-weight:600; color:var(--gm-ink-2); }
+
+/* ============================================================================
+   App shell: anthracite topbar + optional admin sidebar
+   ========================================================================== */
+.app-topbar { background:var(--gm-anthracite); position:sticky; top:0; z-index:1030;
+  border-bottom:1px solid rgba(255,255,255,.06); }
+.app-topbar .navbar-brand { color:#fff; font-weight:800; letter-spacing:-.02em;
+  display:inline-flex; align-items:center; gap:.55rem; }
+.app-brand-chip { width:26px; height:26px; border-radius:6px; background:var(--gm-amber);
+  color:var(--gm-on-amber); display:grid; place-items:center; font-family:var(--font-mono);
+  font-weight:900; font-size:.8rem; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.15); flex:none; }
+.app-topbar .badge.role { background:var(--gm-amber); color:var(--gm-on-amber); font-weight:700; }
+.app-topbar .btn-icon { color:#cfd4db; border-color:rgba(255,255,255,.18);
+  background:rgba(255,255,255,.04); display:inline-grid; place-items:center; }
+.app-topbar .btn-icon:hover { color:#fff; background:rgba(255,255,255,.12); }
+
+/* layout with sidebar (admin) */
+.app-shell { display:block; }
+.app-sidebar {
+  position:fixed; top:0; bottom:0; left:0; width:230px; z-index:1040;
+  background:var(--gm-anthracite); color:#cfd4db; padding:14px 12px 24px;
+  overflow-y:auto; transform:translateX(-100%); transition:transform .22s ease;
+  border-right:1px solid rgba(255,255,255,.06);
+}
+.app-sidebar .sb-brand { display:flex; align-items:center; gap:.55rem; color:#fff;
+  font-weight:800; letter-spacing:-.02em; padding:6px 8px 14px; }
+.app-sidebar .sb-group { font-family:var(--font-mono); font-size:.62rem; letter-spacing:.12em;
+  text-transform:uppercase; color:#7c828c; margin:14px 0 6px; padding-left:10px; }
+.app-sidebar a.sb-link { display:flex; align-items:center; gap:.6rem; padding:.5rem .65rem;
+  border-radius:8px; color:#cfd4db; font-size:.9rem; font-weight:500; margin-bottom:1px; }
+.app-sidebar a.sb-link:hover { background:var(--gm-anthracite-2); color:#fff; text-decoration:none; }
+.app-sidebar a.sb-link.active { background:rgba(245,163,0,.14); color:var(--gm-amber); font-weight:700; }
+.app-sidebar a.sb-link.active .ic { opacity:1; }
+.app-sidebar .ic { width:17px; height:17px; opacity:.7; flex:none; }
+.sb-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1035;
+  opacity:0; visibility:hidden; transition:opacity .2s ease; }
+.app-shell.sidebar-open .app-sidebar { transform:translateX(0); }
+.app-shell.sidebar-open .sb-backdrop { opacity:1; visibility:visible; }
+
+@media (min-width:992px) {
+  .app-shell.has-sidebar .app-sidebar { transform:translateX(0); }
+  .app-shell.has-sidebar .app-content { margin-left:230px; }
+  .app-shell.has-sidebar .app-topbar { padding-left:230px; }
+  .sb-backdrop { display:none; }
+  .js-sidebar-toggle { display:none!important; }
 }
 
-.app-navbar {
-    background: var(--app-green);
-}
+.ic { display:inline-block; vertical-align:-.15em; fill:none; stroke:currentColor;
+  stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 
-.btn-success {
-    --bs-btn-bg: var(--app-green);
-    --bs-btn-border-color: var(--app-green);
-    --bs-btn-hover-bg: var(--app-green-dark);
-    --bs-btn-hover-border-color: var(--app-green-dark);
-}
+/* ============================================================================
+   Components
+   ========================================================================== */
+.card { border:1px solid var(--gm-line); border-radius:var(--gm-radius);
+  background:var(--gm-surface); box-shadow:var(--gm-shadow); }
+.card .card-header { background:var(--gm-surface); border-bottom:1px solid var(--gm-line);
+  font-weight:700; }
+/* many views pin card headers to .bg-white — keep them theme-aware (the signature
+   canvas keeps its own literal white for ink contrast). */
+.card-header.bg-white { background:var(--gm-surface)!important; color:var(--gm-ink); }
+a.card { color:inherit; transition:border-color .15s ease, transform .15s ease; }
+a.card:hover { border-color:var(--gm-ink-2); text-decoration:none; }
 
-.text-success {
-    color: var(--app-green) !important;
+/* Buttons: .btn-success is the app's brand action → hi-vis amber. */
+.btn { font-weight:600; border-radius:8px; }
+.btn-success, .btn-primary {
+  --bs-btn-bg:var(--gm-amber); --bs-btn-border-color:var(--gm-amber-strong);
+  --bs-btn-color:var(--gm-on-amber);
+  --bs-btn-hover-bg:var(--gm-amber-strong); --bs-btn-hover-border-color:var(--gm-amber-strong);
+  --bs-btn-hover-color:var(--gm-on-amber);
+  --bs-btn-active-bg:var(--gm-amber-strong); --bs-btn-active-border-color:var(--gm-amber-strong);
+  --bs-btn-active-color:var(--gm-on-amber);
+  --bs-btn-disabled-bg:var(--gm-amber); --bs-btn-disabled-border-color:var(--gm-amber);
+  --bs-btn-disabled-color:var(--gm-on-amber);
+  font-weight:700;
 }
-
-.card {
-    border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+.btn-outline-success, .btn-outline-primary {
+  --bs-btn-color:var(--gm-steel); --bs-btn-border-color:var(--gm-steel);
+  --bs-btn-hover-bg:var(--gm-steel); --bs-btn-hover-border-color:var(--gm-steel);
+  --bs-btn-hover-color:#fff; --bs-btn-active-bg:var(--gm-steel);
 }
+.text-success { color:var(--gm-ok)!important; }
+.text-warning { color:var(--gm-warn)!important; }
+.text-danger  { color:var(--gm-bad)!important; }
 
-/* Mobile-first: comfortable tap targets for the worker/client apps. */
-@media (max-width: 576px) {
-    .btn,
-    .form-control {
-        font-size: 1.05rem;
-        padding: .6rem .75rem;
-    }
+/* Status pills — encode state in shape + colour */
+.badge { font-weight:650; border-radius:999px; padding:.34em .7em; }
+.text-bg-success { background:color-mix(in srgb, var(--gm-ok) 16%, transparent)!important; color:var(--gm-ok)!important; }
+.text-bg-danger  { background:color-mix(in srgb, var(--gm-bad) 16%, transparent)!important; color:var(--gm-bad)!important; }
+.text-bg-warning { background:color-mix(in srgb, var(--gm-warn) 18%, transparent)!important; color:var(--gm-warn)!important; }
+.text-bg-light   { background:var(--gm-surface-2)!important; color:var(--gm-ink-2)!important; }
+.badge.border { border-color:var(--gm-line)!important; }
+
+/* Tables */
+.table { --bs-table-bg:transparent; --bs-table-color:var(--gm-ink); margin-bottom:0; }
+.table > thead th { font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.05em;
+  font-size:.68rem; font-weight:600; color:var(--gm-ink-2); background:var(--gm-surface-2);
+  border-bottom:1px solid var(--gm-line); }
+.table > tbody td { border-color:var(--gm-line); vertical-align:middle; }
+.table-responsive { border-radius:var(--gm-radius); }
+
+/* Forms */
+.form-control, .form-select { border-color:var(--gm-line); background:var(--gm-surface);
+  color:var(--gm-ink); border-radius:8px; }
+.form-control:focus, .form-select:focus { border-color:var(--gm-amber);
+  box-shadow:0 0 0 .2rem color-mix(in srgb, var(--gm-amber) 28%, transparent); }
+.form-label { font-weight:600; font-size:.88rem; }
+
+/* Alerts (keep semantic hues on tinted grounds) */
+.alert-info { --bs-alert-color:var(--gm-steel-strong); --bs-alert-bg:color-mix(in srgb,var(--gm-steel) 12%,var(--gm-surface));
+  --bs-alert-border-color:color-mix(in srgb,var(--gm-steel) 30%,transparent); }
+.alert-warning { --bs-alert-color:var(--gm-warn); --bs-alert-bg:color-mix(in srgb,var(--gm-warn) 12%,var(--gm-surface));
+  --bs-alert-border-color:color-mix(in srgb,var(--gm-warn) 30%,transparent); }
+
+/* KPI tiles — number-first, accent stripe, red when it needs attention */
+.gm-kpi { position:relative; overflow:hidden; height:100%; }
+.gm-kpi .gm-kpi-val { font-family:var(--font-mono); font-weight:700; font-size:2.1rem; line-height:1;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:var(--gm-ink); }
+.gm-kpi .gm-kpi-lab { font-size:.8rem; color:var(--gm-ink-2); margin-top:.25rem; }
+.gm-kpi .gm-kpi-ic { width:20px; height:20px; color:var(--gm-ink-2); opacity:.8; }
+.gm-kpi::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gm-amber); }
+.gm-kpi.alert::before { background:var(--gm-bad); }
+.gm-kpi.alert .gm-kpi-val { color:var(--gm-bad); }
+.gm-kpi.alert .gm-kpi-ic { color:var(--gm-bad); opacity:1; }
+
+/* severity stripe on table rows */
+tr.sev-bad  > td:first-child { box-shadow:inset 3px 0 0 var(--gm-bad); }
+tr.sev-warn > td:first-child { box-shadow:inset 3px 0 0 var(--gm-warn); }
+
+/* Field / high-contrast big actions (Badge di Cantiere, worker completion).
+   Glove-friendly targets ≥48px, readable at arm's length. */
+.btn-lg { padding:.9rem 1.25rem; font-size:1.1rem; font-weight:700; min-height:52px; }
+.btn-lg.w-100 { border-radius:12px; }
+.form-select-lg { min-height:52px; }
+
+/* Sparkline canvas (ready for when we track history) */
+canvas.gm-spark { display:block; width:100%; height:34px; }
+
+/* Icon buttons in the topbar + theme-toggle icon swap (show the target theme) */
+.btn-icon { padding:.34rem .5rem; line-height:1; border-radius:8px; }
+[data-bs-theme="light"] .ic-sun  { display:none; }
+[data-bs-theme="dark"]  .ic-moon { display:none; }
+
+/* Legacy hook kept for compatibility (old markup referenced .app-navbar) */
+.app-navbar { background:var(--gm-anthracite); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition:none!important; }
 }

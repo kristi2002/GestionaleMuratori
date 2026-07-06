@@ -7,7 +7,9 @@ $e = static fn (?string $v): string => View::e($v);
     <div class="col-12 col-sm-9 col-md-6 col-lg-5">
         <div class="card shadow-sm mt-4">
             <div class="card-body p-4">
-                <h1 class="h4 mb-1 text-success">Gestionale Muratori</h1>
+                <h1 class="h4 mb-1 d-flex align-items-center gap-2">
+                    <span class="app-brand-chip">GM</span> Gestionale Muratori
+                </h1>
                 <p class="text-muted small mb-4">Accedi per continuare</p>
 
                 <div id="login-error" class="alert alert-danger d-none" role="alert"></div>

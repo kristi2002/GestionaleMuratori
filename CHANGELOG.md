@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-07-06 — "Cantiere" UI redesign (frontend only)
+
+A ground-up visual redesign layered on the existing Bootstrap 5.3 stack — **no
+build step, no new runtime framework, CSP `'self'` preserved, assets self-hosted**.
+Grounded in field-service/construction UI research (Procore/Fieldwire patterns,
+outdoor-readability guidance): concrete-grey neutrals, a single hi-vis **safety-amber**
+accent, blueprint-steel for links, and disciplined semantic status colours.
+
+- **Design-token layer in `app.css`** — the "Cantiere" palette as CSS custom
+  properties mapped onto Bootstrap's `--bs-*` variables; **light + dark themes**
+  via `[data-bs-theme]`, persisted in a `gm_theme` cookie and rendered server-side
+  (no flash; no CSP-violating inline script).
+- **Self-hosted Inter** (`@font-face`, woff2 400–800) + a curated inline **SVG icon
+  sprite** — both CSP-clean and offline-friendly; no CDN.
+- **New app shell** in `layout.php` — anthracite topbar with brand chip + theme
+  toggle, and a persistent **admin sidebar** (grouped, role-aware nav, active state).
+  Workers/clients/subcontractors keep the minimal top-bar experience.
+- **Restyled components** — KPI tiles (mono number, icon, accent stripe, red when it
+  needs attention), status pills, severity-striped tables, cards, forms, and
+  glove-friendly ≥48px field buttons (the amber "Timbra Entrata").
+- Dashboard KPIs and the two alert tables reworked; card headers made theme-aware.
+  New `admin.nav.*` labels in `lang/it.php`.
+- **No behavioural change** — the 398-assertion suite stays green; only the skin moved.
+
 ## 2026-07-06 — v2 platform: legal compliance, field UX, exports (Phases 3–8)
 
 Builds the full application layer on top of the v2 schema: the subcontractor portal,

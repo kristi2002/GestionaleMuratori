@@ -133,6 +133,16 @@ return [
             'open'                => 'Apri',
         ],
 
+        'nav' => [
+            'dashboard'    => 'Pannello',
+            'grp_registry' => 'Anagrafica',
+            'grp_site'     => 'Cantiere',
+            'grp_safety'   => 'Sicurezza e magazzino',
+            'grp_system'   => 'Sistema',
+            'toggle_theme' => 'Cambia tema',
+            'menu'         => 'Menu',
+        ],
+
         'users' => [
             'title'                  => 'Utenti',
             'subtitle'               => 'Account di accesso: amministratori, operai e clienti.',

@@ -21,59 +21,39 @@ $expiringDocs = $expiringDocs ?? [];
 <h1 class="h4 mb-1"><?= $e($t('admin.dashboard.title')) ?></h1>
 <p class="text-muted mb-3"><?= $e($t('admin.dashboard.welcome')) ?> <?= $e($user['name'] ?? '') ?>.</p>
 
+<?php
+$kpis = [
+    ['/admin/projects?status=active', (string) $activeProjects, 'admin.dashboard.active_projects', 'i-building', false],
+    ['/admin/interventions', (string) $openInterventions, 'admin.dashboard.open_interventions', 'i-clipboard', false],
+    ['/admin/interventions?range=today', (string) $todayTotal, 'admin.dashboard.today_interventions', 'i-badge', false],
+    ['/admin/warehouse', (string) count($lowStock), 'admin.dashboard.low_stock', 'i-box', $lowStock !== []],
+    ['/admin/compliance?expiring=1', (string) count($expiringDocs), 'admin.dashboard.expiring_docs', 'i-shield', $expiringDocs !== []],
+];
+?>
 <div class="row g-3">
-    <div class="col-6 col-lg-3">
-        <a class="card text-decoration-none h-100" href="<?= $e(Url::to('/admin/projects?status=active')) ?>">
-            <div class="card-body">
-                <div class="display-6 fw-bold text-success"><?= $e((string) $activeProjects) ?></div>
-                <div class="small text-muted"><?= $e($t('admin.dashboard.active_projects')) ?></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-lg-3">
-        <a class="card text-decoration-none h-100" href="<?= $e(Url::to('/admin/interventions')) ?>">
-            <div class="card-body">
-                <div class="display-6 fw-bold text-success"><?= $e((string) $openInterventions) ?></div>
-                <div class="small text-muted"><?= $e($t('admin.dashboard.open_interventions')) ?></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-lg-3">
-        <a class="card text-decoration-none h-100" href="<?= $e(Url::to('/admin/interventions?range=today')) ?>">
-            <div class="card-body">
-                <div class="display-6 fw-bold text-success"><?= $e((string) $todayTotal) ?></div>
-                <div class="small text-muted"><?= $e($t('admin.dashboard.today_interventions')) ?></div>
-                <?php if ($todayTotal > 0): ?>
-                    <div class="small mt-1">
-                        <?php foreach ($todayByStatus as $status => $n): ?>
-                            <span class="badge text-bg-light border me-1"><?= $e(Lang::label('intervention_status', $status)) ?>: <?= $e((string) $n) ?></span>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-lg-3">
-        <a class="card text-decoration-none h-100 <?= $lowStock !== [] ? 'border-danger' : '' ?>" href="<?= $e(Url::to('/admin/warehouse')) ?>">
-            <div class="card-body">
-                <div class="display-6 fw-bold <?= $lowStock !== [] ? 'text-danger' : 'text-success' ?>"><?= $e((string) count($lowStock)) ?></div>
-                <div class="small text-muted"><?= $e($t('admin.dashboard.low_stock')) ?></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-lg-3">
-        <a class="card text-decoration-none h-100 <?= $expiringDocs !== [] ? 'border-danger' : '' ?>" href="<?= $e(Url::to('/admin/compliance?expiring=1')) ?>">
-            <div class="card-body">
-                <div class="display-6 fw-bold <?= $expiringDocs !== [] ? 'text-danger' : 'text-success' ?>"><?= $e((string) count($expiringDocs)) ?></div>
-                <div class="small text-muted"><?= $e($t('admin.dashboard.expiring_docs')) ?></div>
-            </div>
-        </a>
-    </div>
+    <?php foreach ($kpis as [$href, $val, $labelKey, $icon, $alert]): ?>
+        <div class="col-6 col-lg-3 col-xl">
+            <a class="card gm-kpi text-decoration-none h-100<?= $alert ? ' alert' : '' ?>" href="<?= $e(Url::to($href)) ?>">
+                <div class="card-body">
+                    <svg class="ic gm-kpi-ic" aria-hidden="true"><use href="#<?= $e($icon) ?>"></use></svg>
+                    <div class="gm-kpi-val mt-2"><?= $e($val) ?></div>
+                    <div class="gm-kpi-lab"><?= $e($t($labelKey)) ?></div>
+                    <?php if ($labelKey === 'admin.dashboard.today_interventions' && $todayTotal > 0): ?>
+                        <div class="mt-2 d-flex flex-wrap gap-1">
+                            <?php foreach ($todayByStatus as $status => $n): ?>
+                                <span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $status)) ?>: <?= $e((string) $n) ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </a>
+        </div>
+    <?php endforeach; ?>
 </div>
 
 <?php if ($expiringDocs !== []): ?>
     <div class="card mt-3 border-danger">
-        <div class="card-header bg-white text-danger"><?= $e($t('admin.dashboard.expiring_title')) ?></div>
+        <div class="card-header text-danger"><?= $e($t('admin.dashboard.expiring_title')) ?></div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
@@ -86,7 +66,7 @@ $expiringDocs = $expiringDocs ?? [];
                 </thead>
                 <tbody>
                 <?php foreach ($expiringDocs as $doc): ?>
-                    <tr>
+                    <tr class="<?= $doc['expiry_date'] < $today ? 'sev-bad' : 'sev-warn' ?>">
                         <td>
                             <span class="badge text-bg-light border"><?= $e(Lang::label('compliance_subject', $doc['subject_type'])) ?></span>
                             <?= $e($doc['subject_name'] ?? ($doc['subject_type'] === 'company' ? $t('admin.compliance.the_company') : '—')) ?>
@@ -111,7 +91,7 @@ $expiringDocs = $expiringDocs ?? [];
 
 <?php if ($lowStock !== []): ?>
     <div class="card mt-3 border-danger">
-        <div class="card-header bg-white text-danger"><?= $e($t('admin.dashboard.low_stock_title')) ?></div>
+        <div class="card-header text-danger"><?= $e($t('admin.dashboard.low_stock_title')) ?></div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
@@ -124,7 +104,7 @@ $expiringDocs = $expiringDocs ?? [];
                 </thead>
                 <tbody>
                 <?php foreach ($lowStock as $item): ?>
-                    <tr>
+                    <tr class="sev-bad">
                         <td><?= $e($item['name']) ?></td>
                         <td class="text-danger fw-bold"><?= $e($qty($item['qty_in_stock'])) ?> <?= $e(Lang::label('units', $item['unit'])) ?></td>
                         <td><?= $e($qty($item['reorder_level'])) ?> <?= $e(Lang::label('units', $item['unit'])) ?></td>

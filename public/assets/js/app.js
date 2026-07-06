@@ -44,6 +44,25 @@
         });
     });
 
+    // --- Shell: theme toggle + mobile sidebar --------------------------------
+    // Theme is persisted in a cookie and rendered server-side (no flash); here we
+    // just flip the live attribute and remember the choice for the next request.
+    $(function () {
+        $(document).on('click', '.js-theme-toggle', function () {
+            var root = document.documentElement;
+            var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-bs-theme', next);
+            document.cookie = 'gm_theme=' + next + ';path=/;max-age=31536000;samesite=lax';
+        });
+
+        $(document).on('click', '.js-sidebar-toggle', function () {
+            $('.app-shell').toggleClass('sidebar-open');
+        });
+        $(document).on('click', '.js-sidebar-close, .app-sidebar a.sb-link', function () {
+            $('.app-shell').removeClass('sidebar-open');
+        });
+    });
+
     // --- Login form ---------------------------------------------------------
     $(function () {
         var $form = $('#login-form');
