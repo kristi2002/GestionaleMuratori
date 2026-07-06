@@ -7,6 +7,34 @@
 > section below. The full Italian construction platform (subcontractor portal, all four
 > legal must-haves, geo-photos + offline PWA, accountant export, Coolify deploy) is live.
 
+---
+
+# Post-v2 — "Cantiere" UI redesign rollout (in progress)
+
+A ground-up visual redesign layered on the existing Bootstrap 5.3 stack (no build
+step, CSP `'self'`, self-hosted assets): concrete-grey neutrals + hi-vis safety-amber
+accent + blueprint steel, light + dark themes, persistent admin sidebar, self-hosted
+Inter + inline SVG icon sprite. See the "Cantiere" entries in [CHANGELOG.md](../CHANGELOG.md).
+
+**Done & verified in-browser (light + dark):** app shell (anthracite topbar + brand
+chip + theme toggle + role-aware admin sidebar), login, dashboard (KPI tiles + real
+14-day trend sparklines), warehouse ledger detail, and all four Phase-4 legal screens
+(Badge di Cantiere register, Giornale dei Lavori, S.A.L. list+detail, Scadenzario).
+
+**Remaining — bring every page to the same bar** (semantic status pills, severity
+stripes where relevant, tabular-mono figures/dates, dark-mode spot-check):
+- [ ] Admin lists/details: clients, projects, **interventions (list + detail)**,
+      warehouse (list), subcontractors, users, exports.
+- [ ] Worker app: today/task tabs, intervention detail + **completion flow** + signature.
+- [ ] Client portal: index, project show, reports.
+- [ ] Subcontractor portal: index, project show.
+- [ ] Cross-cutting: modals/forms, `errors/403|404|500`, and any remaining
+      `card-header bg-white` / stock-blue Bootstrap components.
+- [ ] Reminder: bump `public/sw.js` `VERSION` whenever these asset changes ship
+      (cache-first shell serves stale CSS/JS otherwise).
+
+---
+
 Phases are ordered by risk: security first, then the features that make the
 platform operable by the client, then infrastructure, then the proof (tests).
 Each phase ends runnable and verified. Gap IDs reference
