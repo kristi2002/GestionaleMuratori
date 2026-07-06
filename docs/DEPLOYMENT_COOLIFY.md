@@ -34,6 +34,19 @@ Persistent state lives on named volumes (`db_data`, `uploads`, `caddy_data`,
 2. Connect this repository and pick the branch to deploy.
 3. Set the **Compose file path** to `/docker-compose.coolify.yml`.
 
+> ⚠️ **Use `docker-compose.coolify.yml`, NOT `docker-compose.yml`.** The repo ships
+> two compose files and picking the wrong one is the #1 deploy failure (see
+> [Troubleshooting](#troubleshooting)):
+>
+> | File | For | `web` | Ports |
+> |------|-----|-------|-------|
+> | **`docker-compose.coolify.yml`** | **Coolify** ✅ | **builds** `deploy/Dockerfile.web` (Caddyfile + `public/` baked in) | none — Coolify's proxy owns 80/443 |
+> | `docker-compose.yml` | plain Docker on a bare VPS | pulls `caddy:2-alpine`, **bind-mounts** repo files | publishes 80/443 |
+>
+> On Coolify, `docker-compose.yml` fails: it can't bind-mount repo files, its
+> published ports collide with Traefik, and Coolify tries to *pull* the app image
+> instead of building it.
+
 ## 2. Environment variables
 
 Add these under the resource's **Environment Variables** (mark the passwords as
@@ -115,3 +128,44 @@ See [`scripts/backup.sh`](../scripts/backup.sh) for an automatable version and
 
 `GET /health` returns `{"ok":true,"data":{"status":"ok"}}` when the app and DB are
 up — point Coolify's health check (or an external monitor) at it.
+
+## Troubleshooting
+
+### `pull access denied for siteflow-app` / it pulls `caddy:2-alpine`
+
+```
+Image caddy:2-alpine Pulling
+Image siteflow-app:latest Pulling
+Image siteflow-app:latest pull access denied for siteflow-app, repository does not exist ...
+WARNING: Some service image(s) must be built from source by running: docker compose build app
+```
+
+**Cause:** Coolify is deploying **`docker-compose.yml`** (the bare-VPS file) instead
+of **`docker-compose.coolify.yml`**. That file has no `build:` on `web` (it pulls
+`caddy:2-alpine`), so Coolify also tries to *pull* the app image — which it named
+`<resource>-app:latest` (e.g. `siteflow-app`) — rather than build it. That image
+exists in no registry, so the pull is denied. (`siteflow` here is just your Coolify
+resource name; it is not in the repo.)
+
+**Fix:** set the resource's **Docker Compose Location** to
+`/docker-compose.coolify.yml`, then **Redeploy** (use *Force rebuild* if offered). In
+that file both `app` and `web` are `build:` services, so Coolify builds them from
+`deploy/Dockerfile` and `deploy/Dockerfile.web` — nothing is pulled from a private
+registry.
+
+> If, on the correct compose file, Coolify *still* attempts to pull the built image
+> instead of building it, add `pull_policy: build` to the `app` and `web` services in
+> `docker-compose.coolify.yml` and redeploy — that forces a local build.
+
+### Deploy hard-fails immediately with a `set DB_PASS` / `set APP_URL` message
+
+The compose file uses `${VAR:?...}` guards, so a **missing required env var**
+(`APP_URL`, `DB_PASS`, `DB_ROOT_PASS`) aborts the deploy before anything builds. Add
+them under **Environment Variables** (see [§2](#2-environment-variables)) and redeploy.
+
+### The site loads but shows the old CSS/JS after a redeploy
+
+The PWA service worker caches the app shell (cache-first). A material change to
+`public/assets/*` requires bumping `VERSION` in [`public/sw.js`](../public/sw.js) so
+returning browsers fetch fresh assets; the `activate` handler then drops the old cache.
+A hard refresh (or clearing site data) shows it immediately.

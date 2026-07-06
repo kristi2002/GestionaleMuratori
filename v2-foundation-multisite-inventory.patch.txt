@@ -1,0 +1,292 @@
+# Transfer the v2 foundation work into your real GitHub repo
+
+## Context
+
+The v2 foundation (Phases 0–2) is **fully implemented, tested (202/202 green), and
+committed** — but in a *disconnected* scratch workspace at `/home/user/repo` whose git
+history has **no remote** (base commit `8beb2a9 "first commit"`, my work on top as
+`5f31098` on branch `feature/v2-foundation-multisite-inventory`). This session was never
+wired to your actual project, so the work needs to be transferred into your real repo,
+where I'll continue adjusting it. You confirmed the real project lives on **GitHub**.
+
+Goal: get commit `5f31098`'s changes onto your GitHub repo on a clean branch, reconcile
+against your repo's actual current code, verify tests pass there, and push / open a PR.
+
+## The changes being transferred (31 files, +603 / −76, all in `5f31098`)
+
+- **New (12):** `database/migrations/003_stock_locations.sql` … `009_photo_geo.sql`;
+  `src/Models/StockLocationModel.php`, `src/Models/StockBalanceModel.php`;
+  `src/Services/StockTransferService.php`; `tests/cases/04_multisite_stock.php`;
+  `docs/DOMAIN_IT.md`.
+- **Modified (19):** `database/seed.php`; `src/Services/InterventionService.php` (the
+  `complete()` fix + optional `locationId`); `src/Models/WarehouseItemModel.php`,
+  `StockMovementModel.php`; `src/Controllers/Admin/WarehouseController.php`,
+  `ProjectController.php`; `views/admin/warehouse/{show,index}.php`; `lang/it.php`;
+  `public/index.php`; `tests/cases/11_concurrency.php`; docs
+  (`DATA_MODEL/API/ARCHITECTURE/ROADMAP/GAP_ANALYSIS/TESTING`), `README.md`, `CHANGELOG.md`.
+
+## Approach
+
+1. **Identify + attach the repo.** List the GitHub repos this session can access
+   (`list_repos`) so you confirm the exact `owner/repo`; attach it via `add_repo`, run the
+   clone command it returns, then `register_repo_root`. It lands under `/workspace` (or the
+   session sources dir) alongside the scratch clone.
+2. **Reconcile the base.** Diff your repo's versions of the 19 *modified* files against the
+   scratch clone's pre-change versions (commit `8beb2a9`). If they match (same v1.1
+   codebase), my patch applies cleanly. If your repo has diverged, I resolve per-file —
+   re-applying each change onto your actual code rather than blindly overwriting. The 12
+   *new* files apply anywhere.
+3. **Apply on a fresh branch.** In your repo, branch `feature/v2-foundation-multisite-inventory`
+   off your default branch; apply commit `5f31098` as a patch (`git format-patch -1 5f31098`
+   → `git am`/`git apply` in your repo), fixing any conflicts from step 2.
+4. **Verify in your repo** (not just the scratch one): `composer install`; start a MySQL
+   (MariaDB is already running here on `127.0.0.1:3306`, root/test); `php database/migrate.php`
+   + `php database/seed.php`; `GM_TEST_DB_PORT=3306 php tests/run.php` → expect **202 passed,
+   0 failed**; `php -l` the touched files; smoke-boot the app.
+5. **Push + open PR** on your repo (`git push -u origin …` with retry), then open the PR so
+   you can review the transfer.
+
+## What I need from you to start
+
+Just the **`owner/repo`** of your GitHub project (e.g. `krsiti/gestionale-muratori`). If
+you're not sure of the exact name, I'll list the repos this session can access and you
+point to the right one.
+
+## Risks
+
+- **Divergence:** if your GitHub repo isn't the same v1.1 base as this scratch clone, a
+  straight patch may conflict. Mitigation: step 2 diffs first; I reconcile file-by-file and
+  re-run the full suite in *your* repo before pushing — I won't blind-overwrite your code.
+- **Access:** if the repo isn't enabled for this workspace, `add_repo` returns a policy
+  error; then an admin grants access in the Claude GitHub settings, or you push the branch
+  yourself from a patch I generate.
+
+---
+
+<details>
+<summary>Original completed feature plan (v2 Foundation Phases 0–2) — for reference</summary>
+
+# Gestionale Muratori — v2 Foundation PR (Phases 0–2)
+
+## Context
+
+`Gestionale Muratori` is a mature v1.1 field-service/construction system (PHP 8.2 custom MVC,
+raw PDO/MySQL 8, jQuery/Bootstrap 5, mPDF + PhpSpreadsheet). The client is an *impresa edile*
+in the Marche region that needs the app to grow into a legally-compliant, offline-capable,
+**multi-site** construction platform (Badge di Cantiere, Giornale dei Lavori, S.A.L.,
+Scadenzario Sicurezza, subcontractor portal, per-site inventory, PWA, accountant export,
+Coolify/Hetzner deploy).
+
+That full scope is **9 phases**. Per the user's decision, **this session delivers the
+foundation (Phases 0–2) as one reviewable, test-green PR**; Phases 3–9 are captured in the
+rewritten roadmap and follow in later PRs. Landing the foundation first is deliberate: the
+location-aware ledger is the highest-blast-radius change, so we stabilize schema + inventory
+(and fix a confirmed latent bug) before any feature builds on top.
+
+**What this PR delivers:**
+1. **Phase 0** — documentation baseline corrected to code truth + new `docs/DOMAIN_IT.md` +
+   v2 scope captured in `docs/GAP_ANALYSIS.md` / `docs/ROADMAP.md`.
+2. **Phase 1** — *all* v2 schema (migrations `003`–`009`) + new models + extended seed, landed
+   once so every later phase builds on stable tables.
+3. **Phase 2** — multi-site inventory made real: per-location balances + warehouse↔site
+   transfers, plus the fix for a confirmed stock-inflation bug in `InterventionService::complete()`.
+
+## Decisions locked (grounded in code review)
+
+- **Reservation model = Additive (site-optional).** *Decision made after reviewing the code.*
+  Interventions keep reserving from the **main warehouse (location 1)** by default;
+  `qty_in_stock` continues to mean "location-1 balance", so **every existing invariant and all
+  174 tests stay valid**. Per-site balances and warehouse↔site transfers are added *underneath*
+  as a new capability; `InterventionService::create/complete` gain an **optional** `locationId`
+  defaulting to `1`. This is a strict superset — a future "site-first default" (Phase 4+) becomes
+  a one-line default change, but we don't rewrite create/complete or existing stock tests inside
+  the same PR that already carries the risky location-ledger schema change + a bug fix. The
+  draft's "materials must be transferred to site before any intervention can consume" behavior is
+  documented in the roadmap as a deferred toggle, not built now.
+- **Ledger stays the single source of truth.** `stock_balances(item_id, location_id)` is a cache
+  (the per-location analogue of `qty_in_stock`), never written without a ledger row — mirroring
+  the existing `WarehouseItemModel::recomputeStock` discipline.
+
+## Confirmed findings driving the build
+
+- **Migration runner** (`database/migrate.php`): tracks applied files in a `migrations` table,
+  applies `migrations/*.sql` in filename-sort order, splits on `;`+newline, strips **only
+  full-line `--` comments**, and has **no per-file transaction** (DDL auto-commits in MySQL).
+  → New files must be `003_…`–`009_…`, every statement terminated by `;`-newline, comments on
+  their **own** lines, and each file safe to re-run conceptually / independently valid.
+- **Ledger sign convention** lives in one place — `WarehouseItemModel::recomputeStock`
+  (`src/Models/WarehouseItemModel.php`): `SUM(CASE WHEN type IN('in','release') THEN qty
+  WHEN type='reserve' THEN -qty WHEN type='adjustment' THEN qty ELSE 0 END)`. `out` is weight-0.
+- **Confirmed latent bug** — `InterventionService::complete()` (`src/Services/InterventionService.php:209–236`):
+  the loop iterates **all** materials from `forInterventionForUpdate` (unfiltered) and emits a
+  `release` of `qty_planned − qty_used` on **every** row **without checking `is_reserved`**.
+  A never-reserved row (no offsetting `reserve` row) therefore adds phantom stock. It's reachable
+  **today**: `database/seed.php` inserts `is_reserved=0` materials on a seeded `in_progress`
+  intervention. The correct pattern already exists in `transition('cancelled')` at line 128
+  (`reservedForUpdate` + `markReleased`).
+- `projects` **already has `lat`/`lng`** (used later by weather). `warehouse_items` has **no
+  cost column**. `users.role` is `admin|worker|client` only. Models are stateless `final class`,
+  namespace `App\Models`, use `App\Support\Database::pdo()`, positional `?` for lookups / named
+  `:x` for writes, `…ForUpdate()` for locking reads. JSON contract via `App\Support\Response`
+  (`ok`/`fail`). Lang via `App\Support\Lang::get/label` + `lang/it.php` (no `subcontractor` block yet).
+
+---
+
+## Phase 0 — Documentation baseline
+
+Correct existing docs to code truth **before** the schema lands, and add the missing domain reference.
+
+- **Patch** `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ARCHITECTURE.md` against ground truth
+  (schema, route table, ledger sign convention incl. `out`=weight-0). Explicitly document the
+  discovered `complete()` release quirk and its fix.
+- **New `docs/DOMAIN_IT.md`** — Italian construction domain: legal obligations
+  (Badge/Giornale/S.A.L./Scadenzario + decree references), glossary (cantiere, S.A.L., DURC, POS,
+  PSC, Patente a Crediti, subappalto, Direttore dei Lavori), and how each maps to app entities.
+- **Rewrite** `docs/GAP_ANALYSIS.md` (v2 section) and `docs/ROADMAP.md` to capture the full v2
+  scope — including Phases 3–9 as *planned/deferred*, and the reservation-model decision above.
+
+Deliverable: `docs/` a reviewer can read to understand current system + full v2 plan.
+
+---
+
+## Phase 1 — All v2 schema + models + seed
+
+Append-only migrations `003`–`009` (features that use them arrive in later PRs; schema lands now).
+Add matching `src/Models/*Model.php` mirroring the stateless model style. Extend `database/seed.php`
+with Marche sample data (default warehouse location, site locations for seeded projects,
+`unit_cost` on items, at least one subcontractor).
+
+| Migration | Schema |
+|---|---|
+| `003_stock_locations.sql` | `stock_locations`(id, name, kind ENUM('warehouse','site'), project_id NULL FK→projects, is_active); insert default warehouse **id=1**. `ALTER stock_movements ADD location_id BIGINT NOT NULL DEFAULT 1` FK→stock_locations; extend the `type` ENUM with `transfer_in`,`transfer_out`. `stock_balances`(item_id, location_id, qty, UNIQUE(item_id,location_id)). `ALTER warehouse_items ADD unit_cost DECIMAL(12,4) NULL`. **Backfill:** after adding `location_id` (all existing rows → 1), populate `stock_balances` from the per-(item,location) ledger sum via `INSERT … SELECT` using the same CASE. |
+| `004_subcontractors.sql` | `subcontractors`(id, name, vat_or_tax_id, email, phone, notes, is_active); `ALTER users MODIFY role ENUM(...,'subcontractor')`; `ALTER users ADD subcontractor_id BIGINT NULL` FK→subcontractors ON DELETE SET NULL; `project_subcontractors`(project_id, subcontractor_id, UNIQUE) M:N. |
+| `005_site_attendance.sql` | `site_attendance`(id, project_id, user_id NULL, subcontractor_id NULL, person_name, entry_at, exit_at NULL, entry_lat/lng, exit_lat/lng, note, created_at; indexes (project_id,entry_at),(user_id,entry_at)). |
+| `006_daily_logs.sql` | `daily_logs`(id, project_id, log_date, weather_text, weather_code, temp_min, temp_max, workers_present, work_done, notes, created_by, is_closed TINYINT DEFAULT 0, closed_at NULL, closed_by NULL, created_at; UNIQUE(project_id,log_date)); `equipment`(id, name, is_active); `daily_log_equipment`(daily_log_id, equipment_id, note). |
+| `007_sal.sql` | `sal_documents`(id, project_id, number INT, period_from, period_to, description, amount DECIMAL(12,2), status ENUM('draft','issued','signed') DEFAULT 'draft', pdf_path NULL, signature_path NULL, created_by, created_at, issued_at NULL, signed_at NULL; UNIQUE(project_id,number)); `sal_lines`(id, sal_id, description, qty DECIMAL, unit, unit_price DECIMAL, amount DECIMAL). |
+| `008_compliance.sql` | `compliance_documents`(id, subject_type ENUM('worker','company','subcontractor','project'), subject_id, doc_type ENUM('DURC','POS','PSC','patente_crediti','visita_medica','formazione','assicurazione','other'), reference, issue_date, expiry_date, credits INT NULL, file_path NULL, notes, created_by, created_at; index on expiry_date). |
+| `009_photo_geo.sql` | `ALTER photos ADD lat DECIMAL(10,7) NULL, ADD lng DECIMAL(10,7) NULL, ADD captured_at DATETIME NULL`. |
+
+New models this PR needs wired (others may be stubbed for later phases, but create the two that
+Phase 2 uses now): `src/Models/StockLocationModel.php`, `src/Models/StockBalanceModel.php`
+(both mirroring `ClientModel`/`WarehouseItemModel`: `all()/find()/create()/update()` + a
+`…ForUpdate()` locking read + a `recompute($itemId,$locationId)` upsert).
+
+**Acceptance:** `php database/migrate.php` applies cleanly on a fresh DB; `php database/seed.php`
+loads; app boots with seed logins; existing tests still green.
+
+---
+
+## Phase 2 — Multi-site inventory (per-location balances + transfers) + bug fix
+
+```mermaid
+flowchart TD
+    subgraph Ledger["stock_movements (source of truth) — now location-aware"]
+        M["type ∈ in/out/reserve/release/adjustment<br/>+ transfer_in/transfer_out<br/>location_id (default 1 = warehouse)"]
+    end
+    M -->|recompute per (item,loc)| B["stock_balances (cache)"]
+    M -->|recompute at loc 1| Q["warehouse_items.qty_in_stock<br/>(= main-warehouse balance)"]
+
+    T["StockTransferService::transfer<br/>(item, fromLoc, toLoc, qty)"] -->|1 txn, lock item FOR UPDATE| M
+    T -->|insert| TO["transfer_out @ from"]
+    T -->|insert| TI["transfer_in @ to"]
+
+    I["InterventionService.create/complete<br/>(locationId = 1 by default)"] -->|reserve/out/release @ loc| M
+
+    subgraph Fix["complete() bug fix"]
+        F["release only when is_reserved=1<br/>(mirror transition('cancelled'))"]
+    end
+    I -.-> F
+```
+
+**2.1 Location-aware recompute.** Update `WarehouseItemModel::recomputeStock($id)` so
+`qty_in_stock` = the **location-1** balance, and extend the CASE to add `transfer_in → +qty`,
+`transfer_out → −qty` (keep in/release/adjustment additive, reserve negative, `out` zero). Add
+`StockBalanceModel::recompute($itemId,$locationId)` computing the **same** signed sum filtered by
+`location_id` and upserting `stock_balances`. Centralize a helper so every movement write
+recomputes the affected location's balance *and* refreshes `qty_in_stock` when that location is 1.
+(Because all pre-existing ledger rows backfill to location 1, existing stock values are unchanged.)
+
+**2.2 Transfers.** New `src/Services/StockTransferService.php`:
+`transfer(int $itemId, int $fromLoc, int $toLoc, string $qty, int $userId, ?string $note)` — one
+transaction; validate `Validate::isQty`, `fromLoc !== toLoc`, both locations exist/active; lock the
+item `FOR UPDATE` (single item → single lock; ascending-id order if extended to multi-item); source
+balance ≥ qty unless `Config::get('inventory.allow_negative_stock')`; insert `transfer_out`(from) +
+`transfer_in`(to); recompute both location balances (+ `qty_in_stock` if either is 1). Follows the
+existing `create()` transaction/lock idiom exactly.
+
+**2.3 Fix the `complete()` bug** (`InterventionService.php:226`): guard the release with the
+reservation flag — only emit `release` when `(int)$material['is_reserved'] === 1` (the `out`
+audit row stays unconditional; it's weight-0). This stops phantom stock for never-reserved rows
+and matches the `transition('cancelled')` precedent. Thread the optional `locationId` (default 1)
+through `create()`/`complete()` so reserve/out/release movements carry `location_id`.
+
+**2.4 Auto site location.** `Admin\ProjectController::store` (+ `ProjectModel`) auto-creates a
+`stock_locations` row (`kind='site'`, `project_id`) when a project is created; seed does the same
+for seeded projects. Makes the site-optional model usable without being required by any test.
+
+**2.5 UI.** `Admin\WarehouseController` gains a `transfer` action (`POST /admin/warehouse/{id}/transfer`,
+`AuthGuard::require($request,['admin'])`, JSON `Response::ok/fail`). `views/admin/warehouse/index.php`
+gets a per-location stock column + "Trasferisci" affordance; `views/admin/warehouse/show.php` shows
+balances by location + a transfer form. Add lang keys under a new `admin.warehouse.transfer.*` group
+and `stock_locations`/`movement_types` labels (incl. `transfer_in`/`transfer_out`) + a `subcontractor`
+role label to `lang/it.php`.
+
+**Files touched:** new `src/Services/StockTransferService.php`, `src/Models/StockLocationModel.php`,
+`src/Models/StockBalanceModel.php`; edit `src/Models/WarehouseItemModel.php`,
+`src/Models/StockMovementModel.php`, `src/Services/InterventionService.php`,
+`src/Controllers/Admin/WarehouseController.php`, `src/Controllers/Admin/ProjectController.php`,
+`src/Models/ProjectModel.php`, warehouse views, `lang/it.php`, `public/index.php` (new route).
+
+**Acceptance (test-gated):** a warehouse→site transfer moves the right qty on both sides; the sum
+of all location balances for an item == the full-ledger recompute; a concurrent transfer race has
+no lost update; a reserve→complete cycle keeps stock math == ledger; and the fixed `complete()` no
+longer inflates stock for the seed's `is_reserved=0` materials.
+
+---
+
+## Tests (extend `tests/`)
+
+Add numbered cases mirroring the existing structure (in-process `0*` receive `$pdo`; assertions via
+`T::section/equals/ok`; global seed, no per-test rollback):
+
+- **`tests/cases/04_multisite_stock.php`** — per-location balance correctness; transfer moves qty
+  both sides; `Σ location balances == recomputeStock full-ledger` for an item; negative-stock guard
+  at source; reserve→complete at location keeps stock == ledger; **regression:** completing the
+  seed's `is_reserved=0` intervention does **not** inflate `qty_in_stock`.
+- **`tests/cases/11_concurrency.php`** — add a transfer-race assertion alongside the existing
+  reservation race (same multi-process pattern).
+- Keep every existing assertion green (existing 174 must not regress).
+
+---
+
+## Verification (this environment is Linux; CLAUDE.md's `C:\xampp\php\php.exe` is the Windows dev box)
+
+1. **Fresh migrate + seed:** `php database/migrate.php` then `php database/seed.php` on a clean DB;
+   confirm app boots (`php -S localhost:8000 -t public public/index.php`, log in as
+   `admin@gestionale.local` / `password`).
+2. **Test suite:** start throwaway MySQL 8 —
+   `docker run -d --name gm-test-mysql -e MYSQL_ROOT_PASSWORD=test -p 127.0.0.1:3307:3306 mysql:8.0`
+   (the repo's `tests/start-test-db.ps1` is Windows-only) — then `php tests/run.php`. Fix→retest
+   until **0 failed**.
+3. **Live drive (`/run` or `/verify` + browser):** create a project (→ auto site location),
+   transfer warehouse→site, run a create→reserve→complete cycle, and confirm per-location balances
+   reconcile against a manual ledger recompute (the release gate).
+4. **Ledger invariant (release gate):** after the full cycle, every location balance == its
+   filtered ledger recompute and `qty_in_stock` == location-1 balance.
+
+## Risks & mitigations
+
+- **Location ledger is the riskiest change** → additive model keeps `qty_in_stock` = location-1
+  balance so existing invariants/tests hold; gate on ledger-reconciliation tests before Phase 3+.
+- **Coupled ENUM edits** (adding `transfer_in/out` types + `subcontractor` role) → change the
+  migration, the `recomputeStock` CASE, and the Lang labels together in the same commit.
+- **Migration runner has no per-file transaction** → keep each `003`–`009` file's statements
+  independently valid, `;`-newline terminated, comments on their own lines; the `stock_balances`
+  backfill runs after the `location_id` column exists.
+- **Scope** → only Phases 0–2 this PR; Phases 3–9 documented in the rewritten roadmap for follow-up PRs.
+
+## After changes (per CLAUDE.md)
+
+Update `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, and
+`CHANGELOG.md` for the location ledger, transfers, new schema, and the `complete()` fix. Open a PR
+(no PR unless implied by "open a pull request when done" — this session ends with a PR).
