@@ -16,7 +16,7 @@ $t = static fn (string $k): string => Lang::get($k);
 // Theme is persisted in a cookie and rendered server-side so there is no flash
 // of the wrong theme on load (inline <script> is blocked by our CSP).
 $theme = (($_COOKIE['gm_theme'] ?? 'light') === 'dark') ? 'dark' : 'light';
-$themeColor = $theme === 'dark' ? '#0B0D11' : '#1E232B';
+$themeColor = $theme === 'dark' ? '#15351F' : '#2E9E5B';
 
 $isAdmin = ($user['role'] ?? null) === 'admin';
 
@@ -98,9 +98,6 @@ $nav = [
 <div class="app-shell<?= $isAdmin ? ' has-sidebar' : '' ?>">
     <?php if ($isAdmin): ?>
         <aside class="app-sidebar" id="app-sidebar">
-            <a class="sb-brand" href="<?= $e(Url::to('/admin')) ?>">
-                <span class="app-brand-chip">GM</span> <?= $e(Lang::get('app_name')) ?>
-            </a>
             <?php foreach ($nav as [$group, $links]): ?>
                 <?php if ($group !== null): ?><div class="sb-group"><?= $e($t($group)) ?></div><?php endif; ?>
                 <?php foreach ($links as [$href, $labelKey, $icon]): ?>

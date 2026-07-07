@@ -31,9 +31,15 @@
   --gm-ink-2:#5A616B;         /* muted text */
   --gm-line:#D6DAE0;          /* hairlines */
 
-  --gm-amber:#F5A300;         /* the one accent */
-  --gm-amber-strong:#E08C00;
-  --gm-on-amber:#2A1D00;      /* text on amber */
+  --gm-green:#2E9E5B;         /* the one accent (ProntoCantiere green) */
+  --gm-green-strong:#248049;
+  --gm-on-green:#FFFFFF;      /* text on green */
+  --gm-topbar:#2E9E5B;        /* full-width header band */
+  /* legacy amber tokens kept as aliases → now resolve to green so every
+     existing reference (buttons, KPI stripe, active states) turns green. */
+  --gm-amber:var(--gm-green);
+  --gm-amber-strong:var(--gm-green-strong);
+  --gm-on-amber:var(--gm-on-green);
   --gm-steel:#2C6E9B;         /* links / info */
   --gm-steel-strong:#215979;
 
@@ -41,6 +47,7 @@
 
   --gm-shadow:0 1px 2px rgba(20,26,35,.06), 0 4px 16px rgba(20,26,35,.07);
   --gm-radius:10px;
+  --topbar-h:56px;            /* full-width header band height */
 
   /* map Bootstrap to the palette */
   --bs-body-bg:var(--gm-ground);
@@ -52,7 +59,7 @@
   --bs-tertiary-bg:var(--gm-surface-2);
   --bs-emphasis-color:var(--gm-ink);
   --bs-primary:var(--gm-amber);
-  --bs-primary-rgb:245,163,0;
+  --bs-primary-rgb:46,158,91;
   --bs-success:var(--gm-ok);
   --bs-success-rgb:31,138,76;
   --bs-warning-rgb:224,124,16;
@@ -75,9 +82,13 @@
   --gm-ink-2:#99A1AC;
   --gm-line:#2A2F37;
 
-  --gm-amber:#FFB020;
-  --gm-amber-strong:#FFC24D;
-  --gm-on-amber:#241800;
+  --gm-green:#34B368;
+  --gm-green-strong:#2A9457;
+  --gm-on-green:#04160C;
+  --gm-topbar:#15351F;        /* deep-green header band in dark mode */
+  --gm-amber:var(--gm-green);
+  --gm-amber-strong:var(--gm-green-strong);
+  --gm-on-amber:var(--gm-on-green);
   --gm-steel:#6FB2DC;
   --gm-steel-strong:#8CC4E6;
 
@@ -92,7 +103,7 @@
   --bs-tertiary-bg:var(--gm-surface-2);
   --bs-emphasis-color:#fff;
   --bs-primary:var(--gm-amber);
-  --bs-primary-rgb:255,176,32;
+  --bs-primary-rgb:52,179,104;
   --bs-success:var(--gm-ok);
   --bs-success-rgb:70,192,126;
   --bs-danger:var(--gm-bad);
@@ -129,37 +140,42 @@ a:hover { text-decoration:underline; }
 /* ============================================================================
    App shell: anthracite topbar + optional admin sidebar
    ========================================================================== */
-.app-topbar { background:var(--gm-anthracite); position:sticky; top:0; z-index:1030;
-  border-bottom:1px solid rgba(255,255,255,.06); }
+.app-topbar { background:var(--gm-topbar); position:sticky; top:0; z-index:1040;
+  min-height:var(--topbar-h); border-bottom:1px solid rgba(0,0,0,.10);
+  box-shadow:0 1px 0 rgba(0,0,0,.05); }
 .app-topbar .navbar-brand { color:#fff; font-weight:800; letter-spacing:-.02em;
   display:inline-flex; align-items:center; gap:.55rem; }
-.app-brand-chip { width:26px; height:26px; border-radius:6px; background:var(--gm-amber);
-  color:var(--gm-on-amber); display:grid; place-items:center; font-family:var(--font-mono);
-  font-weight:900; font-size:.8rem; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.15); flex:none; }
-.app-topbar .badge.role { background:var(--gm-amber); color:var(--gm-on-amber); font-weight:700; }
-.app-topbar .btn-icon { color:#cfd4db; border-color:rgba(255,255,255,.18);
-  background:rgba(255,255,255,.04); display:inline-grid; place-items:center; }
-.app-topbar .btn-icon:hover { color:#fff; background:rgba(255,255,255,.12); }
+.app-brand-chip { width:26px; height:26px; border-radius:6px; background:var(--gm-green);
+  color:#fff; display:grid; place-items:center; font-family:var(--font-mono);
+  font-weight:900; font-size:.8rem; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.12); flex:none; }
+/* on the green header, invert the chip to white-on-green so it stays legible */
+.app-topbar .app-brand-chip { background:#fff; color:var(--gm-green); box-shadow:none; }
+.app-topbar .badge.role { background:rgba(255,255,255,.22); color:#fff; font-weight:700; }
+.app-topbar .btn-icon { color:#fff; border-color:rgba(255,255,255,.32);
+  background:rgba(255,255,255,.12); display:inline-grid; place-items:center; }
+.app-topbar .btn-icon:hover { color:#fff; background:rgba(255,255,255,.24); }
+.app-topbar .btn-outline-light { border-color:rgba(255,255,255,.55); color:#fff; }
+.app-topbar .btn-outline-light:hover { background:#fff; color:var(--gm-green-strong); }
 
-/* layout with sidebar (admin) */
+/* layout with sidebar (admin) — light rail beneath a full-width green header */
 .app-shell { display:block; }
 .app-sidebar {
-  position:fixed; top:0; bottom:0; left:0; width:230px; z-index:1040;
-  background:var(--gm-anthracite); color:#cfd4db; padding:14px 12px 24px;
+  position:fixed; top:var(--topbar-h); bottom:0; left:0; width:230px; z-index:1035;
+  background:var(--gm-surface); color:var(--gm-ink-2); padding:14px 12px 24px;
   overflow-y:auto; transform:translateX(-100%); transition:transform .22s ease;
-  border-right:1px solid rgba(255,255,255,.06);
+  border-right:1px solid var(--gm-line);
 }
-.app-sidebar .sb-brand { display:flex; align-items:center; gap:.55rem; color:#fff;
-  font-weight:800; letter-spacing:-.02em; padding:6px 8px 14px; }
 .app-sidebar .sb-group { font-family:var(--font-mono); font-size:.62rem; letter-spacing:.12em;
-  text-transform:uppercase; color:#7c828c; margin:14px 0 6px; padding-left:10px; }
-.app-sidebar a.sb-link { display:flex; align-items:center; gap:.6rem; padding:.5rem .65rem;
-  border-radius:8px; color:#cfd4db; font-size:.9rem; font-weight:500; margin-bottom:1px; }
-.app-sidebar a.sb-link:hover { background:var(--gm-anthracite-2); color:#fff; text-decoration:none; }
-.app-sidebar a.sb-link.active { background:rgba(245,163,0,.14); color:var(--gm-amber); font-weight:700; }
-.app-sidebar a.sb-link.active .ic { opacity:1; }
-.app-sidebar .ic { width:17px; height:17px; opacity:.7; flex:none; }
-.sb-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1035;
+  text-transform:uppercase; color:var(--gm-ink-2); margin:14px 0 6px; padding-left:10px; }
+.app-sidebar .sb-group:first-child { margin-top:2px; }
+.app-sidebar a.sb-link { display:flex; align-items:center; gap:.6rem; padding:.55rem .65rem;
+  border-radius:8px; color:var(--gm-ink); font-size:.9rem; font-weight:500; margin-bottom:1px; }
+.app-sidebar a.sb-link:hover { background:var(--gm-surface-2); color:var(--gm-ink); text-decoration:none; }
+.app-sidebar a.sb-link.active { background:color-mix(in srgb, var(--gm-green) 14%, transparent);
+  color:var(--gm-green-strong); font-weight:700; }
+.app-sidebar a.sb-link.active .ic { opacity:1; color:var(--gm-green-strong); }
+.app-sidebar .ic { width:17px; height:17px; opacity:.75; flex:none; }
+.sb-backdrop { position:fixed; inset:var(--topbar-h) 0 0 0; background:rgba(0,0,0,.45); z-index:1030;
   opacity:0; visibility:hidden; transition:opacity .2s ease; }
 .app-shell.sidebar-open .app-sidebar { transform:translateX(0); }
 .app-shell.sidebar-open .sb-backdrop { opacity:1; visibility:visible; }
@@ -167,7 +183,6 @@ a:hover { text-decoration:underline; }
 @media (min-width:992px) {
   .app-shell.has-sidebar .app-sidebar { transform:translateX(0); }
   .app-shell.has-sidebar .app-content { margin-left:230px; }
-  .app-shell.has-sidebar .app-topbar { padding-left:230px; }
   .sb-backdrop { display:none; }
   .js-sidebar-toggle { display:none!important; }
 }
