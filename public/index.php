@@ -15,7 +15,10 @@ if (PHP_SAPI === 'cli-server') {
 require dirname(__DIR__) . '/src/bootstrap.php';
 
 use App\Controllers\Admin\ClientController;
+use App\Controllers\Admin\ExpenseController;
 use App\Controllers\Admin\InterventionController;
+use App\Controllers\Admin\InvoiceController;
+use App\Controllers\Admin\QuoteController;
 use App\Controllers\Admin\PhotoController as AdminPhotoController;
 use App\Controllers\Admin\ProjectController;
 use App\Controllers\Admin\AttendanceController as AdminAttendanceController;
@@ -108,9 +111,23 @@ $router->post('/admin/clients/{id}',        [ClientController::class, 'update'])
 $router->post('/admin/clients/{id}/delete', [ClientController::class, 'destroy']);
 
 $router->get('/admin/projects',              [ProjectController::class, 'index']);
+$router->get('/admin/projects/create',       [ProjectController::class, 'create']);
+$router->get('/admin/projects/{id}/edit',    [ProjectController::class, 'edit']);
+$router->get('/admin/projects/{id}',         [ProjectController::class, 'show']);
 $router->post('/admin/projects',             [ProjectController::class, 'store']);
 $router->post('/admin/projects/{id}',        [ProjectController::class, 'update']);
 $router->post('/admin/projects/{id}/delete', [ProjectController::class, 'destroy']);
+// Project detail page sub-resources (documents, invoices, materials, attendance, workers)
+$router->post('/admin/projects/{id}/documents',                    [ProjectController::class, 'uploadDocument']);
+$router->get('/admin/projects/{id}/documents/{docId}',             [ProjectController::class, 'downloadDocument']);
+$router->post('/admin/projects/{id}/documents/{docId}/delete',     [ProjectController::class, 'deleteDocument']);
+$router->post('/admin/projects/{id}/invoices',                     [ProjectController::class, 'storeInvoice']);
+$router->post('/admin/projects/{id}/invoices/{invoiceId}/delete',  [ProjectController::class, 'deleteInvoice']);
+$router->post('/admin/projects/{id}/materials',                    [ProjectController::class, 'storeMaterial']);
+$router->post('/admin/projects/{id}/materials/{materialId}/delete',[ProjectController::class, 'deleteMaterial']);
+$router->post('/admin/projects/{id}/attendance',                   [ProjectController::class, 'toggleAttendance']);
+$router->post('/admin/projects/{id}/workers',                      [ProjectController::class, 'assignWorker']);
+$router->post('/admin/projects/{id}/workers/{workerId}/remove',    [ProjectController::class, 'unassignWorker']);
 
 $router->get('/admin/warehouse',                 [WarehouseController::class, 'index']);
 $router->post('/admin/warehouse',                [WarehouseController::class, 'store']);
@@ -127,6 +144,33 @@ $router->get('/admin/interventions/{id}',           [InterventionController::cla
 $router->post('/admin/interventions/{id}',          [InterventionController::class, 'update']);
 $router->post('/admin/interventions/{id}/status',   [InterventionController::class, 'status']);
 $router->get('/admin/interventions/{id}/signature', [InterventionController::class, 'signature']);
+
+// --- Preventivi (Quotes) ---
+$router->get('/admin/quotes',               [QuoteController::class, 'index']);
+$router->get('/admin/quotes/create',        [QuoteController::class, 'create']);
+$router->get('/admin/quotes/{id}/edit',     [QuoteController::class, 'edit']);
+$router->get('/admin/quotes/{id}/pdf',      [QuoteController::class, 'pdf']);
+$router->post('/admin/quotes',              [QuoteController::class, 'store']);
+$router->post('/admin/quotes/{id}',         [QuoteController::class, 'update']);
+$router->post('/admin/quotes/{id}/delete',  [QuoteController::class, 'destroy']);
+$router->post('/admin/quotes/{id}/invoice', [QuoteController::class, 'toInvoice']);
+
+// --- Fatture (Invoices) ---
+$router->get('/admin/invoices',               [InvoiceController::class, 'index']);
+$router->get('/admin/invoices/create',        [InvoiceController::class, 'create']);
+$router->get('/admin/invoices/{id}/edit',     [InvoiceController::class, 'edit']);
+$router->get('/admin/invoices/{id}/print',    [InvoiceController::class, 'print']);
+$router->post('/admin/invoices',              [InvoiceController::class, 'store']);
+$router->post('/admin/invoices/{id}',         [InvoiceController::class, 'update']);
+$router->post('/admin/invoices/{id}/delete',  [InvoiceController::class, 'destroy']);
+
+// --- Spese (Expenses) ---
+$router->get('/admin/expenses',               [ExpenseController::class, 'index']);
+$router->get('/admin/expenses/create',        [ExpenseController::class, 'create']);
+$router->get('/admin/expenses/{id}/edit',     [ExpenseController::class, 'edit']);
+$router->post('/admin/expenses',              [ExpenseController::class, 'store']);
+$router->post('/admin/expenses/{id}',         [ExpenseController::class, 'update']);
+$router->post('/admin/expenses/{id}/delete',  [ExpenseController::class, 'destroy']);
 
 $router->get('/admin/users',              [UserController::class, 'index']);
 $router->post('/admin/users',             [UserController::class, 'store']);

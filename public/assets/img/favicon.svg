@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="56" fill="#2e7d32"/>
+  <!-- House outline in white, right roof broken open where the arrow exits -->
+  <g fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 198 196 L 58 196 L 58 122 L 128 62 L 164 92"/>
+    <path d="M 198 132 L 198 196"/>
+  </g>
+  <!-- Growth arrow bursting through the roof -->
+  <path d="M 84 170 L 120 134 L 140 154 L 186 108" fill="none" stroke="#fb8c00" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 210 82 L 200.5 113 L 178.7 91.5 Z" fill="#fb8c00"/>
+</svg>

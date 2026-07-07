@@ -30,4 +30,17 @@ final class Validate
     {
         return $raw !== '' && is_numeric($raw) && (float) $raw >= -180.0 && (float) $raw <= 180.0;
     }
+
+    /** Strict ISO date (Y-m-d) that round-trips — rejects things like 2026-02-31. */
+    public static function isDate(string $raw): bool
+    {
+        $d = \DateTimeImmutable::createFromFormat('Y-m-d', $raw);
+        return $d !== false && $d->format('Y-m-d') === $raw;
+    }
+
+    /** Non-negative money amount within the shared DECIMAL(12,x) ceiling. */
+    public static function isMoney(string $raw): bool
+    {
+        return $raw !== '' && is_numeric($raw) && (float) $raw >= 0 && (float) $raw <= self::MAX_DECIMAL;
+    }
 }

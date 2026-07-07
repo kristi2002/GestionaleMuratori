@@ -10,7 +10,7 @@
 // vendored Bootstrap/jQuery) — the `activate` handler deletes any cache whose
 // name differs, so a bump is what forces returning clients to fetch fresh assets
 // instead of serving the stale cache-first copy.
-var VERSION = 'gm-shell-v3';
+var VERSION = 'gm-shell-v4';
 var SCOPE = self.registration.scope; // e.g. https://host/  or  https://host/app/public/
 
 function scoped(path) {
@@ -22,6 +22,8 @@ var SHELL = [
     scoped('assets/js/app.js'),
     scoped('assets/vendor/bootstrap.min.css'),
     scoped('assets/vendor/bootstrap.bundle.min.js'),
+    scoped('assets/vendor/bootstrap-icons.min.css'),
+    scoped('assets/vendor/fonts/bootstrap-icons.woff2'),
     scoped('assets/vendor/jquery.min.js'),
     scoped('assets/icons/icon-192.png'),
     scoped('offline.html')

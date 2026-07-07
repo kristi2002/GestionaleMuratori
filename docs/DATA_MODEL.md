@@ -208,3 +208,16 @@ pending ──→ in_progress ──→ completed   (terminal)
 - `StorageInterface` — S3-compatible object storage drop-in.
 - Schema tolerates labor-hours tracking later (worker rate × time) without
   repainting: new tables would reference `interventions`/`users`.
+
+
+## Addendum — new tables (2026-07-08, migrations 010–014)
+
+- `project_workers(project_id, user_id)` — roster of operai per cantiere (M:N).
+- `project_documents` — per-project file attachments (served through the permission-checked controller, never statically).
+- `project_invoices(number, issue_date, amount, status[draft|issued|paid], note)` — billing rows linked to a project.
+- `project_materials(item_id, qty, note)` — informational per-project material log; **not** part of the stock ledger (does not move `stock_movements` / `qty_in_stock`).
+- `project_absences(project_id, user_id, absence_date)` — absence-by-default site attendance register (only exceptions stored).
+- `quotes` + `quote_lines` — estimates with line items (`vat_rate`, status draft|sent|accepted|rejected|expired), printable to PDF, convertible to a `project_invoices` row.
+- `expenses(expense_date, category[meals|fuel|vehicle|clothing|other], amount, worker_id?, project_id?)` — running costs outside materials.
+
+All foreign keys target existing `clients` / `projects` / `users` / `warehouse_items`.

@@ -117,3 +117,13 @@ Conventions:
 | GET | `/client/projects/{id}/report/pdf` / `.../excel` | Same reports as admin, own projects only. |
 
 *Starred parameters are required.*
+
+
+## Addendum — Preventivi / Fatture / Spese + project detail (2026-07-08)
+
+Admin routes added (all `AuthGuard::require(..., ['admin'])`, JSON `{ok,data?,error?}` on writes):
+
+- `GET /admin/quotes`, `GET /admin/quotes/create`, `GET /admin/quotes/{id}/edit`, `GET /admin/quotes/{id}/pdf`, `POST /admin/quotes`, `POST /admin/quotes/{id}`, `POST /admin/quotes/{id}/delete`, `POST /admin/quotes/{id}/invoice`.
+- `GET /admin/invoices`, `GET /admin/invoices/create`, `GET /admin/invoices/{id}/edit`, `GET /admin/invoices/{id}/print`, `POST /admin/invoices`, `POST /admin/invoices/{id}`, `POST /admin/invoices/{id}/delete`.
+- `GET /admin/expenses` (`?category=`), `GET /admin/expenses/create`, `GET /admin/expenses/{id}/edit`, `POST /admin/expenses`, `POST /admin/expenses/{id}`, `POST /admin/expenses/{id}/delete`.
+- Project detail: `GET /admin/projects/create|{id}/edit|{id}`, plus `POST .../{id}/documents`, `GET .../{id}/documents/{docId}`, `POST .../{id}/documents/{docId}/delete`, `POST .../{id}/invoices[/{invoiceId}/delete]`, `POST .../{id}/materials[/{materialId}/delete]`, `POST .../{id}/attendance`, `POST .../{id}/workers[/{workerId}/remove]`.

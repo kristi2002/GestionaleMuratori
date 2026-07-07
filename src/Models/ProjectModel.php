@@ -13,7 +13,11 @@ final class ProjectModel
      */
     public function all(array $filters = []): array
     {
-        $sql    = 'SELECT p.*, c.name AS client_name
+        $sql    = 'SELECT p.*, c.name AS client_name,
+                        (SELECT GROUP_CONCAT(u.name ORDER BY u.name SEPARATOR \', \')
+                           FROM project_workers pw
+                           JOIN users u ON u.id = pw.user_id
+                          WHERE pw.project_id = p.id) AS worker_names
                     FROM projects p
                     JOIN clients c ON c.id = p.client_id
                     WHERE 1 = 1';
@@ -40,10 +44,22 @@ final class ProjectModel
         return $stmt->fetchAll();
     }
 
+    /** Number of projects in the given status (dashboard KPI). */
+    public function countByStatus(string $status): int
+    {
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM projects WHERE status = ?');
+        $stmt->execute([$status]);
+        return (int) $stmt->fetchColumn();
+    }
+
     public function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare(
-            'SELECT p.*, c.name AS client_name
+            'SELECT p.*, c.name AS client_name,
+                    (SELECT GROUP_CONCAT(u.name ORDER BY u.name SEPARATOR \', \')
+                       FROM project_workers pw
+                       JOIN users u ON u.id = pw.user_id
+                      WHERE pw.project_id = p.id) AS worker_names
              FROM projects p JOIN clients c ON c.id = p.client_id
              WHERE p.id = ? LIMIT 1'
         );
@@ -96,11 +112,76 @@ final class ProjectModel
         return $stmt->execute([$id]);
     }
 
-    public function countByStatus(string $status): int
+    /** @return array<int,array<string,mixed>> Projects a worker is assigned to (profile page). */
+    public function forWorker(int $userId): array
     {
-        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM projects WHERE status = ?');
-        $stmt->execute([$status]);
-        return (int) $stmt->fetchColumn();
+        $stmt = Database::pdo()->prepare(
+            'SELECT p.*, c.name AS client_name
+             FROM projects p
+             JOIN clients c ON c.id = p.client_id
+             JOIN project_workers pw ON pw.project_id = p.id
+             WHERE pw.user_id = ?
+             ORDER BY p.start_date DESC, p.name'
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll();
+    }
+
+    /** @return array<int,array<string,mixed>> Assigned workers (id, name), alphabetical — the attendance roster. */
+    public function workers(int $projectId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT u.id, u.name
+             FROM project_workers pw JOIN users u ON u.id = pw.user_id
+             WHERE pw.project_id = ?
+             ORDER BY u.name'
+        );
+        $stmt->execute([$projectId]);
+        return $stmt->fetchAll();
+    }
+
+    /** @return array<int,int> IDs of the workers assigned to this project. */
+    public function workerIds(int $projectId): array
+    {
+        $stmt = Database::pdo()->prepare('SELECT user_id FROM project_workers WHERE project_id = ?');
+        $stmt->execute([$projectId]);
+        return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    /** Links one worker to the project (attendance register "+ Assegna operaio"). */
+    public function addWorker(int $projectId, int $userId): void
+    {
+        Database::pdo()
+            ->prepare('INSERT INTO project_workers (project_id, user_id) VALUES (?, ?)')
+            ->execute([$projectId, $userId]);
+    }
+
+    /** Unlinks one worker from the project. Logged absences are kept as history. */
+    public function removeWorker(int $projectId, int $userId): bool
+    {
+        $stmt = Database::pdo()->prepare('DELETE FROM project_workers WHERE project_id = ? AND user_id = ?');
+        $stmt->execute([$projectId, $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /** Replaces the project's worker assignments with the given user IDs. */
+    public function syncWorkers(int $projectId, array $userIds): void
+    {
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare('DELETE FROM project_workers WHERE project_id = ?');
+            $stmt->execute([$projectId]);
+
+            $insert = $pdo->prepare('INSERT INTO project_workers (project_id, user_id) VALUES (?, ?)');
+            foreach (array_unique(array_map('intval', $userIds)) as $userId) {
+                $insert->execute([$projectId, $userId]);
+            }
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 
     /** Number of interventions linked to this project — used to warn before a cascading delete. */

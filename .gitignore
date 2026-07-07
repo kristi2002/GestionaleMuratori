@@ -9,3 +9,9 @@ Thumbs.db
 # Test artifacts
 /tests/.uploads/
 /tests/.server.log
+
+# Pre-merge backups (safe to delete; originals are in git history)
+*.desktop-orig*.bak
+
+# Local editor/agent settings
+/.claude/

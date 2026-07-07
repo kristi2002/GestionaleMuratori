@@ -11,51 +11,89 @@ use App\Support\Url;
 $base = $base ?? '';
 $user = $user ?? null;
 $e = static fn (?string $v): string => View::e($v);
-$t = static fn (string $k): string => Lang::get($k);
 
 // Theme is persisted in a cookie and rendered server-side so there is no flash
-// of the wrong theme on load (inline <script> is blocked by our CSP).
-$theme = (($_COOKIE['gm_theme'] ?? 'light') === 'dark') ? 'dark' : 'light';
-$themeColor = $theme === 'dark' ? '#15351F' : '#2E9E5B';
+// of the wrong theme on load (an inline <script> would be blocked by our CSP).
+$theme      = (($_COOKIE['gm_theme'] ?? 'light') === 'dark') ? 'dark' : 'light';
+$themeColor = $theme === 'dark' ? '#15351F' : '#2e7d32';
 
-$isAdmin = ($user['role'] ?? null) === 'admin';
-
-// Current path (base-stripped) for sidebar active state.
-$path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
-if ($base !== '' && str_starts_with($path, $base)) {
-    $path = substr($path, strlen($base));
+// Global sidebar menu, role-aware: [label, href|null, bootstrap-icon, children?].
+// A null href marks a section not available yet (muted placeholder). Children are
+// [label, href, status?] pairs rendered as an expandable sub-list under the item.
+$menu = [];
+if ($user !== null) {
+    $menu = match ($user['role'] ?? '') {
+        'admin' => [
+            [Lang::get('admin.nav.dashboard'),        '/admin',               'bi-grid-1x2'],
+            [Lang::get('admin.clients.title'),        '/admin/clients',       'bi-people'],
+            [Lang::get('admin.projects.title'),       '/admin/projects',      'bi-buildings'],
+            [Lang::get('admin.subcontractors.title'), '/admin/subcontractors','bi-diagram-3'],
+            [Lang::get('admin.quotes.title'),         '/admin/quotes',        'bi-file-earmark-text'],
+            [Lang::get('admin.invoices.title'),       '/admin/invoices',      'bi-receipt'],
+            // One entry per expense category: the list page pre-filtered.
+            [Lang::get('admin.expenses.title'),       '/admin/expenses',      'bi-cash-coin',
+                array_map(
+                    static fn (string $c): array => [Lang::label('expense_categories', $c), '/admin/expenses?category=' . $c],
+                    ['meals', 'fuel', 'vehicle', 'clothing', 'other'],
+                )],
+            [Lang::get('admin.interventions.title'),  '/admin/interventions', 'bi-calendar-week',
+                // One entry per workflow status: the list page pre-filtered.
+                array_map(
+                    static fn (string $s): array => [Lang::label('intervention_status', $s), '/admin/interventions?status=' . $s, $s],
+                    ['in_progress', 'on_hold', 'pending', 'completed'],
+                )],
+            [Lang::get('admin.attendance.title'),     '/admin/attendance',    'bi-person-badge'],
+            [Lang::get('admin.daily_logs.title'),     '/admin/daily-logs',    'bi-journal-text'],
+            [Lang::get('admin.sal.title'),            '/admin/sal',           'bi-file-earmark-ruled'],
+            [Lang::get('admin.compliance.title'),     '/admin/compliance',    'bi-shield-check'],
+            [Lang::get('admin.warehouse.title'),      '/admin/warehouse',     'bi-box-seam'],
+            [Lang::get('admin.exports.title'),        '/admin/exports',       'bi-download'],
+            [Lang::get('admin.users.title'),          '/admin/users',         'bi-person-gear'],
+        ],
+        'worker' => [
+            [Lang::get('nav.my_tasks'),    '/worker',      'bi-list-check'],
+        ],
+        'client' => [
+            [Lang::get('nav.my_projects'), '/client',      'bi-folder2-open'],
+        ],
+        default => [],
+    };
 }
-$path = '/' . trim($path, '/');
-$active = static function (string $href) use ($path): string {
-    $on = $href === '/admin' ? ($path === '/admin' || $path === '/') : str_starts_with($path, $href);
-    return $on ? ' active' : '';
-};
+$hasSidebar = $menu !== [];
 
-// Admin navigation: [group-label-key, [ [href, label-key, icon-id], ... ]].
-$nav = [
-    [null, [
-        ['/admin', 'admin.nav.dashboard', 'i-grid'],
-    ]],
-    ['admin.nav.grp_registry', [
-        ['/admin/clients', 'admin.clients.title', 'i-users'],
-        ['/admin/projects', 'admin.projects.title', 'i-building'],
-        ['/admin/subcontractors', 'admin.subcontractors.title', 'i-link'],
-    ]],
-    ['admin.nav.grp_site', [
-        ['/admin/interventions', 'admin.interventions.title', 'i-clipboard'],
-        ['/admin/attendance', 'admin.attendance.title', 'i-badge'],
-        ['/admin/daily-logs', 'admin.daily_logs.title', 'i-journal'],
-        ['/admin/sal', 'admin.sal.title', 'i-file'],
-    ]],
-    ['admin.nav.grp_safety', [
-        ['/admin/compliance', 'admin.compliance.title', 'i-shield'],
-        ['/admin/warehouse', 'admin.warehouse.title', 'i-box'],
-    ]],
-    ['admin.nav.grp_system', [
-        ['/admin/exports', 'admin.exports.title', 'i-download'],
-        ['/admin/users', 'admin.users.title', 'i-sliders'],
-    ]],
-];
+// Active item = the menu entry whose href is the longest prefix of the current path.
+$reqPath = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+if ($base !== '' && str_starts_with($reqPath, $base)) {
+    $reqPath = substr($reqPath, strlen($base));
+}
+$reqPath     = '/' . ltrim($reqPath, '/');
+$activeIndex = null;
+$activeLen   = -1;
+foreach ($menu as $i => $item) {
+    $href = $item[1];
+    if ($href === null) {
+        continue;
+    }
+    if (($reqPath === $href || str_starts_with($reqPath, $href . '/')) && strlen($href) > $activeLen) {
+        $activeIndex = $i;
+        $activeLen   = strlen($href);
+    }
+}
+
+// A sub-link is active when its path matches and every query pair it carries
+// is present in the current request (extra request params are ignored).
+$subActive = static function (string $href) use ($reqPath): bool {
+    if ($reqPath !== (string) parse_url($href, PHP_URL_PATH)) {
+        return false;
+    }
+    parse_str((string) parse_url($href, PHP_URL_QUERY), $query);
+    foreach ($query as $key => $value) {
+        if ((string) ($_GET[$key] ?? '') !== (string) $value) {
+            return false;
+        }
+    }
+    return true;
+};
 ?>
 <!DOCTYPE html>
 <html lang="it" data-bs-theme="<?= $e($theme) ?>">
@@ -65,90 +103,122 @@ $nav = [
     <meta name="csrf-token" content="<?= $e(Csrf::token()) ?>">
     <meta name="theme-color" content="<?= $e($themeColor) ?>">
     <title><?= $e($title ?? null) ?><?= isset($title) ? ' — ' : '' ?><?= $e(Lang::get('app_name')) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= $e($base) ?>/assets/img/favicon.svg">
     <link rel="manifest" href="<?= $e($base) ?>/manifest.webmanifest">
     <link rel="apple-touch-icon" href="<?= $e($base) ?>/assets/icons/icon-192.png">
     <link rel="preload" as="font" type="font/woff2" crossorigin
           href="<?= $e($base) ?>/assets/fonts/inter-latin-600-normal.woff2">
+    <?php // Local assets only (no CDN): the app must work offline too. ?>
     <link href="<?= $e($base) ?>/assets/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="<?= $e($base) ?>/assets/css/app.css" rel="stylesheet">
+    <link href="<?= $e($base) ?>/assets/vendor/bootstrap-icons.min.css" rel="stylesheet">
+    <?php // filemtime cache-buster: browsers drop stale copies whenever the file changes. ?>
+    <link href="<?= $e($base) ?>/assets/css/app.css?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/css/app.css') ?>" rel="stylesheet">
 </head>
 <body data-base="<?= $e($base) ?>">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-    <defs>
-        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"/><rect x="14" y="4" width="6" height="6" rx="1.2"/><rect x="4" y="14" width="6" height="6" rx="1.2"/><rect x="14" y="14" width="6" height="6" rx="1.2"/></symbol>
-        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M20.5 20c0-2.5-1.5-4.4-3.6-4.9"/></symbol>
-        <symbol id="i-building" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="1.2"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 20v-3h4v3"/></symbol>
-        <symbol id="i-link" viewBox="0 0 24 24"><path d="M9.5 13a3.2 3.2 0 0 1 0-4.5l2-2a3.2 3.2 0 0 1 4.5 4.5l-1 1"/><path d="M14.5 11a3.2 3.2 0 0 1 0 4.5l-2 2a3.2 3.2 0 0 1-4.5-4.5l1-1"/></symbol>
-        <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 11h6M9 15h4"/></symbol>
-        <symbol id="i-badge" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="12" cy="11" r="2.2"/><path d="M8.5 17c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4"/></symbol>
-        <symbol id="i-journal" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="1.5"/><path d="M9 4v16M12 8h4M12 12h4"/></symbol>
-        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3.5H8a1.5 1.5 0 0 0-1.5 1.5v14A1.5 1.5 0 0 0 8 20.5h8a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3.5V7h3.5M9.5 13h5M9.5 16h5"/></symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
-        <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4.2 7.6L12 12l7.8-4.4M12 12v9"/></symbol>
-        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10M8 11l4 4 4-4"/><path d="M5 19h14"/></symbol>
-        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h8M16 8h4M4 16h4M12 16h8"/><circle cx="14" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></symbol>
-        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></symbol>
-        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
-        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
-        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M9 12h10M16 9l3 3-3 3"/></symbol>
-        <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20l-2 2M16 12v3"/></symbol>
-    </defs>
-</svg>
-
-<div class="app-shell<?= $isAdmin ? ' has-sidebar' : '' ?>">
-    <?php if ($isAdmin): ?>
-        <aside class="app-sidebar" id="app-sidebar">
-            <?php foreach ($nav as [$group, $links]): ?>
-                <?php if ($group !== null): ?><div class="sb-group"><?= $e($t($group)) ?></div><?php endif; ?>
-                <?php foreach ($links as [$href, $labelKey, $icon]): ?>
-                    <a class="sb-link<?= $active($href) ?>" href="<?= $e(Url::to($href)) ?>">
-                        <svg class="ic" aria-hidden="true"><use href="#<?= $e($icon) ?>"></use></svg>
-                        <span><?= $e($t($labelKey)) ?></span>
-                    </a>
-                <?php endforeach; ?>
-            <?php endforeach; ?>
-        </aside>
-        <div class="sb-backdrop js-sidebar-close" aria-hidden="true"></div>
-    <?php endif; ?>
-
-    <header class="app-topbar navbar navbar-dark">
-        <div class="container-fluid gap-2">
-            <?php if ($isAdmin): ?>
-                <button type="button" class="btn btn-sm btn-icon js-sidebar-toggle"
-                        aria-label="<?= $e($t('admin.nav.menu')) ?>">
-                    <svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-menu"></use></svg>
+<nav class="navbar navbar-dark app-navbar sticky-top">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <?php if ($hasSidebar): ?>
+                <button class="navbar-toggler d-lg-none me-2" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar"
+                        aria-label="<?= $e(Lang::get('nav.open_menu')) ?>">
+                    <span class="navbar-toggler-icon"></span>
                 </button>
             <?php endif; ?>
-            <a class="navbar-brand me-auto" href="<?= $e(Url::to('/')) ?>">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-white" href="<?= $e(Url::to('/')) ?>">
                 <span class="app-brand-chip">GM</span>
                 <span class="d-none d-sm-inline"><?= $e(Lang::get('app_name')) ?></span>
             </a>
-            <?php if ($user !== null): ?>
+        </div>
+        <?php if ($user !== null): ?>
+            <div class="d-flex align-items-center gap-2">
                 <span class="badge rounded-pill role"><?= $e(Lang::label('roles', $user['role'])) ?></span>
                 <span class="small text-white d-none d-md-inline"><?= $e($user['name']) ?></span>
                 <button type="button" class="btn btn-sm btn-icon js-theme-toggle"
-                        aria-label="<?= $e($t('admin.nav.toggle_theme')) ?>" title="<?= $e($t('admin.nav.toggle_theme')) ?>">
-                    <svg class="ic ic-moon" width="17" height="17" aria-hidden="true"><use href="#i-moon"></use></svg>
-                    <svg class="ic ic-sun" width="17" height="17" aria-hidden="true"><use href="#i-sun"></use></svg>
+                        aria-label="<?= $e(Lang::get('admin.nav.toggle_theme')) ?>" title="<?= $e(Lang::get('admin.nav.toggle_theme')) ?>">
+                    <i class="bi bi-moon-stars ic-moon" aria-hidden="true"></i>
+                    <i class="bi bi-sun ic-sun" aria-hidden="true"></i>
                 </button>
                 <?php if (in_array($user['role'], ['worker', 'subcontractor'], true)): ?>
                     <a class="btn btn-sm btn-outline-light" href="<?= $e(Url::to('/attendance')) ?>"><?= $e(Lang::get('attendance.nav')) ?></a>
                 <?php endif; ?>
-                <a class="btn btn-sm btn-icon" href="<?= $e(Url::to('/password')) ?>" title="<?= $e(Lang::get('auth.change_password')) ?>"
-                   aria-label="<?= $e(Lang::get('auth.change_password')) ?>">
-                    <svg class="ic" width="17" height="17" aria-hidden="true"><use href="#i-key"></use></svg>
+                <a class="btn btn-sm btn-icon" href="<?= $e(Url::to('/password')) ?>"
+                   title="<?= $e(Lang::get('auth.change_password')) ?>" aria-label="<?= $e(Lang::get('auth.change_password')) ?>">
+                    <i class="bi bi-key" aria-hidden="true"></i>
                 </a>
                 <button type="button" class="btn btn-sm btn-icon js-logout"
                         data-url="<?= $e(Url::to('/logout')) ?>" title="<?= $e(Lang::get('auth.logout')) ?>"
                         aria-label="<?= $e(Lang::get('auth.logout')) ?>">
-                    <svg class="ic" width="17" height="17" aria-hidden="true"><use href="#i-logout"></use></svg>
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                 </button>
-            <?php endif; ?>
-        </div>
-    </header>
+            </div>
+        <?php endif; ?>
+    </div>
+</nav>
 
-    <main class="app-content">
-        <div class="container py-4">
+<div class="app-shell">
+    <?php if ($hasSidebar): ?>
+        <aside class="app-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="appSidebar"
+               aria-label="<?= $e(Lang::get('nav.menu')) ?>">
+            <div class="offcanvas-header d-lg-none">
+                <h2 class="offcanvas-title h5"><?= $e(Lang::get('nav.menu')) ?></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar"
+                        aria-label="<?= $e(Lang::get('nav.close_menu')) ?>"></button>
+            </div>
+            <div class="offcanvas-body app-sidebar-body">
+                <nav class="nav flex-column app-sidebar-nav">
+                    <?php foreach ($menu as $i => $item): ?>
+                        <?php [$label, $href, $icon] = $item; $children = $item[3] ?? []; ?>
+                        <?php if ($href === null): ?>
+                            <span class="nav-link app-nav-link disabled" aria-disabled="true"
+                                  title="<?= $e(Lang::get('nav.coming_soon')) ?>">
+                                <span class="app-nav-icon"><i class="bi <?= $e($icon) ?>" aria-hidden="true"></i></span>
+                                <span class="app-nav-label"><?= $e($label) ?></span>
+                            </span>
+                        <?php elseif ($children === []): ?>
+                            <a class="nav-link app-nav-link<?= $i === $activeIndex ? ' active' : '' ?>"
+                               href="<?= $e(Url::to($href)) ?>"<?= $i === $activeIndex ? ' aria-current="page"' : '' ?>>
+                                <span class="app-nav-icon"><i class="bi <?= $e($icon) ?>" aria-hidden="true"></i></span>
+                                <span class="app-nav-label"><?= $e($label) ?></span>
+                            </a>
+                        <?php else: ?>
+                            <?php $open = $i === $activeIndex; ?>
+                            <div class="app-nav-item">
+                                <a class="nav-link app-nav-link<?= $open ? ' active' : '' ?>"
+                                   href="<?= $e(Url::to($href)) ?>"<?= $open ? ' aria-current="page"' : '' ?>>
+                                    <span class="app-nav-icon"><i class="bi <?= $e($icon) ?>" aria-hidden="true"></i></span>
+                                    <span class="app-nav-label"><?= $e($label) ?></span>
+                                </a>
+                                <button type="button" class="app-nav-caret" data-bs-toggle="collapse"
+                                        data-bs-target="#app-subnav-<?= $i ?>" aria-expanded="<?= $open ? 'true' : 'false' ?>"
+                                        aria-controls="app-subnav-<?= $i ?>"
+                                        aria-label="<?= $e(Lang::get('nav.toggle_submenu')) ?>">
+                                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div class="collapse<?= $open ? ' show' : '' ?>" id="app-subnav-<?= $i ?>">
+                                    <nav class="app-nav-sub">
+                                        <?php foreach ($children as $child): ?>
+                                            <?php [$subLabel, $subHref] = $child; $subStatus = $child[2] ?? null; ?>
+                                            <a class="app-nav-sub-link<?= $subActive($subHref) ? ' active' : '' ?>"
+                                               href="<?= $e(Url::to($subHref)) ?>"<?= $subActive($subHref) ? ' aria-current="page"' : '' ?>>
+                                                <?php if ($subStatus !== null): ?>
+                                                    <span class="app-nav-sub-dot st-<?= $e($subStatus) ?>" aria-hidden="true"></span>
+                                                <?php endif; ?>
+                                                <span class="app-nav-sub-label"><?= $e($subLabel) ?></span>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </nav>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </nav>
+            </div>
+        </aside>
+    <?php endif; ?>
+
+    <main class="app-main">
+        <div class="<?= $hasSidebar ? 'container-fluid px-3 px-lg-4' : 'container' ?> py-4">
             <?= $content ?>
         </div>
     </main>
@@ -156,6 +226,6 @@ $nav = [
 
 <script src="<?= $e($base) ?>/assets/vendor/jquery.min.js"></script>
 <script src="<?= $e($base) ?>/assets/vendor/bootstrap.bundle.min.js"></script>
-<script src="<?= $e($base) ?>/assets/js/app.js"></script>
+<script src="<?= $e($base) ?>/assets/js/app.js?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/js/app.js') ?>"></script>
 </body>
 </html>

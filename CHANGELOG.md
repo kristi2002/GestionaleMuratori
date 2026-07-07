@@ -1,5 +1,53 @@
 # Changelog
 
+## 2026-07-08 — "juli" design adoption + Preventivi/Fatture/Spese + project detail page
+
+Merged the frontend and extra modules from the parallel ("juli") build onto this
+core codebase. **No new runtime framework, CSP `'self'` preserved, assets self-hosted,
+CSRF still enforced globally in `public/index.php`.**
+
+### Design (frontend)
+- Adopted the juli **sidebar/navbar look**: an icon-rail sidebar with stacked
+  icon+label, expandable sub-menus (Interventi by status, Spese by category), a
+  green top navbar, Bootstrap-Icons, and a richer `app.css` (filter cards, stat
+  tiles, timeline, in-app dialogs, loading overlay, attendance calendar).
+- **Preserved from this build:** dark/light theme toggle (`gm_theme` cookie,
+  `[data-bs-theme]`), PWA (manifest + service worker `gm-shell-v4`, now precaching
+  Bootstrap-Icons), and the CSRF meta/token flow. `app.js` merges the juli
+  behaviours (CRUD modals, quote line editor, attendance register, photo queue,
+  signature pad, date-range picker) with this build's CSRF header, service-worker
+  registration, KPI sparklines, theme toggle and POST logout.
+- Vendored `bootstrap-icons.min.css` + fonts and the juli logo/favicon SVGs.
+
+### New modules
+- **Preventivi (Quotes)** — `QuoteController`, `QuoteModel`, list/form views, live
+  line editor, PDF export, and quote→invoice conversion. Routes under `/admin/quotes`.
+- **Fatture (Invoices)** — `InvoiceController`, `ProjectInvoiceModel`, list/form
+  views, printable receipt. Routes under `/admin/invoices`.
+- **Spese (Expenses)** — `ExpenseController`, `ExpenseModel`, category-filtered
+  list, totals. Routes under `/admin/expenses`.
+- **Project detail page** ("Apri") — `ProjectController` gains `show` plus workers,
+  attendance register (absence-by-default), materials log, documents (upload/
+  download), and per-project invoices. `ProjectModel` gains worker-roster methods.
+  The per-project **stock-location** creation on project create is preserved.
+- `Validate::isDate` / `Validate::isMoney` added (used by the new controllers).
+
+### Schema
+- New migrations `010`–`014`: `project_workers`, `project_documents`,
+  `project_invoices`, `project_materials`, `project_absences`, `quotes`,
+  `quote_lines`, `expenses`. All FK to existing `clients`/`projects`/`users`/
+  `warehouse_items`. `project_materials` is an informational log — it does **not**
+  touch the stock ledger, so the inventory-ledger invariant is unaffected.
+
+### Notes
+- Verified statically (no PHP runtime was available in the build sandbox): all 91
+  admin routes resolve to existing controller methods, all 63 `View::render`
+  targets exist, and all Italian `Lang` keys used by the new views resolve. Run
+  the test suite locally (`php tests\run.php`) before deploying — see README.
+- `*.desktop-orig*.bak` copies of the pre-merge `layout.php`/`app.css`/`app.js`/
+  `ProjectController`/`ProjectModel`/`projects/index.php` were left in the tree for
+  easy diffing; safe to delete (originals are also in git history).
+
 ## 2026-07-06 — "Cantiere" UI redesign (frontend only)
 
 A ground-up visual redesign layered on the existing Bootstrap 5.3 stack — **no

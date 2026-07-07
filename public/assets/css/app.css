@@ -1,311 +1,1362 @@
-/* ============================================================================
-   Gestionale Muratori — "Cantiere" design system
-   Concrete-grey neutrals · hi-vis safety amber accent · blueprint steel.
-   Layered on Bootstrap 5.3 via CSS custom properties. No build step.
-   Themes: light (default) + dark, driven by [data-bs-theme] (server cookie).
-   ========================================================================== */
-
-/* ---- Self-hosted Inter (CSP-safe, offline-friendly; no CDN) -------------- */
-@font-face { font-family:"Inter"; font-style:normal; font-weight:400; font-display:swap;
-  src:url("../fonts/inter-latin-400-normal.woff2") format("woff2"); }
-@font-face { font-family:"Inter"; font-style:normal; font-weight:500; font-display:swap;
-  src:url("../fonts/inter-latin-500-normal.woff2") format("woff2"); }
-@font-face { font-family:"Inter"; font-style:normal; font-weight:600; font-display:swap;
-  src:url("../fonts/inter-latin-600-normal.woff2") format("woff2"); }
-@font-face { font-family:"Inter"; font-style:normal; font-weight:700; font-display:swap;
-  src:url("../fonts/inter-latin-700-normal.woff2") format("woff2"); }
-@font-face { font-family:"Inter"; font-style:normal; font-weight:800; font-display:swap;
-  src:url("../fonts/inter-latin-800-normal.woff2") format("woff2"); }
-
-/* ---- Design tokens: LIGHT (default) ------------------------------------- */
-:root, [data-bs-theme="light"] {
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-
-  --gm-ground:#EDEFF2;        /* concrete canvas */
-  --gm-surface:#FFFFFF;       /* cards */
-  --gm-surface-2:#F5F6F8;     /* subtle fills, table head */
-  --gm-anthracite:#1E232B;    /* nav bands, sidebar */
-  --gm-anthracite-2:#262C36;  /* sidebar hover */
-  --gm-ink:#171A1F;           /* primary text */
-  --gm-ink-2:#5A616B;         /* muted text */
-  --gm-line:#D6DAE0;          /* hairlines */
-
-  --gm-green:#2E9E5B;         /* the one accent (ProntoCantiere green) */
-  --gm-green-strong:#248049;
-  --gm-on-green:#FFFFFF;      /* text on green */
-  --gm-topbar:#2E9E5B;        /* full-width header band */
-  /* legacy amber tokens kept as aliases → now resolve to green so every
-     existing reference (buttons, KPI stripe, active states) turns green. */
-  --gm-amber:var(--gm-green);
-  --gm-amber-strong:var(--gm-green-strong);
-  --gm-on-amber:var(--gm-on-green);
-  --gm-steel:#2C6E9B;         /* links / info */
-  --gm-steel-strong:#215979;
-
-  --gm-ok:#1F8A4C; --gm-warn:#E07C10; --gm-bad:#D33A2C;
-
-  --gm-shadow:0 1px 2px rgba(20,26,35,.06), 0 4px 16px rgba(20,26,35,.07);
-  --gm-radius:10px;
-  --topbar-h:56px;            /* full-width header band height */
-
-  /* map Bootstrap to the palette */
-  --bs-body-bg:var(--gm-ground);
-  --bs-body-color:var(--gm-ink);
-  --bs-body-font-family:var(--font-sans);
-  --bs-border-color:var(--gm-line);
-  --bs-secondary-color:var(--gm-ink-2);
-  --bs-secondary-bg:var(--gm-surface-2);
-  --bs-tertiary-bg:var(--gm-surface-2);
-  --bs-emphasis-color:var(--gm-ink);
-  --bs-primary:var(--gm-amber);
-  --bs-primary-rgb:46,158,91;
-  --bs-success:var(--gm-ok);
-  --bs-success-rgb:31,138,76;
-  --bs-warning-rgb:224,124,16;
-  --bs-danger:var(--gm-bad);
-  --bs-danger-rgb:211,58,44;
-  --bs-link-color:var(--gm-steel);
-  --bs-link-color-rgb:44,110,155;
-  --bs-link-hover-color:var(--gm-steel-strong);
-  --bs-heading-color:var(--gm-ink);
+:root {
+    --app-green: #2e7d32;
+    --app-green-dark: #1b5e20;
+    --app-green-soft: #e8f5e9;
+    --app-slate: #475569;
+    --app-topbar-h: 56px;
+    --app-sidebar-w: 96px;
 }
 
-/* ---- Design tokens: DARK ------------------------------------------------ */
-[data-bs-theme="dark"] {
-  --gm-ground:#101317;
-  --gm-surface:#191D23;
-  --gm-surface-2:#14171C;
-  --gm-anthracite:#0B0D11;
-  --gm-anthracite-2:#1A1F27;
-  --gm-ink:#E7EAEE;
-  --gm-ink-2:#99A1AC;
-  --gm-line:#2A2F37;
-
-  --gm-green:#34B368;
-  --gm-green-strong:#2A9457;
-  --gm-on-green:#04160C;
-  --gm-topbar:#15351F;        /* deep-green header band in dark mode */
-  --gm-amber:var(--gm-green);
-  --gm-amber-strong:var(--gm-green-strong);
-  --gm-on-amber:var(--gm-on-green);
-  --gm-steel:#6FB2DC;
-  --gm-steel-strong:#8CC4E6;
-
-  --gm-ok:#46C07E; --gm-warn:#F0973B; --gm-bad:#EF6A5C;
-  --gm-shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
-
-  --bs-body-bg:var(--gm-ground);
-  --bs-body-color:var(--gm-ink);
-  --bs-border-color:var(--gm-line);
-  --bs-secondary-color:var(--gm-ink-2);
-  --bs-secondary-bg:var(--gm-surface-2);
-  --bs-tertiary-bg:var(--gm-surface-2);
-  --bs-emphasis-color:#fff;
-  --bs-primary:var(--gm-amber);
-  --bs-primary-rgb:52,179,104;
-  --bs-success:var(--gm-ok);
-  --bs-success-rgb:70,192,126;
-  --bs-danger:var(--gm-bad);
-  --bs-danger-rgb:239,106,92;
-  --bs-link-color:var(--gm-steel);
-  --bs-link-color-rgb:111,178,220;
-  --bs-link-hover-color:var(--gm-steel-strong);
-  --bs-heading-color:var(--gm-ink);
-  --bs-emphasis-color-rgb:255,255,255;
-}
-
-/* ---- Base --------------------------------------------------------------- */
 body {
-  background:var(--gm-ground);
-  color:var(--gm-ink);
-  font-family:var(--font-sans);
-  -webkit-font-smoothing:antialiased;
-  letter-spacing:-.005em;
+    background: #f5f6f8;
+    color: #212529;
 }
-h1,h2,h3,h4,h5,.h1,.h2,.h3,.h4,.h5 { font-weight:800; letter-spacing:-.02em; text-wrap:balance; }
-.display-6 { font-weight:800; letter-spacing:-.03em; }
-.text-muted, .text-body-secondary { color:var(--gm-ink-2)!important; }
-.font-mono, .tnum { font-family:var(--font-mono); }
-.tnum { font-variant-numeric:tabular-nums; }
-code, kbd, .mono { font-family:var(--font-mono); }
-a { text-decoration:none; }
-a:hover { text-decoration:underline; }
-:focus-visible { outline:2px solid var(--gm-steel); outline-offset:2px; }
 
-/* mono micro-label — the "title-block / site-marking" vernacular */
-.gm-eyebrow { font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.1em;
-  font-size:.7rem; font-weight:600; color:var(--gm-ink-2); }
+/* --- Readability & hierarchy ------------------------------------------- */
 
-/* ============================================================================
-   App shell: anthracite topbar + optional admin sidebar
-   ========================================================================== */
-.app-topbar { background:var(--gm-topbar); position:sticky; top:0; z-index:1040;
-  min-height:var(--topbar-h); border-bottom:1px solid rgba(0,0,0,.10);
-  box-shadow:0 1px 0 rgba(0,0,0,.05); }
-.app-topbar .navbar-brand { color:#fff; font-weight:800; letter-spacing:-.02em;
-  display:inline-flex; align-items:center; gap:.55rem; }
-.app-brand-chip { width:26px; height:26px; border-radius:6px; background:var(--gm-green);
-  color:#fff; display:grid; place-items:center; font-family:var(--font-mono);
-  font-weight:900; font-size:.8rem; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.12); flex:none; }
-/* on the green header, invert the chip to white-on-green so it stays legible */
-.app-topbar .app-brand-chip { background:#fff; color:var(--gm-green); box-shadow:none; }
-.app-topbar .badge.role { background:rgba(255,255,255,.22); color:#fff; font-weight:700; }
-.app-topbar .btn-icon { color:#fff; border-color:rgba(255,255,255,.32);
-  background:rgba(255,255,255,.12); display:inline-grid; place-items:center; }
-.app-topbar .btn-icon:hover { color:#fff; background:rgba(255,255,255,.24); }
-.app-topbar .btn-outline-light { border-color:rgba(255,255,255,.55); color:#fff; }
-.app-topbar .btn-outline-light:hover { background:#fff; color:var(--gm-green-strong); }
+/* Bolder page and section titles. */
+.app-main h1 {
+    font-weight: 700;
+}
 
-/* layout with sidebar (admin) — light rail beneath a full-width green header */
-.app-shell { display:block; }
+.app-main h2 {
+    font-weight: 600;
+}
+
+.card-header {
+    font-weight: 600;
+    padding: .85rem 1.25rem;
+}
+
+/* Roomier content containers: less dense, easier to scan. */
+.card-body {
+    padding: 1.25rem;
+}
+
+.app-main > .container,
+.app-main > .container-fluid {
+    padding-top: .875rem !important;
+    padding-bottom: 2.5rem !important;
+}
+
+/* --- Comfortable touch targets ------------------------------------------ */
+
+.btn {
+    padding: .5rem 1rem;
+    border-radius: .5rem;
+}
+
+.btn-sm {
+    padding: .4rem .8rem;
+    border-radius: .45rem;
+}
+
+.form-control,
+.form-select {
+    padding: .55rem .75rem;
+    border-radius: .5rem;
+}
+
+/* Keep grouped-input corners in step with the .5rem inputs above
+   (Bootstrap squares the interior edges on its own). */
+.input-group-text {
+    border-radius: .5rem;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--app-green);
+    box-shadow: 0 0 0 .25rem rgba(46, 125, 50, .15);
+}
+
+.form-label {
+    font-weight: 600;
+}
+
+/* --- Filter card (all list pages) --------------------------------------- */
+
+/* Everything on one row: filter inputs, then the green "Cerca" submit and the
+   "+ Nuovo" creation link side by side (Interventi keeps its quick-range tabs
+   in a slim row above). */
+.app-filter-card {
+    border-radius: .75rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+}
+
+/* One column on phones, two on tablets, single balanced row on desktop. */
+.app-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem;
+}
+
+/* Same height for inputs and buttons so the row reads as one straight line. */
+.app-filter-grid .btn {
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+    white-space: nowrap;
+}
+
+@media (min-width: 576px) {
+    .app-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app-filter-grid .app-date-range {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 992px) {
+    /* Interventi: two selects + date range, then "Cerca" and "+ Nuovo". */
+    .app-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.7fr) auto auto;
+    }
+
+    .app-filter-grid .app-date-range {
+        grid-column: auto;
+    }
+
+    /* Column presets for the other list pages: search input first, selects in
+       the middle, "Cerca" and "+ Nuovo" hugging the end of the row. */
+    .app-filter-grid.app-filter-grid-2 {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+    .app-filter-grid.app-filter-grid-3 {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto auto;
+    }
+
+    .app-filter-grid.app-filter-grid-4 {
+        grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr)) auto auto;
+    }
+}
+
+/* Unified "Dal / Al" range control that reads as a single input. */
+.app-date-range {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding-left: .75rem;
+    background-color: #fff;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: .5rem;
+}
+
+.app-date-range:focus-within {
+    border-color: var(--app-green);
+    box-shadow: 0 0 0 .25rem rgba(46, 125, 50, .15);
+}
+
+.app-date-range-icon {
+    flex-shrink: 0;
+    color: #6c757d;
+}
+
+.app-date-field {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    padding: .55rem .5rem .55rem .65rem;
+    cursor: pointer;
+}
+
+.app-date-prefix {
+    flex-shrink: 0;
+    font-size: .8rem;
+    color: #6c757d;
+}
+
+.app-date-field input {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: .95rem;
+}
+
+.app-date-field input:focus {
+    outline: none;
+}
+
+/* One calendar icon for the whole group: hide the per-input native ones
+   (app.js reopens the picker on click via showPicker()). */
+.app-date-field input::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.app-date-range-divider {
+    align-self: stretch;
+    flex-shrink: 0;
+    width: 1px;
+    margin: .5rem 0;
+    background-color: var(--bs-border-color, #dee2e6);
+}
+
+/* --- Worker timeline (user profile) ------------------------------------- */
+
+/* Pill tabs, shared style: profile tabs (Info / Interventi / Calendario)
+   and timeline sub-tabs (In Corso / Completati / Pianificati). */
+.app-timeline-tabs,
+.app-profile-tabs {
+    gap: .35rem;
+}
+
+.app-timeline-tabs .nav-link,
+.app-profile-tabs .nav-link {
+    padding: .35rem .9rem;
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--app-slate);
+    border-radius: 2rem;
+}
+
+.app-timeline-tabs .nav-link .badge,
+.app-profile-tabs .nav-link .badge {
+    margin-left: .15rem;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.app-timeline-tabs .nav-link:hover,
+.app-profile-tabs .nav-link:hover {
+    background-color: var(--app-green-soft);
+    color: var(--app-green-dark);
+}
+
+.app-timeline-tabs .nav-link.active,
+.app-profile-tabs .nav-link.active {
+    background-color: var(--app-green);
+    color: #fff;
+}
+
+.app-timeline-tabs .nav-link.active .badge,
+.app-profile-tabs .nav-link.active .badge {
+    background-color: rgba(255, 255, 255, .25);
+    color: #fff;
+}
+
+/* Top-level profile tabs sit on the page background: slightly bigger, on white chips. */
+.app-profile-tabs .nav-link {
+    padding: .45rem 1.1rem;
+    background-color: #fff;
+    border: 1px solid #eef0f2;
+}
+
+.app-profile-tabs .nav-link:hover {
+    border-color: #d3e9d5;
+}
+
+.app-profile-tabs .nav-link.active {
+    border-color: var(--app-green);
+}
+
+/* One row per cantiere/intervento inside a tab pane. */
+.app-timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .75rem;
+    background-color: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: .6rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.app-timeline-item + .app-timeline-item {
+    margin-top: .5rem;
+}
+
+.app-timeline-item:hover {
+    border-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
+
+.app-timeline-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .5rem;
+    background-color: var(--app-green-soft);
+    color: var(--app-green);
+}
+
+.app-timeline-icon.is-project {
+    background-color: #f1f5f9;
+    color: var(--app-slate);
+}
+
+/* Small "Cantiere" / "Intervento" type chip next to the title. */
+.app-timeline-type {
+    padding: .15rem .5rem;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #6c757d;
+    background-color: #f1f3f5;
+    border-radius: 2rem;
+}
+
+/* --- Stat tiles (dashboard KPIs) ----------------------------------------- */
+
+/* Label + value in ink, identity carried by the tinted chip. */
+.app-stat-tile {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .8rem 1rem;
+    background-color: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: .75rem;
+}
+
+.app-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: .65rem;
+    font-size: 1.1rem;
+}
+
+.app-stat-label {
+    font-size: .78rem;
+    color: #6c757d;
+}
+
+.app-stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #212529;
+}
+
+.app-stat-unit {
+    font-size: .8rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* --- Project attendance register (Registro Presenze Cantiere) ------------ */
+
+/* Month switcher: ghost circle arrows around the "Mese Anno" label. */
+.app-att-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 50%;
+    background-color: #fff;
+    color: var(--app-slate);
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.app-att-nav-btn:hover {
+    background-color: var(--app-green-soft);
+    border-color: var(--app-green);
+    color: var(--app-green-dark);
+}
+
+.app-att-month {
+    min-width: 9.5rem;
+    text-align: center;
+    font-size: 1.05rem;
+}
+
+/* Legend: one dot per state. */
+.app-att-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.25rem;
+    font-size: .8rem;
+    color: #6c757d;
+}
+
+.app-att-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.app-att-dot {
+    display: inline-block;
+    width: .6rem;
+    height: .6rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.app-att-dot.st-worked { background-color: var(--app-green); }
+.app-att-dot.st-absent { background-color: #adb5bd; }
+
+/* --- In-app dialog (Bootstrap modal replacing native alert/confirm) ------- */
+.app-dialog .modal-content {
+    border: 0;
+    border-radius: .9rem;
+    box-shadow: 0 1rem 3rem rgba(15, 23, 42, .18);
+}
+
+.app-dialog .modal-header {
+    border-bottom: 0;
+    padding-bottom: .25rem;
+}
+
+.app-dialog .modal-title {
+    font-weight: 600;
+}
+
+.app-dialog .modal-body {
+    color: var(--app-slate, #334155);
+}
+
+.app-dialog .modal-footer {
+    border-top: 0;
+    padding-top: .25rem;
+}
+
+/* Worker selector: vertical list on the left, one card per assigned worker.
+   The active worker's monthly calendar shows on the right. Long rosters scroll
+   inside the list's window while the page and the calendar stay put
+   (overscroll-behavior stops chaining). Card metrics are sized so six cards
+   fill the window with no partial seventh:
+   6 × 43.6px cards + 5 × 6.4px gaps = 293.6px ≈ the 5-week month grid. */
+.app-att-workers {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    max-height: 294px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding-right: .25rem;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color .2s ease;
+}
+
+/* Side-by-side layout (md+): pin the list to the calendar column's box so its
+   bottom edge sits exactly on the month grid's bottom border, whatever the
+   month's week count. The absolute list adds no height of its own, so the row
+   height is always dictated by the calendar. */
+@media (min-width: 768px) {
+    .app-att-workers-col {
+        position: relative;
+    }
+
+    .app-att-workers {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc(var(--bs-gutter-x) * .5);
+        right: calc(var(--bs-gutter-x) * .5);
+        max-height: none;
+    }
+}
+
+.app-att-workers:hover,
+.app-att-workers:focus-within {
+    scrollbar-color: #c8ced4 transparent;
+}
+
+/* WebKit fallback (Safari; ignored by browsers honoring the standard props). */
+.app-att-workers::-webkit-scrollbar {
+    width: 6px;
+}
+
+.app-att-workers::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.app-att-workers::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 999px;
+}
+
+.app-att-workers:hover::-webkit-scrollbar-thumb,
+.app-att-workers:focus-within::-webkit-scrollbar-thumb {
+    background-color: #c8ced4;
+}
+
+.app-att-workers::-webkit-scrollbar-thumb:hover {
+    background-color: #aab2ba;
+}
+
+.app-att-worker-item {
+    display: flex;
+    flex-shrink: 0; /* items keep full height; the container scrolls instead */
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .65rem .55rem .9rem;
+    background-color: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: .6rem;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.app-att-worker-item:hover {
+    border-color: #d8dde2;
+}
+
+.app-att-worker-item.active {
+    background-color: var(--app-green-soft);
+    border-color: var(--app-green);
+}
+
+.app-att-worker-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--app-slate);
+}
+
+.app-att-worker-item.active .app-att-worker-name {
+    color: var(--app-green-dark);
+}
+
+/* Discreet unassign control on each worker card: muted ×, red on hover.
+   1.5rem tall: it sets the card height (24 + 2×7.2 padding + 2 border
+   = 43.6px), sized so six cards fill the attendance list window exactly. */
+.app-att-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #c2c9cf;
+    font-size: .75rem;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.app-att-remove:hover {
+    background-color: #fbe4e4;
+    color: #c02f2b;
+}
+
+.app-att-remove:disabled {
+    opacity: .5;
+}
+
+/* Traditional month grid: LUN–DOM header, then 7-column weeks with empty
+   offset blocks so each date lands under its weekday. */
+.app-att-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .375rem;
+    margin-bottom: .375rem;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #adb5bd;
+}
+
+.app-att-weekdays span {
+    text-align: center;
+}
+
+.app-att-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .375rem;
+}
+
+/* Day cell: present ("Lavorato") by default in a soft green; a click marks the
+   absence and mutes it to gray. The centered number is the calendar date. */
+.app-att-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 3.1rem;
+    padding: 0;
+    font-size: .9rem;
+    font-weight: 600;
+    border: 1px solid #d3e9d5;
+    border-radius: .55rem;
+    background-color: #e8f5e9;
+    color: var(--app-green-dark);
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .05s ease;
+}
+
+/* Offset blocks for days of the previous/next month. */
+.app-att-day.is-empty {
+    background-color: transparent;
+    border-color: transparent;
+    pointer-events: none;
+}
+
+.app-att-day:hover {
+    border-color: var(--app-green);
+}
+
+.app-att-day:active {
+    transform: scale(.9);
+}
+
+.app-att-day.st-absent {
+    background-color: #f1f3f5;
+    border-color: #e4e7ea;
+    color: #8a939b;
+}
+
+.app-att-day.st-absent:hover {
+    border-color: #adb5bd;
+}
+
+.app-att-day.is-today {
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, .35);
+}
+
+.app-att-day:disabled {
+    opacity: .6;
+}
+
+@media (max-width: 575.98px) {
+    .app-att-day {
+        min-height: 2.4rem;
+        font-size: .8rem;
+        border-radius: .45rem;
+    }
+}
+
+/* --- Admin dashboard (operational center) -------------------------------- */
+
+/* KPI row: 4 tiles on desktop, 2 on tablets, stacked on phones. */
+.app-kpi-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem;
+}
+
+@media (min-width: 576px) {
+    .app-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 992px) {
+    .app-kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Dashboard variant of the stat tile: borderless card with a soft shadow. */
+.app-kpi-tile {
+    border: none;
+    border-radius: .85rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+}
+
+.app-stat-chip.is-sites       { background-color: var(--app-green-soft); color: var(--app-green); }
+.app-stat-chip.is-pending     { background-color: #e1f0fa; color: #0b5f8a; }
+.app-stat-chip.is-crew        { background-color: #f1f5f9; color: var(--app-slate); }
+.app-stat-chip.is-stock       { background-color: #f1f5f9; color: var(--app-slate); }
+.app-stat-chip.is-stock-alert { background-color: #fdf3dc; color: #b45309; }
+
+/* Low stock above zero: the number itself turns amber. */
+.app-stat-value.is-alert {
+    color: #b45309;
+}
+
+/* Registro Attività: compact icon + two-line entries, divided by hairlines. */
+.app-activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    padding: .55rem 0;
+}
+
+.app-activity-item + .app-activity-item {
+    border-top: 1px solid #eef0f2;
+}
+
+.app-activity-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    margin-top: .1rem;
+    border-radius: .55rem;
+    font-size: .95rem;
+}
+
+.app-activity-icon.is-stock  { background-color: #f1f5f9; color: var(--app-slate); }
+.app-activity-icon.is-status { background-color: #e1f0fa; color: #0b5f8a; }
+.app-activity-icon.is-done   { background-color: var(--app-green-soft); color: var(--app-green-dark); }
+
+/* Validation / AJAX error message: red, legible, close to the fields. */
+.js-crud-error {
+    font-size: .95rem;
+}
+
+/* Form section headings: group related inputs into clear visual blocks. */
+.app-form-section {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--app-green-dark);
+    padding-bottom: .4rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .08);
+    margin: .5rem 0 1rem;
+}
+
+/* --- Soft status pills --------------------------------------------------- */
+
+.app-status {
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .4em .85em;
+}
+
+.app-status-neutral {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.app-status-info {
+    background: #e1f0fa;
+    color: #0b5f8a;
+}
+
+.app-status-warning {
+    background: #fdf3dc;
+    color: #8a6100;
+}
+
+.app-status-success {
+    background: rgba(46, 125, 50, .14);
+    color: var(--app-green-dark);
+}
+
+.app-status-danger {
+    background: #fbe4e4;
+    color: #a12622;
+}
+
+/* Inline status selector (interventions table): a pill-shaped select whose soft
+   fill matches the status pill palette above. */
+.app-status-select {
+    display: inline-block;
+    width: auto;
+    border: 0;
+    border-radius: 50rem;
+    font-size: .78rem;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: .4em 2.2em .4em .95em; /* right padding leaves room for the caret */
+    background-position: right .7em center;
+    background-size: .85em;
+    cursor: pointer;
+}
+
+.app-status-select-neutral { background-color: #e9ecef; color: #495057; }
+.app-status-select-info    { background-color: #e1f0fa; color: #0b5f8a; }
+.app-status-select-warning { background-color: #fdf3dc; color: #8a6100; }
+.app-status-select-success { background-color: rgba(46, 125, 50, .14); color: var(--app-green-dark); }
+.app-status-select-danger  { background-color: #fbe4e4; color: #a12622; }
+
+/* --- Compact icon-only row actions --------------------------------------- */
+
+.app-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: .5rem;
+}
+
+.app-icon-btn .bi {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.app-row-actions {
+    white-space: nowrap;
+}
+
+/* --- Empty states -------------------------------------------------------- */
+
+.app-empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.app-empty-state .bi {
+    font-size: 2.2rem;
+    color: #adb5bd;
+    display: block;
+    margin-bottom: .5rem;
+}
+
+/* --- Page loading overlay ------------------------------------------------ */
+
+.app-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .55);
+}
+
+.app-navbar {
+    background: var(--app-green);
+    min-height: var(--app-topbar-h);
+}
+
+/* App shell: persistent sidebar on the left, scrolling content on the right. */
+.app-shell {
+    display: flex;
+    align-items: stretch;
+    min-height: calc(100vh - var(--app-topbar-h));
+}
+
+.app-main {
+    flex: 1 1 auto;
+    min-width: 0; /* let tables/cards shrink instead of overflowing the shell */
+}
+
 .app-sidebar {
-  position:fixed; top:var(--topbar-h); bottom:0; left:0; width:230px; z-index:1035;
-  background:var(--gm-surface); color:var(--gm-ink-2); padding:14px 12px 24px;
-  overflow-y:auto; transform:translateX(-100%); transition:transform .22s ease;
-  border-right:1px solid var(--gm-line);
-}
-.app-sidebar .sb-group { font-family:var(--font-mono); font-size:.62rem; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--gm-ink-2); margin:14px 0 6px; padding-left:10px; }
-.app-sidebar .sb-group:first-child { margin-top:2px; }
-.app-sidebar a.sb-link { display:flex; align-items:center; gap:.6rem; padding:.55rem .65rem;
-  border-radius:8px; color:var(--gm-ink); font-size:.9rem; font-weight:500; margin-bottom:1px; }
-.app-sidebar a.sb-link:hover { background:var(--gm-surface-2); color:var(--gm-ink); text-decoration:none; }
-.app-sidebar a.sb-link.active { background:color-mix(in srgb, var(--gm-green) 14%, transparent);
-  color:var(--gm-green-strong); font-weight:700; }
-.app-sidebar a.sb-link.active .ic { opacity:1; color:var(--gm-green-strong); }
-.app-sidebar .ic { width:17px; height:17px; opacity:.75; flex:none; }
-.sb-backdrop { position:fixed; inset:var(--topbar-h) 0 0 0; background:rgba(0,0,0,.45); z-index:1030;
-  opacity:0; visibility:hidden; transition:opacity .2s ease; }
-.app-shell.sidebar-open .app-sidebar { transform:translateX(0); }
-.app-shell.sidebar-open .sb-backdrop { opacity:1; visibility:visible; }
-
-@media (min-width:992px) {
-  .app-shell.has-sidebar .app-sidebar { transform:translateX(0); }
-  .app-shell.has-sidebar .app-content { margin-left:230px; }
-  .sb-backdrop { display:none; }
-  .js-sidebar-toggle { display:none!important; }
+    --bs-offcanvas-width: 180px;
+    background: #fff;
 }
 
-.ic { display:inline-block; vertical-align:-.15em; fill:none; stroke:currentColor;
-  stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+/* Narrow vertical column: each item stacks its icon above a small centered label. */
+.app-sidebar-nav {
+    gap: .5rem;
+    align-items: center;
+    width: 100%;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.app-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    width: 100%;
+    padding: .35rem .25rem;
+    color: var(--app-slate);
+    text-align: center;
+}
+
+.app-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: .85rem;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.app-nav-icon .bi {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.app-nav-label {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    line-height: 1.2;
+}
+
+.app-nav-link:hover,
+.app-nav-link:focus {
+    color: var(--app-green-dark);
+}
+
+.app-nav-link:hover .app-nav-icon,
+.app-nav-link:focus .app-nav-icon {
+    background: rgba(46, 125, 50, .08);
+}
+
+/* Active page: icon sits in a prominent light-green rounded square; text and icon in dark green. */
+.app-nav-link.active {
+    color: var(--app-green-dark);
+    font-weight: 700;
+}
+
+.app-nav-link.active .app-nav-icon {
+    background: var(--app-green-soft);
+    color: var(--app-green-dark);
+}
+
+/* Placeholder entries for upcoming modules (e.g. Attrezzature): grayed out,
+   no pointer affordance, and immune to hover/focus highlighting. */
+.app-nav-link.disabled {
+    color: #9aa39d;
+    opacity: .55;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.app-nav-link.disabled:hover,
+.app-nav-link.disabled:focus {
+    color: #9aa39d;
+}
+
+.app-nav-link.disabled:hover .app-nav-icon,
+.app-nav-link.disabled:focus .app-nav-icon {
+    background: transparent;
+}
+
+/* Expandable section (e.g. Interventi): the caret toggles a nested sub-list
+   of status links; the main link itself still navigates. */
+.app-nav-item {
+    position: relative;
+    width: 100%;
+}
+
+.app-nav-caret {
+    position: absolute;
+    top: .3rem;
+    right: .1rem;
+    padding: .15rem .3rem;
+    border: 0;
+    background: none;
+    color: #9aa39d;
+    line-height: 1;
+}
+
+.app-nav-caret:hover,
+.app-nav-caret:focus {
+    color: var(--app-green-dark);
+}
+
+.app-nav-caret .bi {
+    display: block;
+    font-size: .8rem;
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-nav-caret[aria-expanded="true"] .bi {
+    transform: rotate(180deg);
+}
+
+/* Sub-status list: indented under the parent behind a hairline guide, one
+   muted status dot per entry, soft rounded hover — nested SaaS-style nav. */
+.app-nav-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    margin-top: .25rem;
+    padding: .15rem 0 .3rem .4rem;
+    border-left: 1px solid #e2e8f0;
+}
+
+.app-nav-sub-link {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .3rem .4rem;
+    border-radius: .45rem;
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .02em;
+    line-height: 1.25;
+    color: #64748b;
+    text-align: left;
+    text-decoration: none;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.app-nav-sub-link:hover,
+.app-nav-sub-link:focus {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.app-nav-sub-link.active {
+    background-color: var(--app-green-soft);
+    color: var(--app-green-dark);
+    font-weight: 600;
+}
+
+.app-nav-sub-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Status dots: muted professional tones, never neon. */
+.app-nav-sub-dot {
+    flex-shrink: 0;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background-color: #cbd5e1;
+}
+
+.app-nav-sub-dot.st-in_progress { background-color: #7aa7c7; } /* muted sky blue */
+.app-nav-sub-dot.st-on_hold     { background-color: #ddab63; } /* soft amber */
+.app-nav-sub-dot.st-pending     { background-color: #a3aebc; } /* light slate gray */
+.app-nav-sub-dot.st-completed   { background-color: #17845e; } /* deep emerald */
+
+/* Accordion: gentler height easing, and the sub-list glides into place
+   (fade + slight downward settle) instead of popping. */
+.app-nav-item .collapsing {
+    transition: height .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-nav-item .collapsing .app-nav-sub,
+.app-nav-item .collapse.show .app-nav-sub {
+    animation: app-subnav-glide .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+@keyframes app-subnav-glide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Desktop: fixed sidebar column; only the main content scrolls with the page. */
+@media (min-width: 992px) {
+    .app-sidebar {
+        flex: 0 0 var(--app-sidebar-w);
+        width: var(--app-sidebar-w);
+        position: sticky;
+        top: var(--app-topbar-h);
+        height: calc(100vh - var(--app-topbar-h));
+        overflow-y: auto;
+        border-right: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    .app-sidebar-body {
+        padding: 1rem .5rem !important;
+    }
+}
+
+.btn-success {
+    --bs-btn-bg: var(--app-green);
+    --bs-btn-border-color: var(--app-green);
+    --bs-btn-hover-bg: var(--app-green-dark);
+    --bs-btn-hover-border-color: var(--app-green-dark);
+}
+
+.text-success {
+    color: var(--app-green) !important;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+/* Bootstrap ships no min-width utility; needed for text-truncate inside flex rows. */
+.min-w-0 {
+    min-width: 0;
+}
+
+/* Record cards (Clienti / Progetti / Utenti grids) */
+.app-record-card {
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.app-record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+}
+
+.app-card-meta {
+    margin-bottom: 0;
+}
+
+.app-card-meta li {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .15rem 0;
+    color: #495057;
+    min-width: 0;
+}
+
+.app-card-meta .bi {
+    color: var(--app-green);
+    flex-shrink: 0;
+}
+
+.app-badge-green {
+    background: rgba(46, 125, 50, .12);
+    color: var(--app-green-dark);
+}
+
+/* Align Bootstrap's success badge with the app green. */
+.badge.text-bg-success {
+    background-color: var(--app-green) !important;
+}
+
+.app-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: rgba(46, 125, 50, .12);
+    color: var(--app-green-dark);
+    font-size: 1.1rem;
+}
+
+.app-avatar-lg {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Client profile header: inline meta row (P.IVA, phone, email, sites count). */
+.app-profile-meta .list-inline-item:not(:last-child) {
+    margin-right: 1.25rem;
+}
+
+.app-profile-meta .bi {
+    color: var(--app-green);
+    margin-right: .15rem;
+}
+
+/* Client profile: horizontal tab bar with a green underline on the active tab. */
+.app-profile-tabs {
+    border-bottom: 1px solid rgba(0, 0, 0, .08);
+}
+
+.app-profile-tabs .nav-link {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--app-slate);
+    font-weight: 600;
+    padding: .6rem 1rem;
+}
+
+.app-profile-tabs .nav-link:hover,
+.app-profile-tabs .nav-link:focus {
+    color: var(--app-green-dark);
+    border-bottom-color: rgba(46, 125, 50, .35);
+}
+
+.app-profile-tabs .nav-link.active {
+    color: var(--app-green-dark);
+    background: transparent;
+    border-bottom-color: var(--app-green);
+}
+
+/* Card titles that link to a detail page */
+.app-card-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.app-card-title-link:hover {
+    color: var(--app-green-dark);
+    text-decoration: underline;
+}
+
+/* Worker multi-select on the project form: checkbox tiles */
+.app-worker-option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+    padding: .5rem .75rem;
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: .5rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.app-worker-option:hover {
+    border-color: var(--app-green);
+}
+
+.app-worker-option:has(.form-check-input:checked) {
+    border-color: var(--app-green);
+    background: rgba(46, 125, 50, .08);
+}
+
+.app-worker-option .form-check-input {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.app-worker-option .form-check-input:checked {
+    background-color: var(--app-green);
+    border-color: var(--app-green);
+}
+
+.app-worker-option .bi {
+    color: var(--app-green);
+}
+
+/* Breadcrumb trail, themed */
+.breadcrumb a {
+    color: var(--app-green-dark);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile-first: comfortable tap targets for the worker/client apps. */
+@media (max-width: 576px) {
+    .btn,
+    .form-control {
+        font-size: 1.05rem;
+        padding: .6rem .75rem;
+    }
+}
+
+/* Brand logo: the SVG tile already has rounded corners; the drop shadow
+   lifts it off the green navbar / white login card. */
+.app-brand-logo {
+    border-radius: 8px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .25));
+}
+
+.app-login-logo {
+    filter: drop-shadow(0 4px 10px rgba(27, 94, 32, .25));
+}
 
 /* ============================================================================
-   Components
+   GM merge layer — appended when the "juli" design was adopted.
+   1) Inter webfont (self-hosted, offline)   2) legacy KPI/dashboard classes
+   3) dark theme (driven by [data-bs-theme="dark"], server cookie gm_theme)
+   Base design above comes from the download ("juli") build; this block keeps
+   Desktop's dark mode, PWA and dashboard tiles working on top of it.
    ========================================================================== */
-.card { border:1px solid var(--gm-line); border-radius:var(--gm-radius);
-  background:var(--gm-surface); box-shadow:var(--gm-shadow); }
-.card .card-header { background:var(--gm-surface); border-bottom:1px solid var(--gm-line);
-  font-weight:700; }
-/* many views pin card headers to .bg-white — keep them theme-aware (the signature
-   canvas keeps its own literal white for ink contrast). */
-.card-header.bg-white { background:var(--gm-surface)!important; color:var(--gm-ink); }
-a.card { color:inherit; transition:border-color .15s ease, transform .15s ease; }
-a.card:hover { border-color:var(--gm-ink-2); text-decoration:none; }
 
-/* Buttons: .btn-success is the app's brand action → hi-vis amber. */
-.btn { font-weight:600; border-radius:8px; }
-.btn-success, .btn-primary {
-  --bs-btn-bg:var(--gm-amber); --bs-btn-border-color:var(--gm-amber-strong);
-  --bs-btn-color:var(--gm-on-amber);
-  --bs-btn-hover-bg:var(--gm-amber-strong); --bs-btn-hover-border-color:var(--gm-amber-strong);
-  --bs-btn-hover-color:var(--gm-on-amber);
-  --bs-btn-active-bg:var(--gm-amber-strong); --bs-btn-active-border-color:var(--gm-amber-strong);
-  --bs-btn-active-color:var(--gm-on-amber);
-  --bs-btn-disabled-bg:var(--gm-amber); --bs-btn-disabled-border-color:var(--gm-amber);
-  --bs-btn-disabled-color:var(--gm-on-amber);
-  font-weight:700;
+/* ---- 1) Self-hosted Inter (CSP-safe, no CDN) --------------------------- */
+@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;
+  src:url("../fonts/inter-latin-400-normal.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;
+  src:url("../fonts/inter-latin-500-normal.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;
+  src:url("../fonts/inter-latin-600-normal.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;
+  src:url("../fonts/inter-latin-700-normal.woff2") format("woff2");}
+:root{
+  --font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  --gm-ok:#1F8A4C; --gm-warn:#E07C10; --gm-bad:#D33A2C; --gm-steel:#2C6E9B; --gm-amber:var(--app-green);
 }
-.btn-outline-success, .btn-outline-primary {
-  --bs-btn-color:var(--gm-steel); --bs-btn-border-color:var(--gm-steel);
-  --bs-btn-hover-bg:var(--gm-steel); --bs-btn-hover-border-color:var(--gm-steel);
-  --bs-btn-hover-color:#fff; --bs-btn-active-bg:var(--gm-steel);
+body{font-family:var(--font-sans);}
+
+/* ---- 2) Legacy dashboard / KPI classes (Desktop views) ----------------- */
+.gm-eyebrow{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;
+  font-size:.7rem;font-weight:600;color:#6c757d;}
+.gm-kpi{position:relative;overflow:hidden;height:100%;background:#fff;border:1px solid #eef0f2;
+  border-radius:.75rem;padding:.9rem 1rem;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.gm-kpi .gm-kpi-val{font-family:var(--font-mono);font-weight:700;font-size:2.1rem;line-height:1;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#171A1F;}
+.gm-kpi .gm-kpi-lab{font-size:.8rem;color:#6c757d;margin-top:.25rem;}
+.gm-kpi .gm-kpi-ic{width:20px;height:20px;color:#6c757d;opacity:.8;}
+.gm-kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--app-green);}
+.gm-kpi.alert::before{background:var(--gm-bad);}
+.gm-kpi.alert .gm-kpi-val{color:var(--gm-bad);}
+.gm-kpi.alert .gm-kpi-ic{color:var(--gm-bad);opacity:1;}
+canvas.gm-spark{display:block;width:100%;height:34px;}
+tr.sev-bad  > td:first-child{box-shadow:inset 3px 0 0 var(--gm-bad);}
+tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
+
+/* inline SVG icon system (Desktop topbar/menu used <svg class="ic"><use/></svg>) */
+.ic{display:inline-block;vertical-align:-.15em;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;width:17px;height:17px;}
+.app-brand-chip{width:26px;height:26px;border-radius:6px;background:#fff;color:var(--app-green);
+  display:grid;place-items:center;font-family:var(--font-mono);font-weight:900;font-size:.8rem;flex:none;}
+/* topbar icon buttons (theme toggle, password, logout) on the green header */
+.app-navbar .btn-icon{color:#fff;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.12);
+  display:inline-grid;place-items:center;padding:.34rem .5rem;border-radius:8px;line-height:1;}
+.app-navbar .btn-icon:hover{color:#fff;background:rgba(255,255,255,.24);}
+.app-navbar .badge.role{background:rgba(255,255,255,.22);color:#fff;font-weight:700;}
+.app-navbar .btn-outline-light{border-color:rgba(255,255,255,.55);color:#fff;}
+.app-navbar .btn-outline-light:hover{background:#fff;color:var(--app-green-dark);}
+/* theme-toggle icon swap: show the icon for the theme you'd switch TO */
+[data-bs-theme="light"] .ic-sun{display:none;}
+[data-bs-theme="dark"]  .ic-moon{display:none;}
+
+/* ---- 3) DARK THEME ----------------------------------------------------- */
+[data-bs-theme="dark"]{
+  --app-green:#34B368; --app-green-dark:#2A9457; --app-green-soft:rgba(52,179,104,.16);
+  --app-slate:#99A1AC; --bs-border-color:#2A2F37;
+  color-scheme:dark;
 }
-.text-success { color:var(--gm-ok)!important; }
-.text-warning { color:var(--gm-warn)!important; }
-.text-danger  { color:var(--gm-bad)!important; }
-
-/* Status pills — encode state in shape + colour */
-.badge { font-weight:650; border-radius:999px; padding:.34em .7em; }
-.text-bg-success { background:color-mix(in srgb, var(--gm-ok) 16%, transparent)!important; color:var(--gm-ok)!important; }
-.text-bg-danger  { background:color-mix(in srgb, var(--gm-bad) 16%, transparent)!important; color:var(--gm-bad)!important; }
-.text-bg-warning { background:color-mix(in srgb, var(--gm-warn) 18%, transparent)!important; color:var(--gm-warn)!important; }
-.text-bg-info    { background:color-mix(in srgb, var(--gm-steel) 16%, transparent)!important; color:var(--gm-steel)!important; }
-.text-bg-secondary { background:var(--gm-surface-2)!important; color:var(--gm-ink-2)!important; }
-.text-bg-light   { background:var(--gm-surface-2)!important; color:var(--gm-ink-2)!important; }
-.badge.border { border-color:var(--gm-line)!important; }
-
-/* Tables */
-.table { --bs-table-bg:transparent; --bs-table-color:var(--gm-ink); margin-bottom:0; }
-.table > thead th { font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.05em;
-  font-size:.68rem; font-weight:600; color:var(--gm-ink-2); background:var(--gm-surface-2);
-  border-bottom:1px solid var(--gm-line); }
-.table > tbody td { border-color:var(--gm-line); vertical-align:middle; }
-.table-responsive { border-radius:var(--gm-radius); }
-
-/* Forms */
-.form-control, .form-select { border-color:var(--gm-line); background:var(--gm-surface);
-  color:var(--gm-ink); border-radius:8px; }
-.form-control:focus, .form-select:focus { border-color:var(--gm-amber);
-  box-shadow:0 0 0 .2rem color-mix(in srgb, var(--gm-amber) 28%, transparent); }
-.form-label { font-weight:600; font-size:.88rem; }
-
-/* Alerts (keep semantic hues on tinted grounds) */
-.alert-info { --bs-alert-color:var(--gm-steel-strong); --bs-alert-bg:color-mix(in srgb,var(--gm-steel) 12%,var(--gm-surface));
-  --bs-alert-border-color:color-mix(in srgb,var(--gm-steel) 30%,transparent); }
-.alert-warning { --bs-alert-color:var(--gm-warn); --bs-alert-bg:color-mix(in srgb,var(--gm-warn) 12%,var(--gm-surface));
-  --bs-alert-border-color:color-mix(in srgb,var(--gm-warn) 30%,transparent); }
-
-/* KPI tiles — number-first, accent stripe, red when it needs attention */
-.gm-kpi { position:relative; overflow:hidden; height:100%; }
-.gm-kpi .gm-kpi-val { font-family:var(--font-mono); font-weight:700; font-size:2.1rem; line-height:1;
-  letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:var(--gm-ink); }
-.gm-kpi .gm-kpi-lab { font-size:.8rem; color:var(--gm-ink-2); margin-top:.25rem; }
-.gm-kpi .gm-kpi-ic { width:20px; height:20px; color:var(--gm-ink-2); opacity:.8; }
-.gm-kpi::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gm-amber); }
-.gm-kpi.alert::before { background:var(--gm-bad); }
-.gm-kpi.alert .gm-kpi-val { color:var(--gm-bad); }
-.gm-kpi.alert .gm-kpi-ic { color:var(--gm-bad); opacity:1; }
-
-/* severity stripe on table rows */
-tr.sev-bad  > td:first-child { box-shadow:inset 3px 0 0 var(--gm-bad); }
-tr.sev-warn > td:first-child { box-shadow:inset 3px 0 0 var(--gm-warn); }
-
-/* Field / high-contrast big actions (Badge di Cantiere, worker completion).
-   Glove-friendly targets ≥48px, readable at arm's length. */
-.btn-lg { padding:.9rem 1.25rem; font-size:1.1rem; font-weight:700; min-height:52px; }
-.btn-lg.w-100 { border-radius:12px; }
-.form-select-lg { min-height:52px; }
-
-/* Sparkline canvas (ready for when we track history) */
-canvas.gm-spark { display:block; width:100%; height:34px; }
-
-/* Bootstrap bakes some component colours from $primary as literal hex at build
-   time, so overriding --bs-primary at runtime misses them. Re-point the ones we
-   actually use to the amber accent (checkboxes/switches, pills, list/dropdown
-   active states) so nothing renders in stock Bootstrap blue. */
-.nav-pills { --bs-nav-pills-link-active-bg:var(--gm-amber); }
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link { color:var(--gm-on-amber); }
-.nav-pills .nav-link { color:var(--gm-steel); }
-.form-check-input:checked { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); }
-.form-check-input:focus { border-color:var(--gm-amber);
-  box-shadow:0 0 0 .2rem color-mix(in srgb, var(--gm-amber) 28%, transparent); }
-.form-switch .form-check-input:checked { background-color:var(--gm-amber); }
-.list-group-item.active { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); color:var(--gm-on-amber); }
-.dropdown-item.active, .dropdown-item:active { background-color:var(--gm-amber); color:var(--gm-on-amber); }
-.page-link { color:var(--gm-steel); }
-.page-item.active .page-link { background-color:var(--gm-amber); border-color:var(--gm-amber-strong); color:var(--gm-on-amber); }
-.progress { --bs-progress-bar-bg:var(--gm-amber); }
-.spinner-border, .spinner-grow { color:var(--gm-amber); }
-
-/* Icon buttons in the topbar + theme-toggle icon swap (show the target theme) */
-.btn-icon { padding:.34rem .5rem; line-height:1; border-radius:8px; }
-[data-bs-theme="light"] .ic-sun  { display:none; }
-[data-bs-theme="dark"]  .ic-moon { display:none; }
-
-/* Legacy hook kept for compatibility (old markup referenced .app-navbar) */
-.app-navbar { background:var(--gm-anthracite); }
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition:none!important; }
-}
+[data-bs-theme="dark"] body{background:#101317;color:#E7EAEE;}
+[data-bs-theme="dark"] .app-navbar{background:#15351F;}
+[data-bs-theme="dark"] .app-sidebar{background:#191D23;border-right-color:#2A2F37;}
+[data-bs-theme="dark"] .app-nav-link{color:#99A1AC;}
+[data-bs-theme="dark"] .app-nav-link.active,[data-bs-theme="dark"] .app-nav-link:hover{color:#46C07E;}
+[data-bs-theme="dark"] .app-nav-link.active .app-nav-icon{background:rgba(52,179,104,.16);color:#46C07E;}
+[data-bs-theme="dark"] .app-nav-sub{border-left-color:#2A2F37;}
+[data-bs-theme="dark"] .app-nav-sub-link{color:#99A1AC;}
+[data-bs-theme="dark"] .app-nav-sub-link:hover{background:#20252d;color:#E7EAEE;}
+[data-bs-theme="dark"] .app-nav-sub-link.active{background:rgba(52,179,104,.16);color:#46C07E;}
+[data-bs-theme="dark"] .card{background:#191D23;color:#E7EAEE;box-shadow:0 1px 2px rgba(0,0,0,.4);}
+[data-bs-theme="dark"] .card-header{background:#191D23;border-bottom-color:#2A2F37;color:#E7EAEE;}
+[data-bs-theme="dark"] .card-header.bg-white,[data-bs-theme="dark"] .bg-white{background:#191D23!important;color:#E7EAEE;}
+[data-bs-theme="dark"] .table{--bs-table-bg:transparent;--bs-table-color:#E7EAEE;color:#E7EAEE;}
+[data-bs-theme="dark"] .table > thead th{background:#14171C;color:#99A1AC;border-bottom-color:#2A2F37;}
+[data-bs-theme="dark"] .table > tbody td{border-color:#2A2F37;}
+[data-bs-theme="dark"] .form-control,[data-bs-theme="dark"] .form-select{
+  background:#14171C;color:#E7EAEE;border-color:#2A2F37;}
+[data-bs-theme="dark"] .form-control::placeholder{color:#727a85;}
+[data-bs-theme="dark"] .app-date-range,[data-bs-theme="dark"] .app-date-range input{
+  background:#14171C;color:#E7EAEE;border-color:#2A2F37;}
+[data-bs-theme="dark"] .text-muted,[data-bs-theme="dark"] .text-body-secondary,
+[data-bs-theme="dark"] .app-stat-label{color:#99A1AC!important;}
+/* white-surfaced juli components → dark surfaces */
+[data-bs-theme="dark"] .app-stat-tile,[data-bs-theme="dark"] .app-timeline-item,
+[data-bs-theme="dark"] .app-profile-tabs .nav-link,[data-bs-theme="dark"] .app-att-worker-item,
+[data-bs-theme="dark"] .app-att-panel,[data-bs-theme="dark"] .gm-kpi,
+[data-bs-theme="dark"] .modal-content,[data-bs-theme="dark"] .dropdown-menu,
+[data-bs-theme="dark"] .list-group-item{
+  background:#191D23;border-color:#2A2F37;color:#E7EAEE;}
+[data-bs-theme="dark"] .gm-kpi .gm-kpi-val{color:#E7EAEE;}
+[data-bs-theme="dark"] .app-timeline-icon{background:rgba(52,179,104,.16);color:#46C07E;}
+[data-bs-theme="dark"] .app-timeline-item + .app-timeline-item{border-color:#2A2F37;}
+[data-bs-theme="dark"] .app-filter-card{background:#191D23;}
+[data-bs-theme="dark"] a{color:#6FB2DC;}
+[data-bs-theme="dark"] .btn-outline-secondary{--bs-btn-color:#c3c9d1;--bs-btn-border-color:#3a4049;
+  --bs-btn-hover-bg:#242a32;--bs-btn-hover-color:#fff;--bs-btn-hover-border-color:#3a4049;}
+[data-bs-theme="dark"] .border,[data-bs-theme="dark"] .border-top,[data-bs-theme="dark"] .border-bottom,
+[data-bs-theme="dark"] .border-start,[data-bs-theme="dark"] .border-end{border-color:#2A2F37!important;}
