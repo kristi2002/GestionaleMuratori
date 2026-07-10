@@ -15,9 +15,9 @@ $t = static fn (string $key): string => Lang::get($key);
         <h1 class="h4 mb-1"><?= $e($t('admin.subcontractors.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.subcontractors.subtitle')) ?></p>
     </div>
-    <button type="button" class="btn btn-success js-crud-new" data-bs-toggle="modal" data-bs-target="#subcontractor-modal" data-target-modal="#subcontractor-modal">
-        <?= $e($t('admin.subcontractors.new')) ?>
-    </button>
+    <a class="btn btn-success" href="<?= $e(Url::to('/admin/subcontractors/create')) ?>">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.subcontractors.new')) ?>
+    </a>
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -47,7 +47,6 @@ $t = static fn (string $key): string => Lang::get($key);
                 <tr><td colspan="6" class="text-center text-muted py-4"><?= $e($t('admin.subcontractors.empty')) ?></td></tr>
             <?php endif; ?>
             <?php foreach ($subcontractors as $s): ?>
-                <?php $record = ['id' => $s['id'], 'name' => $s['name'], 'vat_or_tax_id' => $s['vat_or_tax_id'], 'email' => $s['email'], 'phone' => $s['phone'], 'notes' => $s['notes']]; ?>
                 <tr class="<?= ((int) $s['is_active']) === 1 ? '' : 'table-secondary text-muted' ?>">
                     <td><?= $e($s['name']) ?></td>
                     <td><?= $e($s['vat_or_tax_id']) ?></td>
@@ -58,11 +57,9 @@ $t = static fn (string $key): string => Lang::get($key);
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assign-modal-<?= $e((string) $s['id']) ?>">
                             <?= $e($t('admin.subcontractors.assign_projects')) ?>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
-                                data-bs-toggle="modal" data-bs-target="#subcontractor-modal" data-target-modal="#subcontractor-modal"
-                                data-record='<?= $e(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
+                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/subcontractors/' . $s['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>
-                        </button>
+                        </a>
                         <button type="button" class="btn btn-sm btn-outline-warning js-toggle-active"
                                 data-url="<?= $e(Url::to('/admin/subcontractors/' . $s['id'] . '/toggle')) ?>">
                             <?= ((int) $s['is_active']) === 1 ? $e($t('admin.subcontractors.deactivate')) : $e($t('admin.subcontractors.activate')) ?>
@@ -112,46 +109,3 @@ $t = static fn (string $key): string => Lang::get($key);
         </div>
     </div>
 <?php endforeach; ?>
-
-<div class="modal fade" id="subcontractor-modal" tabindex="-1" data-title-create="<?= $e($t('admin.subcontractors.new')) ?>" data-title-edit="<?= $e($t('admin.subcontractors.edit')) ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/subcontractors')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.subcontractors.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="id">
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.subcontractors.name')) ?></label>
-                        <input type="text" class="form-control" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.subcontractors.vat')) ?></label>
-                        <input type="text" class="form-control" name="vat_or_tax_id">
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.subcontractors.email')) ?></label>
-                            <input type="email" class="form-control" name="email">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.subcontractors.phone')) ?></label>
-                            <input type="text" class="form-control" name="phone">
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label"><?= $e($t('admin.subcontractors.notes')) ?></label>
-                        <textarea class="form-control" name="notes" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.save')) ?></button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>

@@ -1080,6 +1080,21 @@
         });
     });
 
+    // --- Compliance: subject-type selector toggles the matching subject field --
+    // Show the subject dropdown (operaio / subappaltatore / cantiere) that matches
+    // the chosen "Soggetto", and disable the hidden ones so only the active
+    // subject_id is submitted. "company" shows none (no subject_id needed).
+    $(function () {
+        $(document).on('change', '.js-compliance-subject-type', function () {
+            var type = $(this).val();
+            $('.js-compliance-subject').each(function () {
+                var match = $(this).hasClass('js-compliance-subject-' + type);
+                $(this).toggleClass('d-none', !match);
+                $(this).find('select').prop('disabled', !match);
+            });
+        });
+    });
+
     // --- Esportazioni: per-project report download ---------------------------
     // A project picker + PDF/Excel buttons reuse the existing per-project report
     // endpoints; pick a project, then the button navigates to its report file.

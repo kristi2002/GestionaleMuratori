@@ -48,6 +48,44 @@ final class ComplianceController
         ], 'layout'));
     }
 
+    /** GET /admin/compliance/create — blank compliance document form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/compliance/form', [
+            'title'          => Lang::get('admin.compliance.new'),
+            'document'       => null,
+            'workers'        => (new UserModel())->listByRole('worker'),
+            'subcontractors' => (new SubcontractorModel())->listActive(),
+            'projects'       => (new ProjectModel())->all(),
+            'subjectTypes'   => self::SUBJECT_TYPES,
+            'docTypes'       => self::DOC_TYPES,
+        ], 'layout'));
+    }
+
+    /** GET /admin/compliance/{id}/edit — populated compliance document form page. */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $document = (new ComplianceDocumentModel())->find((int) $id);
+        if ($document === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/compliance/form', [
+            'title'          => Lang::get('admin.compliance.edit'),
+            'document'       => $document,
+            'workers'        => (new UserModel())->listByRole('worker'),
+            'subcontractors' => (new SubcontractorModel())->listActive(),
+            'projects'       => (new ProjectModel())->all(),
+            'subjectTypes'   => self::SUBJECT_TYPES,
+            'docTypes'       => self::DOC_TYPES,
+        ], 'layout'));
+    }
+
     public function store(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

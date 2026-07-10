@@ -26,6 +26,34 @@ final class ClientController
         ], 'layout'));
     }
 
+    /** GET /admin/clients/create — blank client form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/clients/form', [
+            'title'  => Lang::get('admin.clients.new'),
+            'client' => null,
+        ], 'layout'));
+    }
+
+    /** GET /admin/clients/{id}/edit — populated client form page. */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $client = (new ClientModel())->find((int) $id);
+        if ($client === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/clients/form', [
+            'title'  => Lang::get('admin.clients.edit'),
+            'client' => $client,
+        ], 'layout'));
+    }
+
     public function store(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

@@ -42,6 +42,34 @@ final class SubcontractorController
         ], 'layout'));
     }
 
+    /** GET /admin/subcontractors/create — blank subcontractor form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/subcontractors/form', [
+            'title'         => Lang::get('admin.subcontractors.new'),
+            'subcontractor' => null,
+        ], 'layout'));
+    }
+
+    /** GET /admin/subcontractors/{id}/edit — populated subcontractor form page. */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $subcontractor = (new SubcontractorModel())->find((int) $id);
+        if ($subcontractor === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/subcontractors/form', [
+            'title'         => Lang::get('admin.subcontractors.edit'),
+            'subcontractor' => $subcontractor,
+        ], 'layout'));
+    }
+
     public function store(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

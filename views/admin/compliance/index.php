@@ -31,9 +31,9 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
         <h1 class="h4 mb-1"><?= $e($t('admin.compliance.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.compliance.subtitle')) ?></p>
     </div>
-    <button type="button" class="btn btn-success js-crud-new" data-bs-toggle="modal" data-bs-target="#compliance-modal" data-target-modal="#compliance-modal">
-        <?= $e($t('admin.compliance.new')) ?>
-    </button>
+    <a class="btn btn-success" href="<?= $e(Url::to('/admin/compliance/create')) ?>">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.compliance.new')) ?>
+    </a>
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -82,12 +82,7 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                 <tr><td colspan="6" class="text-center text-muted py-4"><?= $e($t('admin.compliance.empty')) ?></td></tr>
             <?php endif; ?>
             <?php foreach ($documents as $d): ?>
-                <?php $record = [
-                    'id' => $d['id'], 'subject_type' => $d['subject_type'], 'subject_id' => $d['subject_id'],
-                    'doc_type' => $d['doc_type'], 'reference' => $d['reference'], 'issue_date' => $d['issue_date'],
-                    'expiry_date' => $d['expiry_date'], 'credits' => $d['credits'], 'notes' => $d['notes'],
-                ];
-                $sev = '';
+                <?php $sev = '';
                 if ($d['expiry_date'] !== null) {
                     $sev = $d['expiry_date'] < $today ? 'sev-bad' : ($d['expiry_date'] <= $soon ? 'sev-warn' : '');
                 }
@@ -109,11 +104,9 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                     </td>
                     <td class="mono tnum"><?= $e($d['credits'] !== null ? (string) $d['credits'] : '—') ?></td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
-                                data-bs-toggle="modal" data-bs-target="#compliance-modal" data-target-modal="#compliance-modal"
-                                data-record='<?= $e(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
+                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/compliance/' . $d['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>
-                        </button>
+                        </a>
                         <button type="button" class="btn btn-sm btn-outline-danger js-crud-delete"
                                 data-url="<?= $e(Url::to('/admin/compliance/' . $d['id'] . '/delete')) ?>"
                                 data-confirm="<?= $e($t('admin.compliance.delete_confirm')) ?>">
@@ -124,93 +117,5 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
             <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-</div>
-
-<div class="modal fade" id="compliance-modal" tabindex="-1" data-title-create="<?= $e($t('admin.compliance.new')) ?>" data-title-edit="<?= $e($t('admin.compliance.edit')) ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form class="js-crud-form js-compliance-form" data-base-url="<?= $e(Url::to('/admin/compliance')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.compliance.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="id">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.subject')) ?></label>
-                            <select class="form-select js-compliance-subject-type" name="subject_type" required>
-                                <?php foreach ($subjectTypes as $st): ?>
-                                    <option value="<?= $e($st) ?>"><?= $e(Lang::label('compliance_subject', $st)) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.doc_type')) ?></label>
-                            <select class="form-select" name="doc_type" required>
-                                <?php foreach ($docTypes as $dt): ?>
-                                    <option value="<?= $e($dt) ?>"><?= $e(Lang::label('compliance_doc', $dt)) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3 js-compliance-subject js-compliance-subject-worker">
-                        <label class="form-label"><?= $e(Lang::label('compliance_subject', 'worker')) ?></label>
-                        <select class="form-select" name="subject_id" data-subject="worker">
-                            <?php foreach ($workers as $w): ?>
-                                <option value="<?= $e((string) $w['id']) ?>"><?= $e($w['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-3 js-compliance-subject js-compliance-subject-subcontractor d-none">
-                        <label class="form-label"><?= $e(Lang::label('compliance_subject', 'subcontractor')) ?></label>
-                        <select class="form-select" name="subject_id" data-subject="subcontractor" disabled>
-                            <?php foreach ($subcontractors as $s): ?>
-                                <option value="<?= $e((string) $s['id']) ?>"><?= $e($s['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-3 js-compliance-subject js-compliance-subject-project d-none">
-                        <label class="form-label"><?= $e(Lang::label('compliance_subject', 'project')) ?></label>
-                        <select class="form-select" name="subject_id" data-subject="project" disabled>
-                            <?php foreach ($projects as $p): ?>
-                                <option value="<?= $e((string) $p['id']) ?>"><?= $e($p['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.issue_date')) ?></label>
-                            <input type="date" class="form-control" name="issue_date">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.expiry')) ?></label>
-                            <input type="date" class="form-control" name="expiry_date">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.reference')) ?></label>
-                            <input type="text" class="form-control" name="reference">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.compliance.credits')) ?></label>
-                            <input type="number" min="0" step="1" class="form-control" name="credits">
-                            <div class="form-text"><?= $e($t('admin.compliance.credits_help')) ?></div>
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label"><?= $e($t('admin.compliance.notes')) ?></label>
-                        <textarea class="form-control" name="notes" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.save')) ?></button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>

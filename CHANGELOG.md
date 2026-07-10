@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-10 — Create/edit modals → dedicated pages (part 1)
+
+Converting the admin create/edit **modals** into full **pages** (matching the
+projects/quotes/invoices/expenses pattern already in place). The POST store/update
+endpoints are unchanged; each page form is a `.js-crud-form` with `data-redirect`
+back to the list. Done so far: **clients, users, subcontractors, compliance**
+(the flat-form resources). New `.../create` and `.../{id}/edit` GET routes +
+`create()`/`edit()` controller methods + `admin/<entity>/form.php` views; the
+index pages now link to those pages and the modal markup is removed.
+- Users: password stays blank on edit (blank = unchanged); the role→linked-client
+  field toggle is preserved (server-set initial state + existing `js-user-role` JS).
+- Compliance: added the missing subject-type→subject-field toggle JS so the form
+  works for every soggetto (operaio / subappaltatore / cantiere / impresa), not
+  just the default. Subcontractors: the "assegna progetti" feature left intact.
+- Remaining modals (interventi, magazzino, S.A.L., giornale) still to convert.
+
+All 451 tests pass.
+
 ## 2026-07-10 — UX batch: dashboard, filters, exports, keyboard shortcuts
 
 A phased pass over recurring UX requests, each verified in a running browser.

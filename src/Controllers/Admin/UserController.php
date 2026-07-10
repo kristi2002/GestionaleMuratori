@@ -44,6 +44,40 @@ final class UserController
         ], 'layout'));
     }
 
+    /** GET /admin/users/create — blank user form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/users/form', [
+            'title'          => Lang::get('admin.users.new'),
+            'record'         => null,
+            'clients'        => (new ClientModel())->all(),
+            'subcontractors' => (new SubcontractorModel())->listActive(),
+            'roles'          => self::ROLES,
+        ], 'layout'));
+    }
+
+    /** GET /admin/users/{id}/edit — populated user form page. */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $record = (new UserModel())->findById((int) $id);
+        if ($record === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/users/form', [
+            'title'          => Lang::get('admin.users.edit'),
+            'record'         => $record,
+            'clients'        => (new ClientModel())->all(),
+            'subcontractors' => (new SubcontractorModel())->listActive(),
+            'roles'          => self::ROLES,
+        ], 'layout'));
+    }
+
     public function store(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

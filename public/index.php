@@ -121,6 +121,8 @@ $router->get('/health',  [DashboardController::class, 'health']);
 $router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
 
 $router->get('/admin/clients',              [ClientController::class, 'index']);
+$router->get('/admin/clients/create',       [ClientController::class, 'create']);
+$router->get('/admin/clients/{id}/edit',    [ClientController::class, 'edit']);
 $router->post('/admin/clients',             [ClientController::class, 'store']);
 $router->post('/admin/clients/{id}',        [ClientController::class, 'update']);
 $router->post('/admin/clients/{id}/delete', [ClientController::class, 'destroy']);
@@ -188,6 +190,8 @@ $router->post('/admin/expenses/{id}',         [ExpenseController::class, 'update
 $router->post('/admin/expenses/{id}/delete',  [ExpenseController::class, 'destroy']);
 
 $router->get('/admin/users',              [UserController::class, 'index']);
+$router->get('/admin/users/create',       [UserController::class, 'create']);
+$router->get('/admin/users/{id}/edit',    [UserController::class, 'edit']);
 $router->post('/admin/users',             [UserController::class, 'store']);
 $router->post('/admin/users/{id}',        [UserController::class, 'update']);
 $router->post('/admin/users/{id}/toggle', [UserController::class, 'toggleActive']);
@@ -217,6 +221,8 @@ $router->post('/admin/sal/{id}/sign',                [SalController::class, 'sig
 $router->get('/admin/sal/{id}/pdf',                  [SalController::class, 'pdf']);
 
 $router->get('/admin/compliance',                    [ComplianceController::class, 'index']);
+$router->get('/admin/compliance/create',             [ComplianceController::class, 'create']);
+$router->get('/admin/compliance/{id}/edit',          [ComplianceController::class, 'edit']);
 $router->post('/admin/compliance',                   [ComplianceController::class, 'store']);
 $router->post('/admin/compliance/{id}',              [ComplianceController::class, 'update']);
 $router->post('/admin/compliance/{id}/delete',       [ComplianceController::class, 'destroy']);
@@ -225,6 +231,8 @@ $router->get('/admin/exports',                       [ExportController::class, '
 $router->get('/admin/exports/accountant',            [ExportController::class, 'accountant']);
 
 $router->get('/admin/subcontractors',                [SubcontractorController::class, 'index']);
+$router->get('/admin/subcontractors/create',         [SubcontractorController::class, 'create']);
+$router->get('/admin/subcontractors/{id}/edit',      [SubcontractorController::class, 'edit']);
 $router->post('/admin/subcontractors',               [SubcontractorController::class, 'store']);
 $router->post('/admin/subcontractors/{id}',          [SubcontractorController::class, 'update']);
 $router->post('/admin/subcontractors/{id}/toggle',   [SubcontractorController::class, 'toggleActive']);
