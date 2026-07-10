@@ -146,33 +146,27 @@ $trendCards = [
     </div>
 <?php endif; ?>
 
-<h2 class="h6 text-muted mt-4 mb-2"><?= $e($t('admin.dashboard.sections')) ?></h2>
+<?php
+// Quick actions: jump straight to the most-used "create" flows (not a copy of the
+// sidebar's section navigation — these are one-click shortcuts to new records).
+$quickActions = [
+    ['/admin/projects/create',  'admin.projects.new',     'bi-buildings'],
+    ['/admin/quotes/create',    'admin.quotes.new',       'bi-file-earmark-text'],
+    ['/admin/invoices/create',  'admin.invoices.new',     'bi-receipt'],
+    ['/admin/expenses/create',  'admin.expenses.new',     'bi-cash-coin'],
+];
+?>
+<h2 class="h6 text-muted mt-4 mb-2"><?= $e($t('admin.dashboard.quick_actions')) ?></h2>
 <div class="row g-3">
-    <?php
-    $cards = [
-        [$t('admin.clients.title'), $t('admin.clients.subtitle'), '/admin/clients'],
-        [$t('admin.projects.title'), $t('admin.projects.subtitle'), '/admin/projects'],
-        [$t('admin.warehouse.title'), $t('admin.warehouse.subtitle'), '/admin/warehouse'],
-        [$t('admin.interventions.title'), $t('admin.interventions.subtitle'), '/admin/interventions'],
-        [$t('admin.subcontractors.title'), $t('admin.subcontractors.subtitle'), '/admin/subcontractors'],
-        [$t('admin.attendance.title'), $t('admin.attendance.subtitle'), '/admin/attendance'],
-        [$t('admin.daily_logs.title'), $t('admin.daily_logs.subtitle'), '/admin/daily-logs'],
-        [$t('admin.sal.title'), $t('admin.sal.subtitle'), '/admin/sal'],
-        [$t('admin.compliance.title'), $t('admin.compliance.subtitle'), '/admin/compliance'],
-        [$t('admin.exports.title'), $t('admin.exports.subtitle'), '/admin/exports'],
-        [$t('admin.users.title'), $t('admin.users.subtitle'), '/admin/users'],
-        [$t('admin.dashboard.reports'), $t('admin.dashboard.reports_subtitle'), '/admin/projects'],
-    ];
-    foreach ($cards as [$titleCard, $descCard, $href]):
-    ?>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h3 class="h6 mb-1"><?= $e($titleCard) ?></h3>
-                    <p class="small text-muted mb-2"><?= $e($descCard) ?></p>
-                    <a class="btn btn-sm btn-success" href="<?= $e(Url::to($href)) ?>"><?= $e($t('admin.dashboard.open')) ?></a>
+    <?php foreach ($quickActions as [$href, $labelKey, $icon]): ?>
+        <div class="col-6 col-lg-3">
+            <a class="card app-quick-action h-100 text-decoration-none" href="<?= $e(Url::to($href)) ?>">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="app-quick-action-icon"><i class="bi <?= $e($icon) ?>" aria-hidden="true"></i></span>
+                    <span class="fw-semibold"><?= $e($t($labelKey)) ?></span>
+                    <i class="bi bi-arrow-right ms-auto app-quick-action-arrow" aria-hidden="true"></i>
                 </div>
-            </div>
+            </a>
         </div>
     <?php endforeach; ?>
 </div>

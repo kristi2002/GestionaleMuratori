@@ -66,7 +66,7 @@ $fmtBytes  = static function (int $bytes): string {
                     </li>
                 </ul>
             </div>
-            <div class="d-flex gap-2 flex-wrap flex-shrink-0">
+            <div class="d-flex gap-2 flex-wrap">
                 <a class="btn btn-success" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/edit')) ?>">
                     <i class="bi bi-pencil" aria-hidden="true"></i> <?= $e($t('common.edit')) ?>
                 </a>

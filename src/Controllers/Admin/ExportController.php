@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\ProjectModel;
 use App\Services\Report\AccountantExportBuilder;
 use App\Services\Report\AccountantExportDataService;
 use App\Support\Lang;
@@ -24,6 +25,7 @@ final class ExportController
         Response::html(View::render('admin/exports/index', [
             'title'        => Lang::get('admin.exports.title'),
             'currentMonth' => (new \DateTimeImmutable('first day of this month'))->format('Y-m'),
+            'projects'     => (new ProjectModel())->all(),
         ], 'layout'));
     }
 

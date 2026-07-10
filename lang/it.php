@@ -19,6 +19,36 @@ return [
         'my_tasks'       => 'I miei interventi',
         'my_projects'    => 'I miei cantieri',
         'notifications'  => 'Notifiche',
+        // Shared chrome for back buttons and breadcrumb trails (partials).
+        'dashboard'      => 'Pannello',
+        'projects'       => 'Progetti',
+        'breadcrumb'     => 'Percorso di navigazione',
+        'shortcuts'      => 'Scorciatoie da tastiera',
+    ],
+
+    // Keyboard-shortcut guide (/shortcuts) + the in-app hints.
+    'shortcuts' => [
+        'title'            => 'Scorciatoie da tastiera',
+        'subtitle'         => 'Muoviti nell\'app senza staccare le mani dalla tastiera.',
+        'nav_group'        => 'Navigazione',
+        'nav_hint'         => 'Premi G seguito dal tasto indicato.',
+        'general_group'    => 'Generale',
+        'open_guide'       => 'Apri questa guida',
+        'focus_search'     => 'Vai al campo di ricerca',
+        'close'            => 'Chiudi finestra, menu o filtro',
+        'then'             => 'poi',
+        'go_dashboard'     => 'Pannello',
+        'go_clients'       => 'Clienti',
+        'go_projects'      => 'Progetti',
+        'go_interventions' => 'Interventi',
+        'go_quotes'        => 'Preventivi',
+        'go_invoices'      => 'Fatture',
+        'go_expenses'      => 'Spese',
+        'go_warehouse'     => 'Magazzino',
+        'go_attendance'    => 'Badge di Cantiere',
+        'go_users'         => 'Utenti',
+        'go_exports'       => 'Esportazioni',
+        'admin_only_note'  => 'Le scorciatoie di navigazione sono disponibili nel pannello amministratore.',
     ],
 
     // In-app alert feed + the scheduled-automation messages (scripts/scheduler.php).
@@ -178,7 +208,10 @@ return [
         'edit'    => 'Modifica',
         'delete'  => 'Elimina',
         'create'  => 'Crea',
+        'open'    => 'Apri',
+        'back'    => 'Indietro',
         'search'  => 'Cerca',
+        'reset_filters' => 'Azzera filtri',
         'loading' => 'Caricamento…',
         'yes'     => 'Sì',
         'no'      => 'No',
@@ -229,6 +262,7 @@ return [
             'reports'             => 'Report',
             'reports_subtitle'    => 'Esportazione PDF ed Excel per progetto.',
             'open'                => 'Apri',
+            'quick_actions'       => 'Azioni rapide',
         ],
 
         'nav' => [
@@ -548,6 +582,17 @@ return [
             'accountant_help' => 'File Excel con costi materiali (a costo unitario) e ore di lavoro dei mesi selezionati.',
             'month'           => 'Mese',
             'download'        => 'Scarica Excel',
+            'available'       => 'Esportazioni disponibili',
+            'export_col'      => 'Esportazione',
+            'description_col' => 'Descrizione',
+            'options_col'     => 'Opzioni',
+            'action_col'      => 'Azione',
+            'project_report'      => 'Report di cantiere',
+            'project_report_help' => 'Scheda completa di un cantiere: interventi, materiali, foto e firme, in PDF o Excel.',
+            'select_project'      => 'Seleziona un cantiere',
+            'format_pdf'          => 'PDF',
+            'format_excel'        => 'Excel',
+            'no_projects'         => 'Nessun cantiere disponibile.',
         ],
 
         'projects' => [
@@ -730,6 +775,11 @@ return [
             'range_today'          => 'Oggi',
             'range_week'           => 'Questa settimana',
             'range_all'            => 'Tutte le date',
+            // Date-range filter (shared by the expenses/invoices/quotes lists).
+            'filter_date_from'       => 'Data inizio',
+            'filter_date_from_short' => 'Dal',
+            'filter_date_to'         => 'Data fine',
+            'filter_date_to_short'   => 'Al',
             'materials'            => 'Materiali pianificati',
             'item'                 => 'Articolo',
             'qty_planned'          => 'Quantità',
@@ -808,11 +858,6 @@ return [
         'not_found'        => 'Intervento non trovato.',
     ],
 
-    'report' => [
-        'pdf'   => 'Report PDF',
-        'excel' => 'Report Excel',
-    ],
-
     'client' => [
         'projects_title'    => 'I miei progetti',
         'projects_subtitle' => 'Cantieri e interventi in corso.',
@@ -873,6 +918,9 @@ return [
 
     // PDF/Excel document labels (previously hardcoded in views/reports/*).
     'report' => [
+        // Action-button labels on the project/client record cards and detail pages.
+        'pdf'                   => 'Report PDF',
+        'excel'                 => 'Report Excel',
         'project_report'        => 'Report progetto',
         'client'                => 'Cliente',
         'name'                  => 'Nome',

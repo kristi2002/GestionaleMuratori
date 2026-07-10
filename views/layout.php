@@ -115,7 +115,7 @@ $subActive = static function (string $href) use ($reqPath): bool {
     <?php // filemtime cache-buster: browsers drop stale copies whenever the file changes. ?>
     <link href="<?= $e($base) ?>/assets/css/app.css?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/css/app.css') ?>" rel="stylesheet">
 </head>
-<body data-base="<?= $e($base) ?>">
+<body data-base="<?= $e($base) ?>" data-role="<?= $e($user['role'] ?? '') ?>">
 <nav class="navbar navbar-dark app-navbar sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center">
@@ -152,6 +152,10 @@ $subActive = static function (string $href) use ($reqPath): bool {
                 <?php if (in_array($user['role'], ['worker', 'subcontractor'], true)): ?>
                     <a class="btn btn-sm btn-outline-light" href="<?= $e(Url::to('/attendance')) ?>"><?= $e(Lang::get('attendance.nav')) ?></a>
                 <?php endif; ?>
+                <a class="btn btn-sm btn-icon d-none d-md-inline-grid" href="<?= $e(Url::to('/shortcuts')) ?>"
+                   title="<?= $e(Lang::get('shortcuts.title')) ?>" aria-label="<?= $e(Lang::get('shortcuts.title')) ?>">
+                    <i class="bi bi-keyboard" aria-hidden="true"></i>
+                </a>
                 <a class="btn btn-sm btn-icon" href="<?= $e(Url::to('/password')) ?>"
                    title="<?= $e(Lang::get('auth.change_password')) ?>" aria-label="<?= $e(Lang::get('auth.change_password')) ?>">
                     <i class="bi bi-key" aria-hidden="true"></i>

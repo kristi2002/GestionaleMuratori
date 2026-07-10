@@ -35,7 +35,12 @@ $catBadges = [
         <h1 class="h4 mb-1"><?= $e($t('admin.expenses.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.expenses.subtitle')) ?></p>
     </div>
-    <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/expenses/create')) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.expenses.new')) ?>
+        </a>
+        <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+    </div>
 </div>
 
 <?= View::render('partials/breadcrumb', ['items' => [
@@ -107,9 +112,6 @@ $catBadges = [
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
-            <a class="btn btn-success" href="<?= $e(Url::to('/admin/expenses/create')) ?>">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.expenses.new')) ?>
-            </a>
             <input type="text" class="form-control" name="q" value="<?= $e($filters['search']) ?>"
                    placeholder="<?= $e($t('admin.expenses.search_placeholder')) ?>" aria-label="<?= $e($t('common.search')) ?>">
             <select class="form-select" name="project_id" aria-label="<?= $e($t('admin.interventions.project')) ?>">
@@ -121,6 +123,11 @@ $catBadges = [
                 <?php endforeach; ?>
             </select>
         </form>
+        <?= View::render('partials/filter_clear', [
+            'active' => $filters['search'] !== '' || $filters['category'] !== '' || $filters['worker_id'] > 0
+                || $filters['project_id'] > 0 || $filters['date_from'] !== '' || $filters['date_to'] !== '',
+            'href'   => '/admin/expenses',
+        ], null) ?>
     </div>
 </div>
 

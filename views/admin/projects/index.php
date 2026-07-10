@@ -17,6 +17,9 @@ $t = static fn (string $key): string => Lang::get($key);
         <p class="text-muted mb-0"><?= $e($t('admin.projects.subtitle')) ?></p>
     </div>
     <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/projects/create')) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.projects.new')) ?>
+        </a>
         <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
     </div>
 </div>
@@ -47,10 +50,11 @@ $t = static fn (string $key): string => Lang::get($key);
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
-            <a class="btn btn-success" href="<?= $e(Url::to('/admin/projects/create')) ?>">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.projects.new')) ?>
-            </a>
         </form>
+        <?= View::render('partials/filter_clear', [
+            'active' => $filters['search'] !== '' || $filters['client_id'] > 0 || $filters['status'] !== '',
+            'href'   => '/admin/projects',
+        ], null) ?>
     </div>
 </div>
 
@@ -101,20 +105,23 @@ $t = static fn (string $key): string => Lang::get($key);
                                 <span class="text-truncate"><?= $e(($p['worker_names'] ?? '') !== '' && $p['worker_names'] !== null ? $p['worker_names'] : $t('admin.projects.no_workers')) ?></span>
                             </li>
                         </ul>
-                        <div class="d-flex flex-wrap gap-2 mt-auto pt-3 border-top">
+                        <div class="d-flex align-items-center gap-2 mt-auto pt-3 border-top">
                             <a class="btn btn-sm btn-success" href="<?= $e(Url::to('/admin/projects/' . $p['id'])) ?>">
                                 <i class="bi bi-folder2-open" aria-hidden="true"></i> <?= $e($t('common.open')) ?>
                             </a>
-                            <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/projects/' . $p['id'] . '/report/pdf')) ?>">
-                                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= $e($t('report.pdf')) ?>
+                            <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="<?= $e(Url::to('/admin/projects/' . $p['id'] . '/report/pdf')) ?>"
+                               title="<?= $e($t('report.pdf')) ?>" aria-label="<?= $e($t('report.pdf')) ?>">
+                                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
                             </a>
-                            <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/projects/' . $p['id'] . '/report/excel')) ?>">
-                                <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= $e($t('report.excel')) ?>
+                            <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="<?= $e(Url::to('/admin/projects/' . $p['id'] . '/report/excel')) ?>"
+                               title="<?= $e($t('report.excel')) ?>" aria-label="<?= $e($t('report.excel')) ?>">
+                                <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger ms-auto js-crud-delete"
+                            <button type="button" class="btn btn-sm btn-outline-danger app-icon-btn ms-auto js-crud-delete"
+                                    title="<?= $e($t('common.delete')) ?>" aria-label="<?= $e($t('common.delete')) ?>"
                                     data-url="<?= $e(Url::to('/admin/projects/' . $p['id'] . '/delete')) ?>"
                                     data-confirm="<?= $e($t('admin.projects.delete_confirm')) ?>">
-                                <?= $e($t('common.delete')) ?>
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

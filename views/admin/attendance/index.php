@@ -20,30 +20,42 @@ $coord = static function ($lat, $lng) use ($e): string {
         . '" target="_blank" rel="noopener" title="' . $e($lat . ', ' . $lng) . '">📍</a>';
 };
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
     <div>
         <h1 class="h4 mb-1"><?= $e($t('admin.attendance.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.attendance.subtitle')) ?></p>
     </div>
+    <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
 </div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-12 col-sm-5">
-        <select class="form-select" name="project_id">
-            <?php foreach ($projects as $p): ?>
-                <option value="<?= $e((string) $p['id']) ?>" <?= $projectId === (int) $p['id'] ? 'selected' : '' ?>>
-                    <?= $e($p['name']) ?> — <?= $e($p['client_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+<?= View::render('partials/breadcrumb', ['items' => [
+    [$t('nav.dashboard'), '/admin'],
+    [$t('admin.attendance.title'), null],
+]], null) ?>
+
+<div class="card app-filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-12 col-sm-5">
+                <select class="form-select" name="project_id" aria-label="<?= $e($t('admin.interventions.project')) ?>">
+                    <?php foreach ($projects as $p): ?>
+                        <option value="<?= $e((string) $p['id']) ?>" <?= $projectId === (int) $p['id'] ? 'selected' : '' ?>>
+                            <?= $e($p['name']) ?> — <?= $e($p['client_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-sm-3">
+                <input type="date" class="form-control" name="date" value="<?= $e($date) ?>">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="col-6 col-sm-3">
-        <input type="date" class="form-control" name="date" value="<?= $e($date) ?>">
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
-    </div>
-</form>
+</div>
 
 <div class="card">
     <div class="table-responsive">

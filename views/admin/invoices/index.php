@@ -19,7 +19,10 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
         <h1 class="h4 mb-1"><?= $e($t('admin.invoices.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.invoices.subtitle')) ?></p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/invoices/create')) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.invoices.new')) ?>
+        </a>
         <button type="button" class="btn btn-outline-secondary" disabled
                 title="<?= $e($t('nav.coming_soon')) ?>">
             <i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= $e($t('admin.invoices.einvoice_soon')) ?>
@@ -57,10 +60,11 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
-            <a class="btn btn-success" href="<?= $e(Url::to('/admin/invoices/create')) ?>">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.invoices.new')) ?>
-            </a>
         </form>
+        <?= View::render('partials/filter_clear', [
+            'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['project_id'] > 0,
+            'href'   => '/admin/invoices',
+        ], null) ?>
     </div>
 </div>
 

@@ -25,7 +25,12 @@ $badge = [
         <h1 class="h4 mb-1"><?= $e($t('admin.quotes.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.quotes.subtitle')) ?></p>
     </div>
-    <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/quotes/create')) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.quotes.new')) ?>
+        </a>
+        <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+    </div>
 </div>
 
 <?= View::render('partials/breadcrumb', ['items' => [
@@ -57,10 +62,11 @@ $badge = [
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
-            <a class="btn btn-success" href="<?= $e(Url::to('/admin/quotes/create')) ?>">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.quotes.new')) ?>
-            </a>
         </form>
+        <?= View::render('partials/filter_clear', [
+            'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['client_id'] > 0,
+            'href'   => '/admin/quotes',
+        ], null) ?>
     </div>
 </div>
 

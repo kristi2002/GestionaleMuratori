@@ -207,8 +207,41 @@
             '</div>'
         ).appendTo('body');
 
+        var hideTimer = null;
+        function hideOverlay() {
+            $overlay.addClass('d-none');
+            if (hideTimer) { window.clearTimeout(hideTimer); hideTimer = null; }
+        }
+
+        // A click on a download / new-tab / in-page link fires beforeunload but
+        // never actually unloads the document (the browser streams the file or
+        // opens a new tab), so a plain overlay-on-beforeunload would spin forever.
+        // Detect those clicks and suppress the overlay for them.
+        var suppressOverlay = false;
+        $(document).on('click', 'a[href]', function () {
+            var $a = $(this);
+            var href = $a.attr('href') || '';
+            var target = ($a.attr('target') || '').toLowerCase();
+            suppressOverlay = $a.is('[download]') || target === '_blank' ||
+                href.charAt(0) === '#' ||
+                /^(mailto:|tel:|javascript:)/i.test(href) ||
+                /\/(pdf|excel|print)(\/|$|\?)|\/report\/|\/exports?\/|\.pdf($|\?)|\.xlsx?($|\?)/i.test(href);
+        });
+
         window.addEventListener('beforeunload', function () {
+            if (suppressOverlay) { suppressOverlay = false; return; }
             $overlay.removeClass('d-none');
+            // Safety net: if the navigation never completes (download, blocked
+            // popup, cancelled prompt) clear the overlay instead of spinning forever.
+            hideTimer = window.setTimeout(hideOverlay, 4000);
+        });
+
+        // Coming back to the page (bfcache back/forward, or focus regained after a
+        // download/print dialog) must always clear a lingering overlay.
+        window.addEventListener('pageshow', hideOverlay);
+        window.addEventListener('focus', hideOverlay);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) { hideOverlay(); }
         });
     });
 
@@ -1047,6 +1080,22 @@
         });
     });
 
+    // --- Esportazioni: per-project report download ---------------------------
+    // A project picker + PDF/Excel buttons reuse the existing per-project report
+    // endpoints; pick a project, then the button navigates to its report file.
+    $(function () {
+        $(document).on('click', '.js-export-project-btn', function () {
+            var $row = $(this).closest('.js-export-project-row');
+            var $select = $row.find('.js-export-project');
+            var id = $select.val();
+            if (!id) {
+                $select.trigger('focus');
+                return;
+            }
+            window.location.href = $row.data('base') + '/' + id + '/report/' + $(this).data('format');
+        });
+    });
+
     // --- Shell: theme toggle + POST logout (Desktop build) --------------------
     // Theme is persisted in a cookie and rendered server-side (no flash); here we
     // just flip the live attribute and remember the choice for the next request.
@@ -1232,4 +1281,62 @@
     window.GM_drawSparks = drawSparks;
     $(function () { drawSparks(); });
     $(window).on('resize', drawSparks);
+
+    // --- Keyboard shortcuts (reference at /shortcuts) ------------------------
+    // "?" opens the guide, "/" jumps to search, and "g" then a section key
+    // navigates (admin only — the targets are admin pages). Kept in sync with
+    // views/shortcuts.php. Never fires while the user is typing in a field.
+    $(function () {
+        var role = document.body.getAttribute('data-role') || '';
+        var navMap = {
+            d: '/admin', c: '/admin/clients', p: '/admin/projects', i: '/admin/interventions',
+            q: '/admin/quotes', f: '/admin/invoices', s: '/admin/expenses', m: '/admin/warehouse',
+            b: '/admin/attendance', u: '/admin/users', e: '/admin/exports'
+        };
+        var pendingG = false;
+        var pendingTimer = null;
+
+        function inField(el) {
+            if (!el) { return false; }
+            var tag = (el.tagName || '').toLowerCase();
+            return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+        }
+        function clearPendingG() {
+            pendingG = false;
+            if (pendingTimer) { window.clearTimeout(pendingTimer); pendingTimer = null; }
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.altKey || e.ctrlKey || e.metaKey) { return; }
+            if (inField(e.target)) { return; }
+
+            if (e.key === '?') {
+                e.preventDefault();
+                window.location.href = BASE + '/shortcuts';
+                return;
+            }
+            if (e.key === '/') {
+                var $search = $('input[name="q"], input[type="search"]').filter(':visible').first();
+                if ($search.length) {
+                    e.preventDefault();
+                    $search.trigger('focus');
+                }
+                return;
+            }
+            if (pendingG) {
+                var dest = navMap[(e.key || '').toLowerCase()];
+                clearPendingG();
+                if (dest && role === 'admin') {
+                    e.preventDefault();
+                    window.location.href = BASE + dest;
+                }
+                return;
+            }
+            if (e.key === 'g' || e.key === 'G') {
+                if (role !== 'admin') { return; }
+                pendingG = true;
+                pendingTimer = window.setTimeout(clearPendingG, 1200);
+            }
+        });
+    });
 }(jQuery));

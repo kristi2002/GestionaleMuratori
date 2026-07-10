@@ -1,5 +1,87 @@
 # Changelog
 
+## 2026-07-10 — UX batch: dashboard, filters, exports, keyboard shortcuts
+
+A phased pass over recurring UX requests, each verified in a running browser.
+No schema change; one additive route (`/shortcuts`).
+
+- **Dashboard** — removed the "Sezioni" card grid (it merely duplicated the
+  sidebar) and replaced it with an **Azioni rapide** panel: one-click shortcuts to
+  the common create flows (nuovo progetto / preventivo / fattura / spesa).
+- **PDF/Excel download spinner** — the page-loading overlay was shown on
+  `beforeunload` but a file download never unloads the page, so the spinner span
+  forever (e.g. "Scarica PDF" on Preventivi). The overlay is now suppressed for
+  download / new-tab / in-page links and cleared on `pageshow`/focus/visibility
+  plus a safety timeout.
+- **Clear-filters** — filtered list pages (progetti, preventivi, fatture, spese,
+  interventi) now show an **Azzera filtri** link whenever a filter is applied,
+  via a new `partials/filter_clear` partial.
+- **Interventi row actions** — the per-row Modifica / Avvia / Sospendi / Annulla
+  buttons no longer wrap onto two lines; they sit on one line (the table still
+  scrolls inside its `.table-responsive` wrapper on narrow screens).
+- **Selects & date pickers** — `<option>`/`<optgroup>` lists pick up the app
+  palette (and stay legible in dark mode), and native date/month/time picker
+  indicators get a pointer cursor, a soft hover chip, and a visible icon in dark
+  mode.
+- **Consistent primary action** — "Nuovo …" buttons moved out of the filter grid
+  to the top-right of the page header on progetti / preventivi / fatture / spese,
+  matching interventi / clienti; Badge di Cantiere gained the standard back button
+  + breadcrumb + filter card.
+- **Esportazioni** — the single accountant form became a proper "Esportazioni
+  disponibili" table, adding a working **Report di cantiere** export (project
+  picker → PDF/Excel, reusing the existing per-project report endpoints).
+- **Keyboard shortcuts** — new `/shortcuts` guide page (topbar ⌨ button and the
+  `?` key open it). `/` focuses search; `g` then a section key navigates
+  (admin). Handler ignores keystrokes while typing in a field.
+
+## 2026-07-10 — UI polish: card alignment, button placement & i18n regressions
+
+A focused pass over card-internal alignment and button placement, done by driving
+the running app in a browser (not by intuition). No behavior or schema change.
+
+### Fixed — missing `lang/it.php` keys left by the "juli" redesign
+Twelve keys resolved to their raw dotted path on real pages (e.g. buttons literally
+read `common.open`, breadcrumbs `nav.dashboard`, back buttons `common.back`).
+Audited every `Lang::get`/`$t` call across `views/` (566 distinct keys); the 12
+missing ones now render Italian:
+- Added `common.open`, `common.back`, `common.reset_filters`.
+- Added `nav.dashboard`, `nav.projects`, `nav.breadcrumb` (used by the shared
+  `back_button` / `breadcrumb` partials — affected ~10 pages each).
+- Added `admin.interventions.filter_date_{from,to}{,_short}` (the expenses/quotes/
+  invoices date-range filter).
+- **Root cause of `report.pdf` / `report.excel` blanking: a duplicate top-level
+  `report` key** — the second literal silently overrode the first in the array.
+  Merged the button labels into the surviving block and removed the dead duplicate.
+
+### Improved — Progetti card footer (button placement)
+The record-card footer wrapped its delete button onto a second line (`flex-wrap` +
+`ms-auto`), leaving an orphaned right-aligned "Elimina". Reworked to a single
+aligned row — primary **Apri**, then PDF/Excel and delete as compact
+`app-icon-btn` icon buttons (tooltip + `aria-label` preserved), delete pinned right.
+Footers now line up across cards. Verified in light and dark themes.
+
+### Fixed — mobile/tablet responsiveness
+Audited the app at phone width (375px) across the dashboard, list pages, record-card
+grids, detail pages and forms. One real break found and fixed: the **project detail
+header** button group (`d-flex … flex-shrink-0`) forced its ~417px content width even
+after wrapping, pushing the whole page into horizontal scroll on phones. Dropped
+`flex-shrink-0` so the group shrinks and its buttons wrap (Modifica / Report PDF on
+one line, Report Excel on the next); desktop still keeps all three on one row.
+Everything else already behaved: wide tables (interventi, quote/invoice line items)
+scroll inside their `.table-responsive` wrappers instead of overflowing the page,
+filter grids collapse to a single column, and card grids stack — verified no
+page-level horizontal overflow on any audited screen.
+
+### Redesigned — sidebar navigation
+The narrow 96px icon-rail (centered icon over a tiny label) read as cramped and
+cheap once widened. Rebuilt as a **240px left-aligned row menu** (CSS-only, in
+`app.css` — the `layout.php` markup is unchanged): each item is icon + label on one
+line, hover and the active page fill the whole row with a soft green rounded **pill**
+(no icon chips, no side stripes). Sub-nav labels wrap instead of truncating and the
+expand caret is centred on the row's right edge. Dark theme and the mobile
+off-canvas drawer (now 260px) updated to match. Verified on desktop (light + dark)
+and the mobile drawer.
+
 ## 2026-07-10 — Platform hardening: automation, proactive alerts, indexing & polish
 
 A deployment-readiness and "full platform" pass: fixed regressions left by the

@@ -76,6 +76,13 @@ $nextActions = [
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
     </div>
+    <?php if ($filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== ''): ?>
+        <div class="col-auto">
+            <a class="btn btn-link text-decoration-none" href="<?= $e(Url::to('/admin/interventions') . ($range !== '' ? '?range=' . $e($range) : '')) ?>">
+                <i class="bi bi-x-circle" aria-hidden="true"></i> <?= $e($t('common.reset_filters')) ?>
+            </a>
+        </div>
+    <?php endif; ?>
 </form>
 
 <div class="card">
@@ -118,20 +125,22 @@ $nextActions = [
                         <?php endif; ?>
                     </td>
                     <td><span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $iv['status'])) ?></span></td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit js-intervention-edit"
-                                data-bs-toggle="modal" data-bs-target="#intervention-modal" data-target-modal="#intervention-modal"
-                                data-record='<?= $e(json_encode($iv, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
-                            <?= $e($t('common.edit')) ?>
-                        </button>
-                        <?php foreach ($nextActions[$iv['status']] ?? [] as $action): ?>
-                            <button type="button" class="btn btn-sm <?= $action['to'] === 'cancelled' ? 'btn-outline-danger' : 'btn-outline-success' ?> js-intervention-status"
-                                    data-url="<?= $e(Url::to('/admin/interventions/' . $iv['id'] . '/status')) ?>"
-                                    data-to-status="<?= $e($action['to']) ?>"
-                                    <?= $action['to'] === 'cancelled' ? 'data-confirm="' . $e($t('admin.interventions.cancel_confirm')) . '"' : '' ?>>
-                                <?= $e($action['label']) ?>
+                    <td class="text-end app-row-actions">
+                        <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit js-intervention-edit"
+                                    data-bs-toggle="modal" data-bs-target="#intervention-modal" data-target-modal="#intervention-modal"
+                                    data-record='<?= $e(json_encode($iv, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
+                                <?= $e($t('common.edit')) ?>
                             </button>
-                        <?php endforeach; ?>
+                            <?php foreach ($nextActions[$iv['status']] ?? [] as $action): ?>
+                                <button type="button" class="btn btn-sm <?= $action['to'] === 'cancelled' ? 'btn-outline-danger' : 'btn-outline-success' ?> js-intervention-status"
+                                        data-url="<?= $e(Url::to('/admin/interventions/' . $iv['id'] . '/status')) ?>"
+                                        data-to-status="<?= $e($action['to']) ?>"
+                                        <?= $action['to'] === 'cancelled' ? 'data-confirm="' . $e($t('admin.interventions.cancel_confirm')) . '"' : '' ?>>
+                                    <?= $e($action['label']) ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
                     </td>
                 </tr>
             <?php endforeach; ?>

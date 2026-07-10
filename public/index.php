@@ -118,6 +118,7 @@ $router->get('/password',  [AuthController::class, 'showPassword']);
 $router->post('/password', [AuthController::class, 'changePassword']);
 $router->get('/admin',   [DashboardController::class, 'admin']);
 $router->get('/health',  [DashboardController::class, 'health']);
+$router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
 
 $router->get('/admin/clients',              [ClientController::class, 'index']);
 $router->post('/admin/clients',             [ClientController::class, 'store']);

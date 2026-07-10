@@ -73,6 +73,16 @@ final class DashboardController
         ], 'layout'));
     }
 
+    /** GET /shortcuts — keyboard-shortcut reference, for any authenticated user. */
+    public function shortcuts(Request $request): void
+    {
+        AuthGuard::require($request); // any authenticated user
+
+        Response::html(View::render('shortcuts', [
+            'title' => Lang::get('shortcuts.title'),
+        ], 'layout'));
+    }
+
     /** GET /health — public lightweight readiness probe. */
     public function health(Request $request): void
     {

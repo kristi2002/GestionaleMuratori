@@ -4,7 +4,7 @@
     --app-green-soft: #e8f5e9;
     --app-slate: #475569;
     --app-topbar-h: 56px;
-    --app-sidebar-w: 96px;
+    --app-sidebar-w: 240px;
 }
 
 body {
@@ -72,6 +72,72 @@ body {
 
 .form-label {
     font-weight: 600;
+}
+
+/* --- Select controls & their option lists -------------------------------- */
+/* The expanded list is OS-drawn, but Chromium honours background/color on
+   <option>/<optgroup>, so the dropdown items pick up the app palette (and stay
+   legible in dark mode, where the native list would otherwise be near-white). */
+.form-select {
+    cursor: pointer;
+}
+
+.form-select option,
+.form-control option {
+    padding: .4rem .5rem;
+    background-color: #fff;
+    color: #212529;
+}
+
+.form-select option:checked,
+.form-select option:hover {
+    background-color: var(--app-green-soft);
+    color: var(--app-green-dark);
+}
+
+.form-select optgroup {
+    color: #6c757d;
+    font-weight: 700;
+    font-style: normal;
+}
+
+[data-bs-theme="dark"] .form-select option,
+[data-bs-theme="dark"] .form-control option {
+    background-color: #191D23;
+    color: #E7EAEE;
+}
+
+[data-bs-theme="dark"] .form-select option:checked,
+[data-bs-theme="dark"] .form-select option:hover {
+    background-color: rgba(52, 179, 104, .22);
+    color: #fff;
+}
+
+/* --- Native date / month / time pickers ---------------------------------- */
+/* Pointer cursor, a soft green hover chip, and — crucially — a visible icon in
+   dark mode (the default calendar glyph is near-black on the dark input). */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: .12rem;
+    border-radius: .3rem;
+    transition: background-color .15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    background-color: var(--app-green-soft);
+}
+
+[data-bs-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator,
+[data-bs-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator,
+[data-bs-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.15);
 }
 
 /* --- Filter card (all list pages) --------------------------------------- */
@@ -681,6 +747,49 @@ body {
     color: #b45309;
 }
 
+/* Dashboard quick-action shortcuts: one-click access to the common create flows. */
+.app-quick-action {
+    color: #212529;
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+.app-quick-action:hover {
+    color: var(--app-green-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+}
+
+.app-quick-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: .65rem;
+    background-color: var(--app-green-soft);
+    color: var(--app-green);
+    font-size: 1.2rem;
+}
+
+.app-quick-action-arrow {
+    color: #cbd5e1;
+    transition: color .15s ease, transform .15s ease;
+}
+
+.app-quick-action:hover .app-quick-action-arrow {
+    color: var(--app-green);
+    transform: translateX(2px);
+}
+
+[data-bs-theme="dark"] .app-quick-action {
+    color: #E7EAEE;
+}
+
+[data-bs-theme="dark"] .app-quick-action:hover {
+    color: #46C07E;
+}
+
 /* Registro Attività: compact icon + two-line entries, divided by hairlines. */
 .app-activity-item {
     display: flex;
@@ -802,6 +911,53 @@ body {
     white-space: nowrap;
 }
 
+/* --- Keyboard shortcut guide (/shortcuts) -------------------------------- */
+.app-kbd-list li {
+    padding: .55rem 0;
+}
+
+.app-kbd-list li + li {
+    border-top: 1px solid #eef0f2;
+}
+
+.app-kbd-combo {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    white-space: nowrap;
+}
+
+.app-kbd-then {
+    font-size: .78rem;
+    color: #6c757d;
+}
+
+.app-kbd {
+    display: inline-block;
+    min-width: 1.7rem;
+    padding: .2rem .45rem;
+    font-family: var(--font-mono, monospace);
+    font-size: .8rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    color: #334155;
+    background-color: #f8fafc;
+    border: 1px solid #d7dde3;
+    border-bottom-width: 2px;
+    border-radius: .4rem;
+}
+
+[data-bs-theme="dark"] .app-kbd {
+    color: #E7EAEE;
+    background-color: #14171C;
+    border-color: #2A2F37;
+}
+
+[data-bs-theme="dark"] .app-kbd-list li + li {
+    border-top-color: #2A2F37;
+}
+
 /* --- Empty states -------------------------------------------------------- */
 
 .app-empty-state {
@@ -847,70 +1003,72 @@ body {
 }
 
 .app-sidebar {
-    --bs-offcanvas-width: 180px;
+    --bs-offcanvas-width: 260px;
     background: #fff;
 }
 
-/* Narrow vertical column: each item stacks its icon above a small centered label. */
+/* Left-aligned row nav: each item is icon + label on one line; hover and the
+   active page fill the whole row with a soft rounded pill (no icon chips, no
+   side stripes) for a clean, modern sidebar. */
 .app-sidebar-nav {
-    gap: .5rem;
-    align-items: center;
+    gap: 2px;
+    align-items: stretch;
     width: 100%;
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
 }
 
 .app-nav-link {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: .35rem;
+    gap: .7rem;
     width: 100%;
-    padding: .35rem .25rem;
+    padding: .55rem .65rem;
+    border-radius: .6rem;
     color: var(--app-slate);
-    text-align: center;
+    text-align: left;
+    transition: background-color .15s ease, color .15s ease;
 }
 
 .app-nav-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: .85rem;
-    transition: background-color .15s ease, color .15s ease;
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: .5rem;
+    transition: color .15s ease;
 }
 
 .app-nav-icon .bi {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     line-height: 1;
 }
 
 .app-nav-label {
-    font-size: .72rem;
-    font-weight: 600;
-    letter-spacing: .01em;
-    line-height: 1.2;
+    min-width: 0;
+    font-size: .875rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.25;
 }
 
 .app-nav-link:hover,
 .app-nav-link:focus {
+    background: rgba(46, 125, 50, .07);
     color: var(--app-green-dark);
 }
 
-.app-nav-link:hover .app-nav-icon,
-.app-nav-link:focus .app-nav-icon {
-    background: rgba(46, 125, 50, .08);
-}
-
-/* Active page: icon sits in a prominent light-green rounded square; text and icon in dark green. */
+/* Active page: the whole row becomes a soft green pill, icon and label in dark green. */
 .app-nav-link.active {
+    background: var(--app-green-soft);
     color: var(--app-green-dark);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .app-nav-link.active .app-nav-icon {
-    background: var(--app-green-soft);
     color: var(--app-green-dark);
 }
 
@@ -926,10 +1084,6 @@ body {
 .app-nav-link.disabled:hover,
 .app-nav-link.disabled:focus {
     color: #9aa39d;
-}
-
-.app-nav-link.disabled:hover .app-nav-icon,
-.app-nav-link.disabled:focus .app-nav-icon {
     background: transparent;
 }
 
@@ -940,15 +1094,32 @@ body {
     width: 100%;
 }
 
+/* Expandable rows reserve space on the right for the caret so a wrapped label
+   never slides under it. */
+.app-nav-item > .app-nav-link {
+    padding-right: 2rem;
+}
+
 .app-nav-caret {
     position: absolute;
-    top: .3rem;
-    right: .1rem;
-    padding: .15rem .3rem;
+    top: .55rem;
+    right: .35rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    padding: 0;
     border: 0;
+    border-radius: .4rem;
     background: none;
     color: #9aa39d;
     line-height: 1;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.app-nav-caret:hover {
+    background: rgba(46, 125, 50, .1);
 }
 
 .app-nav-caret:hover,
@@ -980,15 +1151,15 @@ body {
 
 .app-nav-sub-link {
     display: flex;
-    align-items: center;
-    gap: .4rem;
+    align-items: flex-start;
+    gap: .45rem;
     width: 100%;
-    padding: .3rem .4rem;
+    padding: .35rem .5rem;
     border-radius: .45rem;
-    font-size: .7rem;
+    font-size: .78rem;
     font-weight: 500;
-    letter-spacing: .02em;
-    line-height: 1.25;
+    letter-spacing: .01em;
+    line-height: 1.3;
     color: #64748b;
     text-align: left;
     text-decoration: none;
@@ -1007,18 +1178,21 @@ body {
     font-weight: 600;
 }
 
+/* Wrap long status/category labels onto a second line instead of truncating
+   with an ellipsis — the wider rail has the room and readability wins. */
 .app-nav-sub-label {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
-/* Status dots: muted professional tones, never neon. */
+/* Status dots: muted professional tones, never neon.
+   Nudged down to sit on the first text line when a label wraps. */
 .app-nav-sub-dot {
     flex-shrink: 0;
     width: .5rem;
     height: .5rem;
+    margin-top: .3rem;
     border-radius: 50%;
     background-color: #cbd5e1;
 }
@@ -1327,8 +1501,9 @@ tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
 [data-bs-theme="dark"] .app-navbar{background:#15351F;}
 [data-bs-theme="dark"] .app-sidebar{background:#191D23;border-right-color:#2A2F37;}
 [data-bs-theme="dark"] .app-nav-link{color:#99A1AC;}
-[data-bs-theme="dark"] .app-nav-link.active,[data-bs-theme="dark"] .app-nav-link:hover{color:#46C07E;}
-[data-bs-theme="dark"] .app-nav-link.active .app-nav-icon{background:rgba(52,179,104,.16);color:#46C07E;}
+[data-bs-theme="dark"] .app-nav-link:hover,[data-bs-theme="dark"] .app-nav-link:focus{background:rgba(52,179,104,.1);color:#46C07E;}
+[data-bs-theme="dark"] .app-nav-link.active{background:rgba(52,179,104,.16);color:#46C07E;}
+[data-bs-theme="dark"] .app-nav-link.active .app-nav-icon{background:transparent;color:#46C07E;}
 [data-bs-theme="dark"] .app-nav-sub{border-left-color:#2A2F37;}
 [data-bs-theme="dark"] .app-nav-sub-link{color:#99A1AC;}
 [data-bs-theme="dark"] .app-nav-sub-link:hover{background:#20252d;color:#E7EAEE;}
