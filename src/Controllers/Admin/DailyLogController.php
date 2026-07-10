@@ -42,6 +42,26 @@ final class DailyLogController
         ], 'layout'));
     }
 
+    /** GET /admin/daily-logs/create — blank daily log form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $projects  = (new ProjectModel())->all();
+        $projectId = (int) $request->input('project_id', 0);
+        if ($projectId <= 0 && $projects !== []) {
+            $projectId = (int) $projects[0]['id'];
+        }
+
+        Response::html(View::render('admin/daily_logs/form', [
+            'title'     => Lang::get('admin.daily_logs.new'),
+            'log'       => null,
+            'projects'  => $projects,
+            'projectId' => $projectId,
+            'today'     => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+        ], 'layout'));
+    }
+
     public function show(Request $request, string $id): void
     {
         AuthGuard::require($request, ['admin']);

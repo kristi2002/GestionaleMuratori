@@ -147,6 +147,8 @@ $router->post('/admin/projects/{id}/workers',                      [ProjectContr
 $router->post('/admin/projects/{id}/workers/{workerId}/remove',    [ProjectController::class, 'unassignWorker']);
 
 $router->get('/admin/warehouse',                 [WarehouseController::class, 'index']);
+$router->get('/admin/warehouse/create',          [WarehouseController::class, 'create']);
+$router->get('/admin/warehouse/{id}/edit',       [WarehouseController::class, 'edit']);
 $router->post('/admin/warehouse',                [WarehouseController::class, 'store']);
 $router->get('/admin/warehouse/{id}',            [WarehouseController::class, 'show']);
 $router->post('/admin/warehouse/{id}',           [WarehouseController::class, 'update']);
@@ -203,6 +205,7 @@ $router->post('/admin/notifications/{id}/read',      [NotificationController::cl
 $router->get('/admin/attendance',                    [AdminAttendanceController::class, 'index']);
 
 $router->get('/admin/daily-logs',                    [DailyLogController::class, 'index']);
+$router->get('/admin/daily-logs/create',             [DailyLogController::class, 'create']);
 $router->post('/admin/daily-logs',                   [DailyLogController::class, 'store']);
 $router->get('/admin/daily-logs/{id}',               [DailyLogController::class, 'show']);
 $router->post('/admin/daily-logs/{id}',              [DailyLogController::class, 'update']);
@@ -211,6 +214,7 @@ $router->post('/admin/daily-logs/{id}/equipment',    [DailyLogController::class,
 $router->post('/admin/equipment',                    [DailyLogController::class, 'storeEquipment']);
 
 $router->get('/admin/sal',                           [SalController::class, 'index']);
+$router->get('/admin/sal/create',                    [SalController::class, 'create']);
 $router->post('/admin/sal',                          [SalController::class, 'store']);
 $router->get('/admin/sal/{id}',                      [SalController::class, 'show']);
 $router->post('/admin/sal/{id}',                     [SalController::class, 'update']);

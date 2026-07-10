@@ -15,9 +15,9 @@ $t = static fn (string $key): string => Lang::get($key);
         <h1 class="h4 mb-1"><?= $e($t('admin.warehouse.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.warehouse.subtitle')) ?></p>
     </div>
-    <button type="button" class="btn btn-success js-crud-new" data-bs-toggle="modal" data-bs-target="#item-modal" data-target-modal="#item-modal">
+    <a class="btn btn-success" href="<?= $e(Url::to('/admin/warehouse/create')) ?>">
         <?= $e($t('admin.warehouse.new')) ?>
-    </button>
+    </a>
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -68,11 +68,9 @@ $t = static fn (string $key): string => Lang::get($key);
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-primary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>#trasferisci"><?= $e($t('admin.warehouse.transfer.action')) ?></a>
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>"><?= $e($t('admin.warehouse.ledger')) ?></a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit"
-                                data-bs-toggle="modal" data-bs-target="#item-modal" data-target-modal="#item-modal"
-                                data-record='<?= $e(json_encode($it, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
+                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>
-                        </button>
+                        </a>
                         <button type="button" class="btn btn-sm btn-outline-danger js-toggle-active"
                                 data-url="<?= $e(Url::to('/admin/warehouse/' . $it['id'] . '/toggle')) ?>">
                             <?= $e((int) $it['is_active'] === 1 ? $t('admin.warehouse.deactivate') : $t('admin.warehouse.activate')) ?>
@@ -82,48 +80,5 @@ $t = static fn (string $key): string => Lang::get($key);
             <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-</div>
-
-<div class="modal fade" id="item-modal" tabindex="-1" data-title-create="<?= $e($t('admin.warehouse.new')) ?>" data-title-edit="<?= $e($t('admin.warehouse.edit')) ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/warehouse')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.warehouse.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="id">
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.warehouse.name')) ?></label>
-                        <input type="text" class="form-control" name="name" required>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.warehouse.sku')) ?></label>
-                            <input type="text" class="form-control" name="sku">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.warehouse.unit')) ?></label>
-                            <select class="form-select" name="unit">
-                                <?php foreach ($units as $u): ?>
-                                    <option value="<?= $e($u) ?>"><?= $e(Lang::label('units', $u)) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label"><?= $e($t('admin.warehouse.reorder_level')) ?></label>
-                        <input type="number" step="0.001" min="0" class="form-control" name="reorder_level" value="0">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.save')) ?></button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>

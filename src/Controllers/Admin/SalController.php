@@ -46,6 +46,25 @@ final class SalController
         ], 'layout'));
     }
 
+    /** GET /admin/sal/create — blank S.A.L. form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $projects  = (new ProjectModel())->all();
+        $projectId = (int) $request->input('project_id', 0);
+        if ($projectId <= 0 && $projects !== []) {
+            $projectId = (int) $projects[0]['id'];
+        }
+
+        Response::html(View::render('admin/sal/form', [
+            'title'     => Lang::get('admin.sal.new'),
+            'sal'       => null,
+            'projects'  => $projects,
+            'projectId' => $projectId,
+        ], 'layout'));
+    }
+
     public function show(Request $request, string $id): void
     {
         AuthGuard::require($request, ['admin']);

@@ -59,6 +59,36 @@ final class WarehouseController
         ], 'layout'));
     }
 
+    /** GET /admin/warehouse/create — blank item form page. */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/warehouse/form', [
+            'title' => Lang::get('admin.warehouse.new'),
+            'item'  => null,
+            'units' => self::UNITS,
+        ], 'layout'));
+    }
+
+    /** GET /admin/warehouse/{id}/edit — populated item form page. */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $item = (new WarehouseItemModel())->find((int) $id);
+        if ($item === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/warehouse/form', [
+            'title' => Lang::get('admin.warehouse.edit'),
+            'item'  => $item,
+            'units' => self::UNITS,
+        ], 'layout'));
+    }
+
     public function store(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

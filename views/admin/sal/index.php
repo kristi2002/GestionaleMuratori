@@ -19,9 +19,9 @@ $salPill = static fn (string $s): string
         <p class="text-muted mb-0"><?= $e($t('admin.sal.subtitle')) ?></p>
     </div>
     <?php if ($projectId > 0): ?>
-        <button type="button" class="btn btn-success js-crud-new" data-bs-toggle="modal" data-bs-target="#sal-modal" data-target-modal="#sal-modal">
-            <?= $e($t('admin.sal.new')) ?>
-        </button>
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/sal/create?project_id=' . $projectId)) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.sal.new')) ?>
+        </a>
     <?php endif; ?>
 </div>
 

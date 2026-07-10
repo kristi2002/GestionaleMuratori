@@ -17,9 +17,9 @@ $t = static fn (string $key): string => Lang::get($key);
         <p class="text-muted mb-0"><?= $e($t('admin.daily_logs.subtitle')) ?></p>
     </div>
     <?php if ($projectId > 0): ?>
-        <button type="button" class="btn btn-success js-crud-new" data-bs-toggle="modal" data-bs-target="#daily-log-modal" data-target-modal="#daily-log-modal">
-            <?= $e($t('admin.daily_logs.new')) ?>
-        </button>
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/daily-logs/create?project_id=' . $projectId)) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.daily_logs.new')) ?>
+        </a>
     <?php endif; ?>
 </div>
 
@@ -75,49 +75,5 @@ $t = static fn (string $key): string => Lang::get($key);
             <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-</div>
-
-<div class="modal fade" id="daily-log-modal" tabindex="-1" data-title-create="<?= $e($t('admin.daily_logs.new')) ?>" data-title-edit="<?= $e($t('admin.daily_logs.new')) ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/daily-logs')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.daily_logs.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="project_id" value="<?= $e((string) $projectId) ?>">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.daily_logs.date')) ?></label>
-                            <input type="date" class="form-control" name="log_date" value="<?= $e($today) ?>" max="<?= $e($today) ?>" required>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.daily_logs.workers')) ?></label>
-                            <input type="number" min="0" step="1" class="form-control" name="workers_present">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.daily_logs.weather')) ?></label>
-                        <input type="text" class="form-control" name="weather_text" placeholder="<?= $e($t('admin.daily_logs.weather_auto')) ?>">
-                        <div class="form-text"><?= $e($t('admin.daily_logs.weather_help')) ?></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.daily_logs.work_done')) ?></label>
-                        <textarea class="form-control" name="work_done" rows="3"></textarea>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label"><?= $e($t('admin.daily_logs.notes')) ?></label>
-                        <textarea class="form-control" name="notes" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.create')) ?></button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
