@@ -119,6 +119,24 @@ cat /var/backups/gestionale/uploads-<STAMP>.tar.gz \
   | docker compose exec -T app tar -C /var/www/app/storage -xzf -
 ```
 
+## 6b. Scheduler (proactive alerts) — daily cron
+
+`scripts/scheduler.php` generates the in-app notifications (compliance expiries,
+overdue interventions, auto-expired quotes, low stock) and — when e-mail is enabled
+— a digest to the admins. It is **idempotent**, so running it more than once a day
+is harmless.
+
+```bash
+crontab -e
+# 02:15 daily — run inside the app container
+  15 2 * * *  cd /opt/gestionale && docker compose exec -T app php scripts/scheduler.php >> /var/log/gestionale-scheduler.log 2>&1
+```
+
+Bare-metal: drop the `docker compose exec -T app` prefix. To also send e-mail
+digests, set the `MAIL_*` variables (off by default) — see
+[CONFIGURATION.md](CONFIGURATION.md). Every configurable value (DB, sessions,
+company identity on PDFs, mail, weather) is documented there.
+
 ## 7. Updates / new releases
 
 ```bash

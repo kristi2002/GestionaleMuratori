@@ -1,7 +1,10 @@
 <?php
+use App\Support\Config;
 use App\Support\View;
 use App\Support\Url;
 $e = static fn (?string $v): string => View::e($v);
+// Never advertise the seed logins on a production install.
+$showDemo = Config::get('app.env', 'local') !== 'production';
 ?>
 <div class="row justify-content-center">
     <div class="col-12 col-sm-9 col-md-6 col-lg-5">
@@ -30,11 +33,13 @@ $e = static fn (?string $v): string => View::e($v);
             </div>
         </div>
 
+        <?php if ($showDemo): ?>
         <div class="card mt-3 border-0 bg-transparent">
             <div class="card-body p-2 small text-muted">
                 <strong>Credenziali demo</strong> (password: <code>password</code>)<br>
                 admin@gestionale.local · worker1@gestionale.local · client1@gestionale.local
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>

@@ -111,3 +111,31 @@ it must gain the Italian construction legal + operational feature set. Domain de
 **This PR (v2 foundation)** closes V1 and V2 and lands the schema for V3–V10, so every
 later phase builds on stable tables. Remaining phases are sequenced in
 [ROADMAP.md](ROADMAP.md).
+
+---
+
+## 7. 2026-07-10 hardening pass — closed & remaining
+
+A full code re-audit before the "sellable platform" milestone found **no security
+blockers** (RBAC, CSRF, transactions, `FOR UPDATE` locking, prepared statements,
+escaping all verified correct) but surfaced three **redesign regressions** and a set
+of correctness/UX gaps — all now closed (see [CHANGELOG.md](../CHANGELOG.md)).
+
+| # | Gap | Sev | Status |
+|---|-----|-----|--------|
+| H1 | **GPS clock-in/out dead** — the "juli" `app.js` rewrite dropped the attendance handlers; the headline field feature did nothing. | 🔴 | ✅ restored (+ offline queue) |
+| H2 | **Change-password page dead** — missing `js-password-form` handler. | 🟠 | ✅ restored |
+| H3 | **Blank dashboard KPI icons** — referenced a removed SVG sprite. | 🟠 | ✅ switched to Bootstrap-Icons |
+| H4 | **No proactive alerting** — expiry/overdue/low-stock data existed but nothing notified. | 🟠 | ✅ notification bell + daily scheduler (+ optional e-mail) |
+| H5 | Invoice/quote PDF filenames ignored their prefix; warehouse null-deref; client `during`-photo id exposure; S.A.L. upload uncapped; seed orphaned 010–014 tables. | 🟠 | ✅ all fixed + regression-tested |
+| H6 | No pagination; N+1 on interventions list; missing status/ledger indexes. | 🟡 | ✅ Paginator on the 4 big lists; N+1 batched; migration 015 |
+| H7 | Hardcoded Italian in report PDFs / error pages / `app.js`. | 🟡 | ✅ moved to `lang/it.php` (+ JS i18n bridge) |
+| H8 | No client self-service on quotes. | 🟡 | ✅ accept/reject in the portal |
+
+### Still open (deliberate, need client sign-off)
+- **e-Fatturazione (FatturaPA / SDI)** — invoices are internal receipts; legal Italian
+  e-invoicing through the Sistema di Interscambio is a separate, larger integration.
+- **Multi-tenancy** — single-company install by design.
+- **Push notifications / SMS** — in-app + e-mail cover the need for now.
+- Pagination on the remaining lower-volume lists (clients/users/compliance/daily-logs)
+  — the reusable `Paginator` makes each a small follow-up.

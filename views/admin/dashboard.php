@@ -23,11 +23,11 @@ $expiringDocs = $expiringDocs ?? [];
 
 <?php
 $kpis = [
-    ['/admin/projects?status=active', (string) $activeProjects, 'admin.dashboard.active_projects', 'i-building', false],
-    ['/admin/interventions', (string) $openInterventions, 'admin.dashboard.open_interventions', 'i-clipboard', false],
-    ['/admin/interventions?range=today', (string) $todayTotal, 'admin.dashboard.today_interventions', 'i-badge', false],
-    ['/admin/warehouse', (string) count($lowStock), 'admin.dashboard.low_stock', 'i-box', $lowStock !== []],
-    ['/admin/compliance?expiring=1', (string) count($expiringDocs), 'admin.dashboard.expiring_docs', 'i-shield', $expiringDocs !== []],
+    ['/admin/projects?status=active', (string) $activeProjects, 'admin.dashboard.active_projects', 'bi-buildings', false],
+    ['/admin/interventions', (string) $openInterventions, 'admin.dashboard.open_interventions', 'bi-clipboard-check', false],
+    ['/admin/interventions?range=today', (string) $todayTotal, 'admin.dashboard.today_interventions', 'bi-calendar-day', false],
+    ['/admin/warehouse', (string) count($lowStock), 'admin.dashboard.low_stock', 'bi-box-seam', $lowStock !== []],
+    ['/admin/compliance?expiring=1', (string) count($expiringDocs), 'admin.dashboard.expiring_docs', 'bi-shield-check', $expiringDocs !== []],
 ];
 ?>
 <div class="row g-3">
@@ -35,7 +35,7 @@ $kpis = [
         <div class="col-6 col-lg-3 col-xl">
             <a class="card gm-kpi text-decoration-none h-100<?= $alert ? ' alert' : '' ?>" href="<?= $e(Url::to($href)) ?>">
                 <div class="card-body">
-                    <svg class="ic gm-kpi-ic" aria-hidden="true"><use href="#<?= $e($icon) ?>"></use></svg>
+                    <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
                     <div class="gm-kpi-val mt-2"><?= $e($val) ?></div>
                     <div class="gm-kpi-lab"><?= $e($t($labelKey)) ?></div>
                     <?php if ($labelKey === 'admin.dashboard.today_interventions' && $todayTotal > 0): ?>

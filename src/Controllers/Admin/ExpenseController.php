@@ -9,6 +9,7 @@ use App\Models\ProjectModel;
 use App\Models\UserModel;
 use App\Support\Auth;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
@@ -40,16 +41,18 @@ final class ExpenseController
             'date_to'    => $this->dateInput($request, 'date_to'),
         ];
 
-        $model = new ExpenseModel();
+        $model     = new ExpenseModel();
+        $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
 
         Response::html(View::render('admin/expenses/index', [
             'title'      => Lang::get('admin.expenses.title'),
-            'expenses'   => $model->all($filters),
+            'expenses'   => $model->all($filters, $paginator->perPage, $paginator->offset),
             'totals'     => $model->totals($filters),
             'workers'    => (new UserModel())->listByRole('worker', false),
             'projects'   => (new ProjectModel())->all(),
             'filters'    => $filters,
             'categories' => self::CATEGORIES,
+            'paginator'  => $paginator,
         ], 'layout'));
     }
 

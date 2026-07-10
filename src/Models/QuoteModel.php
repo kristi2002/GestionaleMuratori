@@ -11,15 +11,41 @@ final class QuoteModel
      * @param array{search?:string,status?:string,client_id?:int} $filters
      * @return array<int,array<string,mixed>> Quotes with client/project names and computed subtotal.
      */
-    public function all(array $filters = []): array
+    public function all(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
+        [$where, $params] = $this->filterSql($filters);
         $sql = 'SELECT q.*, c.name AS client_name, p.name AS project_name,
                        (SELECT COALESCE(SUM(l.qty * l.unit_price), 0)
                           FROM quote_lines l WHERE l.quote_id = q.id) AS subtotal
                 FROM quotes q
                 JOIN clients c ON c.id = q.client_id
-                LEFT JOIN projects p ON p.id = q.project_id
-                WHERE 1 = 1';
+                LEFT JOIN projects p ON p.id = q.project_id'
+            . $where
+            . ' ORDER BY q.quote_date DESC, q.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
+        }
+
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Row count for the same filters (drives pagination). */
+    public function count(array $filters = []): int
+    {
+        [$where, $params] = $this->filterSql($filters);
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM quotes q JOIN clients c ON c.id = q.client_id' . $where
+        );
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{0:string,1:array<int,mixed>} Shared WHERE builder for all()/count(). */
+    private function filterSql(array $filters): array
+    {
+        $sql    = ' WHERE 1 = 1';
         $params = [];
 
         if (!empty($filters['search'])) {
@@ -37,11 +63,58 @@ final class QuoteModel
             $sql     .= ' AND q.client_id = ?';
             $params[] = (int) $filters['client_id'];
         }
-        $sql .= ' ORDER BY q.quote_date DESC, q.id DESC';
+        return [$sql, $params];
+    }
 
-        $stmt = Database::pdo()->prepare($sql);
-        $stmt->execute($params);
+    /**
+     * Quotes visible to a client in their portal: everything the admin has sent or
+     * decided (never 'draft'). Newest first, with the computed subtotal.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function forClient(int $clientId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT q.*, p.name AS project_name,
+                    (SELECT COALESCE(SUM(l.qty * l.unit_price), 0) FROM quote_lines l WHERE l.quote_id = q.id) AS subtotal
+             FROM quotes q
+             LEFT JOIN projects p ON p.id = q.project_id
+             WHERE q.client_id = ? AND q.status <> 'draft'
+             ORDER BY q.quote_date DESC, q.id DESC"
+        );
+        $stmt->execute([$clientId]);
         return $stmt->fetchAll();
+    }
+
+    /** A single quote owned by this client and not a draft (portal ownership guard). */
+    public function findForClient(int $id, int $clientId): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT q.*, p.name AS project_name
+             FROM quotes q
+             LEFT JOIN projects p ON p.id = q.project_id
+             WHERE q.id = ? AND q.client_id = ? AND q.status <> 'draft' LIMIT 1"
+        );
+        $stmt->execute([$id, $clientId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /**
+     * Client accept/reject. Only a 'sent' quote owned by the client may transition,
+     * and only to 'accepted' or 'rejected'. Returns true when a row was updated
+     * (guards against double-decisions and expired quotes via the WHERE clause).
+     */
+    public function setClientDecision(int $id, int $clientId, string $status): bool
+    {
+        if (!in_array($status, ['accepted', 'rejected'], true)) {
+            return false;
+        }
+        $stmt = Database::pdo()->prepare(
+            "UPDATE quotes SET status = ? WHERE id = ? AND client_id = ? AND status = 'sent'"
+        );
+        $stmt->execute([$status, $id, $clientId]);
+        return $stmt->rowCount() > 0;
     }
 
     public function find(int $id): ?array

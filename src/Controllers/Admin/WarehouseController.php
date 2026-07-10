@@ -144,7 +144,13 @@ final class WarehouseController
         try {
             $pdo->beginTransaction();
 
-            $locked   = $itemModel->findForUpdate((int) $id);
+            $locked = $itemModel->findForUpdate((int) $id);
+            if ($locked === null) {
+                // Deleted between the unlocked find() above and this locked read.
+                $pdo->rollBack();
+                Response::fail(Lang::get('admin.warehouse.not_found'), 404);
+                return;
+            }
             $newStock = (float) $locked['qty_in_stock'] + (float) $rawQty;
 
             if (!$allowNegative && $newStock < 0) {

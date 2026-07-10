@@ -140,6 +140,8 @@ $nextActions = [
     </div>
 </div>
 
+<?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>
+
 <div class="modal fade" id="intervention-modal" tabindex="-1" data-title-create="<?= $e($t('admin.interventions.new')) ?>" data-title-edit="<?= $e($t('admin.interventions.edit')) ?>">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

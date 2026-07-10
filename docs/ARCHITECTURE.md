@@ -136,3 +136,26 @@ helpers return `null` after sending a `fail()` response, so actions read top-dow
 - All output escaped with `View::e()`; all SQL through prepared statements.
 - JSON contract everywhere: `{ ok: bool, data?, error? }`.
 - Keep files under 500 lines; validate at system boundaries (controllers).
+
+## Addendum — automation layer (2026-07-10)
+
+- **`Services\SchedulerService`** — turns held data into proactive alerts. `run()`
+  generates **idempotent** notifications (deduped on `notifications.dedup_key`) for
+  compliance-document expiries, quotes past `valid_until` (auto-`expired`), overdue
+  interventions and low stock, then optionally e-mails a digest. Invoked by
+  `scripts/scheduler.php` (cron) — a thin entrypoint so the logic stays unit-testable.
+- **`Models\NotificationModel`** — `createIfAbsent()` (`INSERT IGNORE` on dedup_key),
+  `unreadCount()`, `recent()`, `all()`, `markRead()`, `markAllRead()`. The feed is
+  admin-global; the topbar bell count is shared into every admin view from
+  `public/index.php` (one indexed `COUNT`, admins only).
+- **`Support\Mailer`** — dependency-free, **disabled by default**. `mail`/`smtp`
+  transports (the SMTP one is a compact STARTTLS/SSL client over `fsockopen`);
+  message construction (`buildMimeMessage`/`encodeHeader`/`normalizeRecipients`) is
+  pure and unit-tested. See [CONFIGURATION.md](CONFIGURATION.md) for the `MAIL_*` vars.
+- **`Support\Paginator`** — value object (`page`/`perPage`/`total`/`pages`/`offset`,
+  clamped) built from `?page=`. Models expose `count($filters)` + `all($filters,
+  $limit, $offset)` sharing one filter builder; `views/partials/pagination.php`
+  renders the control, preserving the active query string.
+- **JS i18n bridge** — `app.js` exposes `GM.t(key, fallback)` reading an optional
+  `<script id="gm-i18n" type="application/json">` dictionary, so JS strings can move
+  into `lang/it.php` without a build step while degrading to the inline fallback.

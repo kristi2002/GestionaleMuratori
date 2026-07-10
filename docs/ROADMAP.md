@@ -205,3 +205,24 @@ PWA/service-worker offline mode, GPS check-in, labor hours, and the cost/export
 module were v1 "out of scope" items — all are now planned in the v2 phases above.
 Still genuinely out of scope: S3 storage, multi-tenancy, e-mail notifications
 (needs an SMTP account).
+
+---
+
+# Post-v2 — 2026-07-10 hardening & automation pass ✅
+
+Delivered (all test-gated, 451 assertions green; see [CHANGELOG.md](../CHANGELOG.md)
+and [GAP_ANALYSIS.md](GAP_ANALYSIS.md) §7):
+
+1. **Regression fixes** from the "juli" redesign — restored GPS clock-in/out (+offline
+   queue) and change-password JS; fixed blank dashboard KPI icons.
+2. **Automation platform** — `notifications` table + admin bell; `SchedulerService` +
+   `scripts/scheduler.php` (compliance expiries, overdue interventions, auto-expiring
+   quotes, low stock), idempotent; config-gated `Mailer` for e-mail digests.
+3. **DB indexing** (migration 015) + N+1 fix on the interventions list.
+4. **Pagination** (`Support\Paginator`) on interventions/expenses/invoices/quotes.
+5. **Client quote self-service** (accept/reject in the portal).
+6. **i18n** of report PDFs + error pages + a JS i18n bridge; new `company.*`/`mail.*`/
+   `scheduler.*` config ([CONFIGURATION.md](CONFIGURATION.md)).
+
+Next candidates (client decision): FatturaPA/SDI e-invoicing, pagination on the
+remaining lists, push/SMS alerts.

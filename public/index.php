@@ -18,6 +18,7 @@ use App\Controllers\Admin\ClientController;
 use App\Controllers\Admin\ExpenseController;
 use App\Controllers\Admin\InterventionController;
 use App\Controllers\Admin\InvoiceController;
+use App\Controllers\Admin\NotificationController;
 use App\Controllers\Admin\QuoteController;
 use App\Controllers\Admin\PhotoController as AdminPhotoController;
 use App\Controllers\Admin\ProjectController;
@@ -33,6 +34,7 @@ use App\Controllers\Admin\WarehouseController;
 use App\Controllers\AuthController;
 use App\Controllers\Client\PhotoController as ClientPhotoController;
 use App\Controllers\Client\ProjectController as ClientProjectController;
+use App\Controllers\Client\QuoteController as ClientQuoteController;
 use App\Controllers\Client\ReportController as ClientReportController;
 use App\Controllers\AttendanceController;
 use App\Controllers\DashboardController;
@@ -90,9 +92,21 @@ if ($request->isPost() && !Csrf::check(Csrf::fromRequest($request))) {
     exit;
 }
 
+// Unread notification count for the admin topbar bell (one indexed COUNT for
+// admins only; every other role skips the query).
+$notifUnread = 0;
+if (Auth::role() === 'admin') {
+    try {
+        $notifUnread = (new \App\Models\NotificationModel())->unreadCount();
+    } catch (\Throwable $e) {
+        $notifUnread = 0; // e.g. before the notifications migration has run
+    }
+}
+
 View::share([
-    'base' => $base,
-    'user' => Auth::user(),
+    'base'        => $base,
+    'user'        => Auth::user(),
+    'notifUnread' => $notifUnread,
 ]);
 
 $router = new Router();
@@ -177,6 +191,10 @@ $router->post('/admin/users',             [UserController::class, 'store']);
 $router->post('/admin/users/{id}',        [UserController::class, 'update']);
 $router->post('/admin/users/{id}/toggle', [UserController::class, 'toggleActive']);
 
+$router->get('/admin/notifications',                 [NotificationController::class, 'index']);
+$router->post('/admin/notifications/read-all',       [NotificationController::class, 'readAll']);
+$router->post('/admin/notifications/{id}/read',      [NotificationController::class, 'read']);
+
 $router->get('/admin/attendance',                    [AdminAttendanceController::class, 'index']);
 
 $router->get('/admin/daily-logs',                    [DailyLogController::class, 'index']);
@@ -238,6 +256,10 @@ $router->get('/sub/photos/{id}/thumb',       [SubPhotoController::class, 'thumb'
 
 $router->get('/client',                          [ClientProjectController::class, 'index']);
 $router->get('/client/projects/{id}',             [ClientProjectController::class, 'show']);
+$router->get('/client/quotes',                     [ClientQuoteController::class, 'index']);
+$router->get('/client/quotes/{id}',                [ClientQuoteController::class, 'show']);
+$router->post('/client/quotes/{id}/accept',        [ClientQuoteController::class, 'accept']);
+$router->post('/client/quotes/{id}/reject',        [ClientQuoteController::class, 'reject']);
 $router->get('/client/photos/{id}',               [ClientPhotoController::class, 'show']);
 $router->get('/client/photos/{id}/thumb',         [ClientPhotoController::class, 'thumb']);
 $router->get('/client/projects/{id}/report/pdf',   [ClientReportController::class, 'pdf']);

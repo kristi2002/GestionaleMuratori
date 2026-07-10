@@ -10,6 +10,7 @@ use App\Services\Report\InvoicePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
@@ -30,12 +31,16 @@ final class InvoiceController
             'project_id' => (int) $request->input('project_id', 0),
         ];
 
+        $model     = new ProjectInvoiceModel();
+        $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
+
         Response::html(View::render('admin/invoices/index', [
-            'title'    => Lang::get('admin.invoices.title'),
-            'invoices' => (new ProjectInvoiceModel())->all($filters),
-            'projects' => (new ProjectModel())->all(),
-            'filters'  => $filters,
-            'statuses' => self::STATUSES,
+            'title'     => Lang::get('admin.invoices.title'),
+            'invoices'  => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'projects'  => (new ProjectModel())->all(),
+            'filters'   => $filters,
+            'statuses'  => self::STATUSES,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

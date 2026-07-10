@@ -14,6 +14,7 @@ use App\Services\InterventionService;
 use App\Services\PhotoStreamService;
 use App\Support\Auth;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
@@ -44,10 +45,14 @@ final class InterventionController
         [$filters['date_from'], $filters['date_to']] = $this->dateRangeBounds($range);
 
         $model         = new InterventionModel();
-        $interventions = $model->all($filters);
-        $materialModel = new InterventionMaterialModel();
+        $paginator     = Paginator::fromRequest($request, $model->count($filters), 25);
+        $interventions = $model->all($filters, $paginator->perPage, $paginator->offset);
+        // One query for all materials instead of one per intervention (no N+1).
+        $materialsById = (new InterventionMaterialModel())->forInterventions(
+            array_map(static fn (array $i): int => (int) $i['id'], $interventions)
+        );
         foreach ($interventions as &$intervention) {
-            $intervention['materials'] = $materialModel->forIntervention((int) $intervention['id']);
+            $intervention['materials'] = $materialsById[(int) $intervention['id']] ?? [];
         }
         unset($intervention);
 
@@ -60,6 +65,7 @@ final class InterventionController
             'filters'       => $filters,
             'statuses'      => self::STATUSES,
             'range'         => $range,
+            'paginator'     => $paginator,
         ], 'layout'));
     }
 

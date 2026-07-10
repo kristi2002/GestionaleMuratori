@@ -24,13 +24,41 @@ final class ProjectInvoiceModel
      * @param array{search?:string,status?:string,project_id?:int} $filters
      * @return array<int,array<string,mixed>> All invoices with project/client names ("Fatture" list page).
      */
-    public function all(array $filters = []): array
+    public function all(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
+        [$where, $params] = $this->filterSql($filters);
         $sql = 'SELECT i.*, p.name AS project_name, c.name AS client_name
                 FROM project_invoices i
                 JOIN projects p ON p.id = i.project_id
-                JOIN clients c ON c.id = p.client_id
-                WHERE 1 = 1';
+                JOIN clients c ON c.id = p.client_id'
+            . $where
+            . ' ORDER BY i.issue_date DESC, i.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
+        }
+
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Row count for the same filters (drives pagination). */
+    public function count(array $filters = []): int
+    {
+        [$where, $params] = $this->filterSql($filters);
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM project_invoices i
+             JOIN projects p ON p.id = i.project_id
+             JOIN clients c ON c.id = p.client_id' . $where
+        );
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{0:string,1:array<int,mixed>} Shared WHERE builder for all()/count(). */
+    private function filterSql(array $filters): array
+    {
+        $sql    = ' WHERE 1 = 1';
         $params = [];
 
         if (!empty($filters['search'])) {
@@ -48,11 +76,7 @@ final class ProjectInvoiceModel
             $sql     .= ' AND i.project_id = ?';
             $params[] = (int) $filters['project_id'];
         }
-        $sql .= ' ORDER BY i.issue_date DESC, i.id DESC';
-
-        $stmt = Database::pdo()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
+        return [$sql, $params];
     }
 
     public function find(int $id): ?array

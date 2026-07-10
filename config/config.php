@@ -51,4 +51,34 @@ return [
         'endpoint' => Env::get('WEATHER_ENDPOINT', 'https://api.open-meteo.com/v1/forecast'),
         'timeout'  => (int) Env::get('WEATHER_TIMEOUT', '5'),
     ],
+    // Contractor identity printed on invoice / quote / S.A.L. PDFs (the header
+    // partial reads these). Empty by default; set the COMPANY_* env vars.
+    'company' => [
+        'name'    => Env::get('COMPANY_NAME', Env::get('APP_NAME', 'Gestionale Muratori')),
+        'address' => Env::get('COMPANY_ADDRESS', ''),
+        'vat'     => Env::get('COMPANY_VAT', ''),
+        'phone'   => Env::get('COMPANY_PHONE', ''),
+        'email'   => Env::get('COMPANY_EMAIL', ''),
+    ],
+    // Scheduled automation (scripts/scheduler.php): how far ahead to alert on
+    // expiring compliance documents.
+    'scheduler' => [
+        'compliance_days' => (int) Env::get('SCHEDULER_COMPLIANCE_DAYS', '30'),
+    ],
+    // E-mail (alert digests). DISABLED by default: the platform ships without an
+    // SMTP account. Set MAIL_ENABLED=true + the MAIL_* vars to turn it on.
+    'mail' => [
+        'enabled'           => Env::bool('MAIL_ENABLED', false),
+        'transport'         => Env::get('MAIL_TRANSPORT', 'smtp'),   // 'smtp' | 'mail'
+        'host'              => Env::get('MAIL_HOST', ''),
+        'port'              => (int) Env::get('MAIL_PORT', '587'),
+        'username'          => Env::get('MAIL_USERNAME', ''),
+        'password'          => Env::get('MAIL_PASSWORD', ''),
+        'encryption'        => Env::get('MAIL_ENCRYPTION', 'tls'),    // 'tls' | 'ssl' | ''
+        'from_address'      => Env::get('MAIL_FROM_ADDRESS', 'no-reply@localhost'),
+        'from_name'         => Env::get('MAIL_FROM_NAME', Env::get('APP_NAME', 'Gestionale Muratori')),
+        'timeout'           => (int) Env::get('MAIL_TIMEOUT', '10'),
+        // Comma-separated override; empty = every active admin's address.
+        'digest_recipients' => Env::get('MAIL_DIGEST_RECIPIENTS', ''),
+    ],
 ];

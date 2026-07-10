@@ -41,6 +41,14 @@ final class PhotoController
             return;
         }
 
+        // Clients only ever see before/after evidence; 'during' progress photos are
+        // worker-internal — the gallery hides them, so enforce it on the stream too
+        // (otherwise a client could view one by guessing its id).
+        if (($photo['type'] ?? '') === 'during') {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
         if (!(new PhotoStreamService())->streamPhoto($photo, $original)) {
             Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
         }

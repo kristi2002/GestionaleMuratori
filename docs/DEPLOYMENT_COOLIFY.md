@@ -169,3 +169,18 @@ The PWA service worker caches the app shell (cache-first). A material change to
 `public/assets/*` requires bumping `VERSION` in [`public/sw.js`](../public/sw.js) so
 returning browsers fetch fresh assets; the `activate` handler then drops the old cache.
 A hard refresh (or clearing site data) shows it immediately.
+
+## Scheduler (proactive alerts)
+
+The alert generator `scripts/scheduler.php` should run once a day. In Coolify add a
+**Scheduled Task** on the `app` service:
+
+- Command: `php scripts/scheduler.php`
+- Frequency (cron): `15 2 * * *`
+
+It is idempotent (deduped on `notifications.dedup_key`), so an accidental double run
+does nothing. To also e-mail admins a digest of new alerts, set the `MAIL_*`
+environment variables (disabled by default) — full list in
+[CONFIGURATION.md](CONFIGURATION.md), which also documents the new `COMPANY_*` vars
+(contractor identity on invoice/quote/S.A.L. PDFs). New migrations (`015`, `016`)
+apply automatically on the next `php database/migrate.php`.

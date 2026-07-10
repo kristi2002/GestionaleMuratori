@@ -1,5 +1,78 @@
 # Changelog
 
+## 2026-07-10 — Platform hardening: automation, proactive alerts, indexing & polish
+
+A deployment-readiness and "full platform" pass: fixed regressions left by the
+"juli" redesign, added a **notification + scheduler automation layer** (the headline
+feature), a **config-gated SMTP mailer**, **query indexes**, **list pagination**,
+**client quote self-service**, and moved the last hardcoded strings into `lang/it.php`.
+**No new runtime framework; CSP `'self'`, self-hosted assets and global CSRF preserved.**
+The automated suite grows **398 → 451 assertions** (all green on a fresh DB).
+
+### Fixed — regressions from the "juli" redesign (were user-facing breakage)
+- **GPS clock-in/out (Badge di Cantiere) restored.** The rewritten `app.js` had
+  dropped the `js-attendance-in/out` handlers, so the field timbratura did nothing.
+  Re-added with best-effort geolocation **and** the offline action queue
+  (`gm_action_queue_v1`, replays on reconnect) — matching what `sw.js` advertises.
+- **Change-password restored.** The `js-password-form` handler was missing, leaving
+  `/password` a dead raw POST; inline success/error feedback works again.
+- **Dashboard KPI icons fixed.** `dashboard.php` referenced an SVG sprite
+  (`#i-building`…) that the current `layout.php` no longer injects (it lived only in
+  a `.bak`), so the cards rendered blank. Switched to the already-loaded Bootstrap-Icons.
+
+### Fixed — correctness / safety (from a full code audit)
+- **Invoice/quote PDF filenames.** `ReportFilename::make()` ignored the prefix its
+  callers passed, so invoices/quotes downloaded as `report-*.pdf`; now
+  `fattura-*.pdf` / `preventivo-*.pdf` (verified end-to-end).
+- **Warehouse movement null-deref.** `addMovement()` used the `FOR UPDATE` row with
+  no null check — a concurrent delete threw a 500 inside an open transaction. Guarded.
+- **Client `during`-photo exposure.** The client gallery hides progress photos, but
+  the stream served any type by id; the stream now 404s `during` photos too.
+- **S.A.L. signature upload** now capped at 5 MB before base64-decoding (parity with
+  the worker signature path).
+- **Seed integrity.** `database/seed.php` truncated `clients`/`projects`/… but not
+  the migration 010–014 tables (`quotes`, `expenses`, `project_invoices`, …), so
+  re-seeding orphaned those rows. Added them, plus demo quotes/invoices/expenses/roster.
+- **Login page** no longer prints demo credentials when `APP_ENV=production`.
+
+### Added — automation platform (notifications + scheduler + mailer)
+- **`notifications` table** (migration 016) + `NotificationModel`, admin topbar
+  **bell with unread count**, and `/admin/notifications` (list, mark-read, mark-all).
+- **`SchedulerService`** + `scripts/scheduler.php` (cron entrypoint): generates
+  **idempotent** alerts (dedup-keyed) for **compliance-document expiries**
+  (DURC/POS/Patente a Crediti…), **quotes past `valid_until`** (auto-set `expired`),
+  **overdue interventions**, and **low stock**. Re-running the same day adds nothing.
+- **`Support\Mailer`** — dependency-free, **disabled by default** (`MAIL_ENABLED=false`).
+  Transports `smtp` (compact STARTTLS/SSL client over `fsockopen`) or PHP `mail`.
+  When enabled, the scheduler e-mails admins a digest of the fresh alerts.
+
+### Added — performance & UX
+- **Indexes** (migration 015): `interventions(status)`, `interventions(completed_at)`,
+  `stock_movements(item_id, location_id)`, `stock_movements(created_at)`,
+  `project_invoices(status)`, `sal_documents(status)`.
+- **Fixed the N+1** on the admin interventions list (one batched material query).
+- **Pagination** (`Support\Paginator` + `partials/pagination.php`, 25/page) on the
+  interventions, expenses, invoices and quotes lists, preserving active filters.
+- **Client quote self-service** — clients see their non-draft quotes at
+  `/client/quotes` and **accept/reject** the sent ones (ownership-guarded).
+- **PWA:** `sw.js` `gm-shell-v5` now precaches the Inter web-fonts + `icon-512`;
+  `manifest.webmanifest` `theme_color` corrected (red → brand green).
+
+### Added — i18n & configuration
+- Moved the last hardcoded Italian into `lang/it.php`: **report/PDF labels** (~70
+  strings across `views/reports/*`), the **error pages**, and a small **JS i18n
+  bridge** (`GM.t(key, fallback)` reading an optional `#gm-i18n` dictionary).
+- New config groups (all env-driven): **`company.*`** (contractor identity on
+  invoice/quote/S.A.L. PDFs — previously blank), **`mail.*`**, **`scheduler.*`**.
+  Full reference: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+
+### Tests
+- `tests/cases/00_paginator_mailer.php` — Paginator math, `ReportFilename` prefix,
+  Mailer message construction + disabled gate.
+- `tests/cases/19_scheduler_notifications.php` — scheduler idempotency + correct
+  alert generation, notification read-state, admin-page RBAC, model pagination
+  windows, and the full client accept/reject/ownership flow. **451 assertions green.**
+
 ## 2026-07-08 — "juli" design adoption + Preventivi/Fatture/Spese + project detail page
 
 Merged the frontend and extra modules from the parallel ("juli") build onto this

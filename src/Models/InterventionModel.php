@@ -11,49 +11,75 @@ final class InterventionModel
      * @param array{project_id?:int,worker_id?:int,status?:string,date?:string,date_from?:string,date_to?:string,search?:string} $filters
      * @return array<int,array<string,mixed>>
      */
-    public function all(array $filters = []): array
+    public function all(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
-        $sql    = 'SELECT i.*, p.name AS project_name, c.name AS client_name, w.name AS worker_name
-                    FROM interventions i
-                    JOIN projects p ON p.id = i.project_id
-                    JOIN clients c ON c.id = p.client_id
-                    LEFT JOIN users w ON w.id = i.assigned_worker_id
-                    WHERE 1 = 1';
-        $params = [];
+        [$where, $params] = $this->filterSql($filters);
+        $sql = 'SELECT i.*, p.name AS project_name, c.name AS client_name, w.name AS worker_name
+                FROM interventions i
+                JOIN projects p ON p.id = i.project_id
+                JOIN clients c ON c.id = p.client_id
+                LEFT JOIN users w ON w.id = i.assigned_worker_id'
+            . $where
+            . ' ORDER BY i.scheduled_date IS NULL, i.scheduled_date DESC, i.scheduled_start_time, i.id DESC';
 
-        if (!empty($filters['project_id'])) {
-            $sql      .= ' AND i.project_id = ?';
-            $params[]  = (int) $filters['project_id'];
+        if ($limit !== null) {
+            // $limit/$offset are ints (Paginator), safe to inline for native prepares.
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
         }
-        if (!empty($filters['worker_id'])) {
-            $sql      .= ' AND i.assigned_worker_id = ?';
-            $params[]  = (int) $filters['worker_id'];
-        }
-        if (!empty($filters['status'])) {
-            $sql      .= ' AND i.status = ?';
-            $params[]  = $filters['status'];
-        }
-        if (!empty($filters['date'])) {
-            $sql      .= ' AND i.scheduled_date = ?';
-            $params[]  = $filters['date'];
-        }
-        if (!empty($filters['date_from'])) {
-            $sql      .= ' AND i.scheduled_date >= ?';
-            $params[]  = $filters['date_from'];
-        }
-        if (!empty($filters['date_to'])) {
-            $sql      .= ' AND i.scheduled_date <= ?';
-            $params[]  = $filters['date_to'];
-        }
-        if (!empty($filters['search'])) {
-            $sql      .= ' AND i.title LIKE ?';
-            $params[]  = '%' . $filters['search'] . '%';
-        }
-        $sql .= ' ORDER BY i.scheduled_date IS NULL, i.scheduled_date DESC, i.scheduled_start_time, i.id DESC';
 
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same filters (drives pagination). */
+    public function count(array $filters = []): int
+    {
+        [$where, $params] = $this->filterSql($filters);
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM interventions i' . $where);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Shared WHERE builder for all()/count().
+     *
+     * @return array{0:string,1:array<int,mixed>} [" WHERE …", params]
+     */
+    private function filterSql(array $filters): array
+    {
+        $sql    = ' WHERE 1 = 1';
+        $params = [];
+
+        if (!empty($filters['project_id'])) {
+            $sql .= ' AND i.project_id = ?';
+            $params[] = (int) $filters['project_id'];
+        }
+        if (!empty($filters['worker_id'])) {
+            $sql .= ' AND i.assigned_worker_id = ?';
+            $params[] = (int) $filters['worker_id'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= ' AND i.status = ?';
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['date'])) {
+            $sql .= ' AND i.scheduled_date = ?';
+            $params[] = $filters['date'];
+        }
+        if (!empty($filters['date_from'])) {
+            $sql .= ' AND i.scheduled_date >= ?';
+            $params[] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $sql .= ' AND i.scheduled_date <= ?';
+            $params[] = $filters['date_to'];
+        }
+        if (!empty($filters['search'])) {
+            $sql .= ' AND i.title LIKE ?';
+            $params[] = '%' . $filters['search'] . '%';
+        }
+        return [$sql, $params];
     }
 
     public function find(int $id): ?array

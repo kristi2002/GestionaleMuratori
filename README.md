@@ -33,6 +33,7 @@ warehouse inventory and client-facing reports. Three roles, three experiences:
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased implementation plan toward production on Hetzner |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Hetzner deployment guide (Docker + bare-metal) |
 | [docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md) | Coolify-on-Hetzner deployment guide (Docker Compose build pack) |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Every environment variable (DB, sessions, company PDF identity, mail, scheduler, weather) |
 | [docs/TESTING.md](docs/TESTING.md) | Test suite and full-flow simulation instructions |
 | [CHANGELOG.md](CHANGELOG.md) | Changes per release/session |
 
@@ -144,7 +145,7 @@ items and 6 sample interventions. Password for every account: `password`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1   # throwaway MySQL 8 in Docker
-C:\xampp\php\php.exe tests\run.php                                  # 398 assertions
+C:\xampp\php\php.exe tests\run.php                                  # 451 assertions
 ```
 
 The suite runs on its own database and covers the ledger math, the state
@@ -176,9 +177,15 @@ warehouse↔cantiere transfers), the **subcontractor portal**, all four Italian 
 must-haves (**Badge di Cantiere** GPS attendance, **Giornale dei Lavori** with
 Open-Meteo weather auto-fill, **S.A.L.** generator with locked PDF + DL sign-off,
 **Scadenzario Sicurezza** expiry dashboard), **geolocated photos + an offline PWA**,
-and the **accountant Excel export** — deployed via Coolify on Hetzner. See
-[docs/DOMAIN_IT.md](docs/DOMAIN_IT.md), [docs/ROADMAP.md](docs/ROADMAP.md) and
-[docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md). A 398-assertion automated
+and the **accountant Excel export** — deployed via Coolify on Hetzner. The
+**2026-07-10 hardening pass** then fixed redesign regressions and added a
+**proactive alert engine** (in-app notification bell + daily scheduler for expiring
+compliance docs, overdue interventions, auto-expiring quotes and low stock; optional
+e-mail digests via a config-gated SMTP mailer), **list pagination**, **client quote
+self-service** (accept/reject in the portal), query **indexes**, and full report/PDF
+i18n. See [docs/DOMAIN_IT.md](docs/DOMAIN_IT.md), [docs/ROADMAP.md](docs/ROADMAP.md),
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md) and
+[docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md). A 451-assertion automated
 test suite backs it.
 History: [CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
 remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §6.

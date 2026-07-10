@@ -6,6 +6,7 @@ use App\Support\View;
 /** @var string $generated_at */
 
 $e     = static fn (?string $v): string => View::e($v);
+$t     = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => $v === null ? '—' : '€ ' . number_format((float) $v, 2, ',', '.');
 $date  = static fn (?string $v): string => $v ? date('d/m/Y', (int) strtotime($v)) : '—';
 ?>
@@ -28,43 +29,43 @@ $date  = static fn (?string $v): string => $v ? date('d/m/Y', (int) strtotime($v
 </head>
 <body>
     <?= View::render('reports/partials/pdf_header', [
-        'doc_title'    => 'Fattura n. ' . $invoice['number'],
-        'doc_subtitle' => 'Ricevuta / riepilogo fattura',
+        'doc_title'    => sprintf($t('report.invoice_number'), (string) $invoice['number']),
+        'doc_subtitle' => $t('report.invoice_subtitle'),
     ], null) ?>
 
-    <h2>Cliente</h2>
+    <h2><?= $e($t('report.client')) ?></h2>
     <table class="data">
-        <tr><th width="25%">Nome</th><td><?= $e($invoice['client_name']) ?></td></tr>
+        <tr><th width="25%"><?= $e($t('report.name')) ?></th><td><?= $e($invoice['client_name']) ?></td></tr>
         <?php if ($invoice['client_vat']): ?>
-            <tr><th>P.IVA / C.F.</th><td><?= $e($invoice['client_vat']) ?></td></tr>
+            <tr><th><?= $e($t('report.vat_cf')) ?></th><td><?= $e($invoice['client_vat']) ?></td></tr>
         <?php endif; ?>
         <?php if ($invoice['client_address']): ?>
-            <tr><th>Indirizzo</th><td><?= $e($invoice['client_address']) ?></td></tr>
+            <tr><th><?= $e($t('report.address')) ?></th><td><?= $e($invoice['client_address']) ?></td></tr>
         <?php endif; ?>
         <?php if ($invoice['client_email']): ?>
-            <tr><th>Email</th><td><?= $e($invoice['client_email']) ?></td></tr>
+            <tr><th><?= $e($t('report.email')) ?></th><td><?= $e($invoice['client_email']) ?></td></tr>
         <?php endif; ?>
     </table>
 
-    <h2>Dettagli fattura</h2>
+    <h2><?= $e($t('report.invoice_details')) ?></h2>
     <table class="data">
-        <tr><th width="25%">Numero</th><td><?= $e($invoice['number']) ?></td></tr>
-        <tr><th>Data emissione</th><td><?= $e($date($invoice['issue_date'])) ?></td></tr>
-        <tr><th>Cantiere</th>
+        <tr><th width="25%"><?= $e($t('report.number')) ?></th><td><?= $e($invoice['number']) ?></td></tr>
+        <tr><th><?= $e($t('report.issue_date')) ?></th><td><?= $e($date($invoice['issue_date'])) ?></td></tr>
+        <tr><th><?= $e($t('report.project')) ?></th>
             <td>
                 <?= $e($invoice['project_name']) ?>
                 <?= $invoice['project_location'] ? ' — ' . $e($invoice['project_location']) : '' ?>
             </td>
         </tr>
-        <tr><th>Stato</th><td><span class="status-badge"><?= $e(Lang::label('invoice_status', $invoice['status'])) ?></span></td></tr>
+        <tr><th><?= $e($t('report.status')) ?></th><td><span class="status-badge"><?= $e(Lang::label('invoice_status', $invoice['status'])) ?></span></td></tr>
         <?php if ($invoice['note']): ?>
-            <tr><th>Nota</th><td><?= $e($invoice['note']) ?></td></tr>
+            <tr><th><?= $e($t('report.note')) ?></th><td><?= $e($invoice['note']) ?></td></tr>
         <?php endif; ?>
-        <tr><th>Registrata da</th><td><?= $e($invoice['created_by_name']) ?></td></tr>
+        <tr><th><?= $e($t('report.registered_by')) ?></th><td><?= $e($invoice['created_by_name']) ?></td></tr>
     </table>
 
-    <div class="total-box">Importo: <?= $e($money($invoice['amount'])) ?></div>
+    <div class="total-box"><?= $e($t('report.amount')) ?>: <?= $e($money($invoice['amount'])) ?></div>
 
-    <p class="muted" style="margin-top:12pt;">Documento generato il <?= $e($generated_at) ?></p>
+    <p class="muted" style="margin-top:12pt;"><?= $e(sprintf($t('report.generated_on'), $generated_at)) ?></p>
 </body>
 </html>

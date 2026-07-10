@@ -35,6 +35,35 @@ final class InterventionMaterialModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Materials for many interventions in one query, grouped by intervention_id.
+     * Avoids the N+1 the list page would otherwise do (one query per row).
+     *
+     * @param array<int,int> $interventionIds
+     * @return array<int,array<int,array<string,mixed>>> intervention_id => rows
+     */
+    public function forInterventions(array $interventionIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $interventionIds)));
+        if ($ids === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, w.name AS item_name, w.unit
+             FROM intervention_materials m JOIN warehouse_items w ON w.id = m.item_id
+             WHERE m.intervention_id IN (' . $placeholders . ')
+             ORDER BY w.name'
+        );
+        $stmt->execute($ids);
+
+        $grouped = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $grouped[(int) $row['intervention_id']][] = $row;
+        }
+        return $grouped;
+    }
+
     /** Reserved (not yet released/consumed) materials, locked for an in-transaction cancel/commit. */
     public function reservedForUpdate(int $interventionId): array
     {

@@ -54,7 +54,8 @@ if ($user !== null) {
             [Lang::get('nav.my_tasks'),    '/worker',      'bi-list-check'],
         ],
         'client' => [
-            [Lang::get('nav.my_projects'), '/client',      'bi-folder2-open'],
+            [Lang::get('nav.my_projects'), '/client',        'bi-folder2-open'],
+            [Lang::get('client.quotes.title'), '/client/quotes', 'bi-file-earmark-text'],
         ],
         default => [],
     };
@@ -134,6 +135,15 @@ $subActive = static function (string $href) use ($reqPath): bool {
             <div class="d-flex align-items-center gap-2">
                 <span class="badge rounded-pill role"><?= $e(Lang::label('roles', $user['role'])) ?></span>
                 <span class="small text-white d-none d-md-inline"><?= $e($user['name']) ?></span>
+                <?php if (($user['role'] ?? '') === 'admin'): $nu = $notifUnread ?? 0; ?>
+                    <a class="btn btn-sm btn-icon position-relative" href="<?= $e(Url::to('/admin/notifications')) ?>"
+                       title="<?= $e(Lang::get('nav.notifications')) ?>" aria-label="<?= $e(Lang::get('nav.notifications')) ?>">
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        <?php if ($nu > 0): ?>
+                            <span class="app-notif-badge badge rounded-pill text-bg-danger"><?= $e($nu > 99 ? '99+' : (string) $nu) ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endif; ?>
                 <button type="button" class="btn btn-sm btn-icon js-theme-toggle"
                         aria-label="<?= $e(Lang::get('admin.nav.toggle_theme')) ?>" title="<?= $e(Lang::get('admin.nav.toggle_theme')) ?>">
                     <i class="bi bi-moon-stars ic-moon" aria-hidden="true"></i>

@@ -124,3 +124,5 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
         </table>
     </div>
 </div>
+
+<?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>

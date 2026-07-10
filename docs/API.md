@@ -127,3 +127,22 @@ Admin routes added (all `AuthGuard::require(..., ['admin'])`, JSON `{ok,data?,er
 - `GET /admin/invoices`, `GET /admin/invoices/create`, `GET /admin/invoices/{id}/edit`, `GET /admin/invoices/{id}/print`, `POST /admin/invoices`, `POST /admin/invoices/{id}`, `POST /admin/invoices/{id}/delete`.
 - `GET /admin/expenses` (`?category=`), `GET /admin/expenses/create`, `GET /admin/expenses/{id}/edit`, `POST /admin/expenses`, `POST /admin/expenses/{id}`, `POST /admin/expenses/{id}/delete`.
 - Project detail: `GET /admin/projects/create|{id}/edit|{id}`, plus `POST .../{id}/documents`, `GET .../{id}/documents/{docId}`, `POST .../{id}/documents/{docId}/delete`, `POST .../{id}/invoices[/{invoiceId}/delete]`, `POST .../{id}/materials[/{materialId}/delete]`, `POST .../{id}/attendance`, `POST .../{id}/workers[/{workerId}/remove]`.
+
+## Addendum — notifications + client quotes (2026-07-10)
+
+Admin (role `admin`):
+- `GET /admin/notifications` (`?filter=unread`) — alert feed (list).
+- `POST /admin/notifications/{id}/read` — mark one read → `{ok}`.
+- `POST /admin/notifications/read-all` — mark all read → `{ok,data:{count}}`.
+
+Client self-service (role `client`; every query scoped by `client_id`, drafts hidden):
+- `GET /client/quotes` — the client's non-draft quotes.
+- `GET /client/quotes/{id}` — quote detail with line items + accept/reject actions.
+- `POST /client/quotes/{id}/accept` / `POST /client/quotes/{id}/reject` — decide a
+  *sent* quote → `{ok,data:{status}}`; a foreign, already-decided or expired quote is 422.
+
+Admin list pages (`/admin/interventions|expenses|invoices|quotes`) accept `?page=N`
+(25 rows/page; all existing filters preserved).
+
+Not an HTTP route: `php scripts/scheduler.php` (cron) generates the notifications and,
+when `MAIL_ENABLED=true`, e-mails the admins a digest. See [CONFIGURATION.md](CONFIGURATION.md).

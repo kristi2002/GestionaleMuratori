@@ -1290,7 +1290,7 @@ body{font-family:var(--font-sans);}
 .gm-kpi .gm-kpi-val{font-family:var(--font-mono);font-weight:700;font-size:2.1rem;line-height:1;
   letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#171A1F;}
 .gm-kpi .gm-kpi-lab{font-size:.8rem;color:#6c757d;margin-top:.25rem;}
-.gm-kpi .gm-kpi-ic{width:20px;height:20px;color:#6c757d;opacity:.8;}
+.gm-kpi .gm-kpi-ic{width:20px;height:20px;font-size:20px;line-height:1;color:#6c757d;opacity:.8;}
 .gm-kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--app-green);}
 .gm-kpi.alert::before{background:var(--gm-bad);}
 .gm-kpi.alert .gm-kpi-val{color:var(--gm-bad);}
@@ -1308,6 +1308,8 @@ tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
 .app-navbar .btn-icon{color:#fff;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.12);
   display:inline-grid;place-items:center;padding:.34rem .5rem;border-radius:8px;line-height:1;}
 .app-navbar .btn-icon:hover{color:#fff;background:rgba(255,255,255,.24);}
+.app-notif-badge{position:absolute;top:-6px;right:-6px;font-size:.62rem;font-weight:700;
+  padding:.12rem .34rem;line-height:1;box-shadow:0 0 0 1.5px var(--app-green,#2e7d32);}
 .app-navbar .badge.role{background:rgba(255,255,255,.22);color:#fff;font-weight:700;}
 .app-navbar .btn-outline-light{border-color:rgba(255,255,255,.55);color:#fff;}
 .app-navbar .btn-outline-light:hover{background:#fff;color:var(--app-green-dark);}

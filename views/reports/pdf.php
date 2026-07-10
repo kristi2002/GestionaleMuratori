@@ -9,6 +9,7 @@ use App\Support\View;
 /** @var string $generated_at */
 
 $e = static fn (?string $v): string => View::e($v);
+$t = static fn (string $key): string => Lang::get($key);
 $fileSrc = static function (?string $absolutePath): string {
     return $absolutePath === null ? '' : 'file:///' . str_replace('\\', '/', $absolutePath);
 };
@@ -41,28 +42,28 @@ $fileSrc = static function (?string $absolutePath): string {
         <tr>
             <td width="70%">
                 <h1><?= $e($project['name']) ?></h1>
-                <div class="muted"><?= $e(Lang::get('app_name')) ?> — Report progetto</div>
+                <div class="muted"><?= $e(Lang::get('app_name')) ?> — <?= $e($t('report.project_report')) ?></div>
             </td>
             <td width="30%" align="right"><div class="logo-placeholder">LOGO</div></td>
         </tr>
     </table>
 
     <table class="data" style="margin-top:8pt;">
-        <tr><th width="25%">Cliente</th><td><?= $e($project['client_name']) ?></td></tr>
-        <tr><th>Località</th><td><?= $e($project['location']) ?></td></tr>
-        <tr><th>Periodo</th><td><?= $e($project['start_date']) ?><?= $project['end_date'] ? ' — ' . $e($project['end_date']) : '' ?></td></tr>
-        <tr><th>Riferimento fattura</th><td><?= $e($project['invoice_reference']) ?></td></tr>
-        <tr><th>Stato</th><td><?= $e(Lang::label('project_status', $project['status'])) ?></td></tr>
+        <tr><th width="25%"><?= $e($t('report.client')) ?></th><td><?= $e($project['client_name']) ?></td></tr>
+        <tr><th><?= $e($t('report.location')) ?></th><td><?= $e($project['location']) ?></td></tr>
+        <tr><th><?= $e($t('report.period')) ?></th><td><?= $e($project['start_date']) ?><?= $project['end_date'] ? ' — ' . $e($project['end_date']) : '' ?></td></tr>
+        <tr><th><?= $e($t('report.invoice_ref')) ?></th><td><?= $e($project['invoice_reference']) ?></td></tr>
+        <tr><th><?= $e($t('report.status')) ?></th><td><?= $e(Lang::label('project_status', $project['status'])) ?></td></tr>
     </table>
 
-    <h2>Interventi (<?= $e((string) $totals['count']) ?> totali, <?= $e((string) $totals['completed']) ?> completati)</h2>
+    <h2><?= $e(sprintf($t('report.interventions_heading'), (int) $totals['count'], (int) $totals['completed'])) ?></h2>
     <table class="data">
         <thead>
             <tr>
-                <th>Titolo</th>
-                <th>Data</th>
-                <th>Operaio</th>
-                <th>Stato</th>
+                <th><?= $e($t('report.title')) ?></th>
+                <th><?= $e($t('report.date')) ?></th>
+                <th><?= $e($t('report.worker')) ?></th>
+                <th><?= $e($t('report.status')) ?></th>
             </tr>
         </thead>
         <tbody>
@@ -77,12 +78,12 @@ $fileSrc = static function (?string $absolutePath): string {
         </tbody>
     </table>
 
-    <h2>Materiali utilizzati</h2>
+    <h2><?= $e($t('report.materials_used')) ?></h2>
     <?php if ($materials === []): ?>
-        <p class="muted">Nessun materiale registrato come utilizzato.</p>
+        <p class="muted"><?= $e($t('report.no_materials')) ?></p>
     <?php else: ?>
         <table class="data">
-            <thead><tr><th>Articolo</th><th>Unità</th><th>Quantità totale</th></tr></thead>
+            <thead><tr><th><?= $e($t('report.article')) ?></th><th><?= $e($t('report.unit')) ?></th><th><?= $e($t('report.total_qty')) ?></th></tr></thead>
             <tbody>
             <?php foreach ($materials as $m): ?>
                 <tr>
@@ -95,7 +96,7 @@ $fileSrc = static function (?string $absolutePath): string {
         </table>
     <?php endif; ?>
 
-    <h2>Dettaglio interventi e foto</h2>
+    <h2><?= $e($t('report.interventions_photos')) ?></h2>
     <?php foreach ($interventions as $iv): ?>
         <div class="intervention-block">
             <strong><?= $e($iv['title']) ?></strong>
@@ -105,7 +106,7 @@ $fileSrc = static function (?string $absolutePath): string {
             <?php endif; ?>
 
             <?php if ($iv['gallery'] === []): ?>
-                <p class="muted">Nessuna foto disponibile.</p>
+                <p class="muted"><?= $e($t('report.no_photos')) ?></p>
             <?php else: ?>
                 <div class="gallery">
                     <?php foreach ($iv['gallery'] as $photo): ?>
@@ -118,13 +119,13 @@ $fileSrc = static function (?string $absolutePath): string {
 
             <?php if ($iv['signature_absolute_path'] !== null): ?>
                 <div class="signature">
-                    <div class="muted">Firma cliente</div>
-                    <img src="<?= $e($fileSrc($iv['signature_absolute_path'])) ?>" alt="Firma cliente">
+                    <div class="muted"><?= $e($t('report.client_signature')) ?></div>
+                    <img src="<?= $e($fileSrc($iv['signature_absolute_path'])) ?>" alt="<?= $e($t('report.client_signature')) ?>">
                 </div>
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
 
-    <p class="muted" style="margin-top:12pt;">Report generato il <?= $e($generated_at) ?></p>
+    <p class="muted" style="margin-top:12pt;"><?= $e(sprintf($t('report.generated_on_report'), $generated_at)) ?></p>
 </body>
 </html>

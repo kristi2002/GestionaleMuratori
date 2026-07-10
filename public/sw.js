@@ -10,7 +10,7 @@
 // vendored Bootstrap/jQuery) — the `activate` handler deletes any cache whose
 // name differs, so a bump is what forces returning clients to fetch fresh assets
 // instead of serving the stale cache-first copy.
-var VERSION = 'gm-shell-v4';
+var VERSION = 'gm-shell-v5';
 var SCOPE = self.registration.scope; // e.g. https://host/  or  https://host/app/public/
 
 function scoped(path) {
@@ -25,7 +25,15 @@ var SHELL = [
     scoped('assets/vendor/bootstrap-icons.min.css'),
     scoped('assets/vendor/fonts/bootstrap-icons.woff2'),
     scoped('assets/vendor/jquery.min.js'),
+    // Self-hosted Inter web-fonts: without these the offline shell falls back to
+    // system fonts. Weights match the @font-face rules in app.css.
+    scoped('assets/fonts/inter-latin-400-normal.woff2'),
+    scoped('assets/fonts/inter-latin-500-normal.woff2'),
+    scoped('assets/fonts/inter-latin-600-normal.woff2'),
+    scoped('assets/fonts/inter-latin-700-normal.woff2'),
+    scoped('assets/fonts/inter-latin-800-normal.woff2'),
     scoped('assets/icons/icon-192.png'),
+    scoped('assets/icons/icon-512.png'),
     scoped('offline.html')
 ];
 

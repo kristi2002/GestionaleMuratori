@@ -5,6 +5,25 @@
     var BASE = document.body.getAttribute('data-base') || '';
     var CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
 
+    // Tiny i18n bridge. The layout may inject a <script type="application/json"
+    // id="gm-i18n"> dictionary (dotted key -> Italian string); GM.t(key, fallback)
+    // returns the translation when present, otherwise the fallback literal. This
+    // lets JS strings live in lang/it.php without a build step, while degrading
+    // gracefully to the inline fallback if the dictionary is absent.
+    var GM = (function () {
+        var dict = {};
+        try {
+            var node = document.getElementById('gm-i18n');
+            if (node) { dict = JSON.parse(node.textContent || '{}') || {}; }
+        } catch (e) { dict = {}; }
+        return {
+            t: function (key, fallback) {
+                return Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : fallback;
+            }
+        };
+    })();
+    window.GM = GM;
+
     // Every jQuery AJAX request carries the CSRF token; the server rejects POSTs
     // without it (checked globally in public/index.php). $.ajaxSetup also covers
     // the FormData uploads below, which go through $.ajax as well.
@@ -1045,6 +1064,134 @@
             var url = $(this).data('url');
             Api.post('/logout', {}).always(function () {
                 window.location.href = url ? url.replace(/\/logout$/, '/login') : (BASE + '/login');
+            });
+        });
+    });
+
+    // --- Change password (inline success/error) ------------------------------
+    // Restored in the "juli" build: /password is an AJAX POST returning {ok},
+    // so the page shows inline feedback instead of a raw form submit.
+    $(function () {
+        $(document).on('submit', '.js-password-form', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $error = $form.closest('.card-body').find('.js-password-error');
+            var $success = $form.closest('.card-body').find('.js-password-success');
+            var $submit = $form.find('[type="submit"]');
+
+            $error.addClass('d-none').text('');
+            $success.addClass('d-none').text('');
+            $submit.prop('disabled', true);
+
+            Api.post('/password', $form.serialize()).done(function (res) {
+                $submit.prop('disabled', false);
+                if (res && res.ok) {
+                    $form[0].reset();
+                    $success.removeClass('d-none').text(GM.t('auth.password_updated', 'Password aggiornata correttamente.'));
+                } else {
+                    $error.removeClass('d-none').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                $submit.prop('disabled', false);
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) || GM.t('common.connection_error', 'Errore di connessione.');
+                $error.removeClass('d-none').text(msg);
+            });
+        });
+    });
+
+    // --- Badge di Cantiere: clock in/out with best-effort GPS + offline queue -
+    // Restored in the "juli" build. Geolocation is optional (a worker is never
+    // blocked by a denied/slow GPS); a timbratura made on a no-signal site is
+    // queued in localStorage and replayed on reconnect.
+    $(function () {
+        function failMessage(xhr) {
+            return (xhr.responseJSON && xhr.responseJSON.error) || GM.t('common.connection_error', 'Errore di connessione.');
+        }
+
+        function withGeolocation(callback) {
+            var $geo = $('.js-attendance-geo');
+            if (!navigator.geolocation) {
+                callback({});
+                return;
+            }
+            $geo.removeClass('d-none');
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                $geo.addClass('d-none');
+                callback({ lat: pos.coords.latitude.toFixed(7), lng: pos.coords.longitude.toFixed(7) });
+            }, function () {
+                $geo.addClass('d-none');
+                callback({}); // denied / unavailable — proceed without coordinates
+            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+        }
+
+        // Generic offline write queue (localStorage) for simple JSON POSTs — used
+        // by the Badge di Cantiere so a timbratura on a no-signal site is not lost.
+        // (Photos keep their own binary queue.)
+        var ACTION_QUEUE_KEY = 'gm_action_queue_v1';
+        function loadActionQueue() {
+            try { return JSON.parse(window.localStorage.getItem(ACTION_QUEUE_KEY) || '[]'); } catch (e) { return []; }
+        }
+        function saveActionQueue(q) {
+            try { window.localStorage.setItem(ACTION_QUEUE_KEY, JSON.stringify(q)); } catch (e) { /* best-effort */ }
+        }
+        function queueAction(url, data) {
+            var q = loadActionQueue();
+            q.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, data: data });
+            saveActionQueue(q);
+        }
+        function flushActionQueue() {
+            loadActionQueue().forEach(function (item) {
+                Api.post(item.url, item.data).done(function () {
+                    saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
+                }).fail(function (xhr) {
+                    if (xhr.status > 0) { // definite server response — drop it, not "offline"
+                        saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
+                    }
+                });
+            });
+        }
+        $(window).on('online', flushActionQueue);
+        flushActionQueue();
+
+        function postAttendance(url, data, $btn) {
+            var $error = $('.js-attendance-error');
+            $error.addClass('d-none').text('');
+            $btn.prop('disabled', true);
+            Api.post(url, data).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    $error.removeClass('d-none alert-warning').addClass('alert-danger')
+                        .text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                    $btn.prop('disabled', false);
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 0) {
+                    queueAction(url, data);
+                    $error.removeClass('d-none alert-danger').addClass('alert-warning')
+                        .text(GM.t('attendance.offline_queued', 'Sei offline: la timbratura è stata salvata e verrà inviata alla riconnessione.'));
+                    $btn.prop('disabled', false);
+                    return;
+                }
+                $error.removeClass('d-none alert-warning').addClass('alert-danger').text(failMessage(xhr));
+                $btn.prop('disabled', false);
+            });
+        }
+
+        $(document).on('click', '.js-attendance-in', function () {
+            var $btn = $(this);
+            var projectId = $('.js-attendance-project').val();
+            $btn.prop('disabled', true);
+            withGeolocation(function (coords) {
+                postAttendance($btn.data('url'), $.extend({ project_id: projectId }, coords), $btn);
+            });
+        });
+
+        $(document).on('click', '.js-attendance-out', function () {
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            withGeolocation(function (coords) {
+                postAttendance($btn.data('url'), coords, $btn);
             });
         });
     });

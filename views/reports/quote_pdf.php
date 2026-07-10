@@ -7,6 +7,7 @@ use App\Support\View;
 /** @var string $generated_at */
 
 $e     = static fn (?string $v): string => View::e($v);
+$t     = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => '€ ' . number_format((float) $v, 2, ',', '.');
 $date  = static fn (?string $v): string => $v ? date('d/m/Y', (int) strtotime($v)) : '—';
 $qty   = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
@@ -39,45 +40,45 @@ $vatAmount = $subtotal * (float) $quote['vat_rate'] / 100;
 </head>
 <body>
     <?= View::render('reports/partials/pdf_header', [
-        'doc_title'    => 'Preventivo n. ' . $quote['number'],
+        'doc_title'    => sprintf($t('report.quote_number'), (string) $quote['number']),
         'doc_subtitle' => $quote['title'],
     ], null) ?>
 
-    <h2>Cliente</h2>
+    <h2><?= $e($t('report.client')) ?></h2>
     <table class="data">
-        <tr><th width="25%">Nome</th><td><?= $e($quote['client_name']) ?></td></tr>
+        <tr><th width="25%"><?= $e($t('report.name')) ?></th><td><?= $e($quote['client_name']) ?></td></tr>
         <?php if ($quote['client_vat']): ?>
-            <tr><th>P.IVA / C.F.</th><td><?= $e($quote['client_vat']) ?></td></tr>
+            <tr><th><?= $e($t('report.vat_cf')) ?></th><td><?= $e($quote['client_vat']) ?></td></tr>
         <?php endif; ?>
         <?php if ($quote['client_address']): ?>
-            <tr><th>Indirizzo</th><td><?= $e($quote['client_address']) ?></td></tr>
+            <tr><th><?= $e($t('report.address')) ?></th><td><?= $e($quote['client_address']) ?></td></tr>
         <?php endif; ?>
         <?php if ($quote['client_email']): ?>
-            <tr><th>Email</th><td><?= $e($quote['client_email']) ?></td></tr>
+            <tr><th><?= $e($t('report.email')) ?></th><td><?= $e($quote['client_email']) ?></td></tr>
         <?php endif; ?>
     </table>
 
-    <h2>Dettagli preventivo</h2>
+    <h2><?= $e($t('report.quote_details')) ?></h2>
     <table class="data">
-        <tr><th width="25%">Data</th><td><?= $e($date($quote['quote_date'])) ?></td></tr>
+        <tr><th width="25%"><?= $e($t('report.date')) ?></th><td><?= $e($date($quote['quote_date'])) ?></td></tr>
         <?php if ($quote['valid_until']): ?>
-            <tr><th>Valido fino al</th><td><?= $e($date($quote['valid_until'])) ?></td></tr>
+            <tr><th><?= $e($t('report.valid_until')) ?></th><td><?= $e($date($quote['valid_until'])) ?></td></tr>
         <?php endif; ?>
         <?php if ($quote['project_name']): ?>
-            <tr><th>Cantiere</th><td><?= $e($quote['project_name']) ?></td></tr>
+            <tr><th><?= $e($t('report.project')) ?></th><td><?= $e($quote['project_name']) ?></td></tr>
         <?php endif; ?>
-        <tr><th>Stato</th><td><span class="status-badge"><?= $e(Lang::label('quote_status', $quote['status'])) ?></span></td></tr>
+        <tr><th><?= $e($t('report.status')) ?></th><td><span class="status-badge"><?= $e(Lang::label('quote_status', $quote['status'])) ?></span></td></tr>
     </table>
 
-    <h2>Voci</h2>
+    <h2><?= $e($t('report.items')) ?></h2>
     <table class="data">
         <thead>
             <tr>
-                <th>Descrizione</th>
-                <th class="num" width="10%">Quantità</th>
-                <th width="10%">Unità</th>
-                <th class="num" width="15%">Prezzo unitario</th>
-                <th class="num" width="15%">Totale</th>
+                <th><?= $e($t('report.description')) ?></th>
+                <th class="num" width="10%"><?= $e($t('report.qty')) ?></th>
+                <th width="10%"><?= $e($t('report.unit')) ?></th>
+                <th class="num" width="15%"><?= $e($t('report.unit_price')) ?></th>
+                <th class="num" width="15%"><?= $e($t('report.line_total')) ?></th>
             </tr>
         </thead>
         <tbody>
@@ -94,16 +95,16 @@ $vatAmount = $subtotal * (float) $quote['vat_rate'] / 100;
     </table>
 
     <table class="totals">
-        <tr><td>Imponibile:</td><td><?= $e($money($subtotal)) ?></td></tr>
-        <tr><td>IVA (<?= $e($qty($quote['vat_rate'])) ?>%):</td><td><?= $e($money($vatAmount)) ?></td></tr>
-        <tr class="grand"><td>Totale:</td><td><?= $e($money($subtotal + $vatAmount)) ?></td></tr>
+        <tr><td><?= $e($t('report.subtotal')) ?>:</td><td><?= $e($money($subtotal)) ?></td></tr>
+        <tr><td><?= $e($t('report.vat')) ?> (<?= $e($qty($quote['vat_rate'])) ?>%):</td><td><?= $e($money($vatAmount)) ?></td></tr>
+        <tr class="grand"><td><?= $e($t('report.total')) ?>:</td><td><?= $e($money($subtotal + $vatAmount)) ?></td></tr>
     </table>
 
     <?php if ($quote['notes']): ?>
-        <h2>Note e condizioni</h2>
+        <h2><?= $e($t('report.notes_conditions')) ?></h2>
         <p><?= nl2br($e($quote['notes'])) ?></p>
     <?php endif; ?>
 
-    <p class="muted" style="margin-top:12pt;">Documento generato il <?= $e($generated_at) ?></p>
+    <p class="muted" style="margin-top:12pt;"><?= $e(sprintf($t('report.generated_on'), $generated_at)) ?></p>
 </body>
 </html>

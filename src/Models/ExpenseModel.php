@@ -11,20 +11,31 @@ final class ExpenseModel
      * @param array{search?:string,category?:string,worker_id?:int,project_id?:int,date_from?:string,date_to?:string} $filters
      * @return array<int,array<string,mixed>> Expenses with worker/project names, newest first.
      */
-    public function all(array $filters = []): array
+    public function all(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
         [$where, $params] = $this->whereClause($filters);
-        $stmt = Database::pdo()->prepare(
-            'SELECT e.*, w.name AS worker_name, p.name AS project_name, u.name AS created_by_name
+        $sql = 'SELECT e.*, w.name AS worker_name, p.name AS project_name, u.name AS created_by_name
              FROM expenses e
              LEFT JOIN users w ON w.id = e.worker_id
              LEFT JOIN projects p ON p.id = e.project_id
              JOIN users u ON u.id = e.created_by'
             . $where .
-            ' ORDER BY e.expense_date DESC, e.id DESC'
-        );
+            ' ORDER BY e.expense_date DESC, e.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
+        }
+        $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same filters (drives pagination). */
+    public function count(array $filters = []): int
+    {
+        [$where, $params] = $this->whereClause($filters);
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM expenses e' . $where);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     /**

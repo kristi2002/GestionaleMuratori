@@ -187,3 +187,5 @@ $catBadges = [
         </table>
     </div>
 </div>
+
+<?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>

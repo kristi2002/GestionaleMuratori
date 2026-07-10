@@ -25,9 +25,15 @@ $pass = password_hash('password', PASSWORD_DEFAULT);
 $today = (new DateTimeImmutable('today'))->format('Y-m-d');
 
 $dataTables = [
+    'notifications',
     'photos', 'stock_balances', 'stock_movements',
     'compliance_documents', 'sal_lines', 'sal_documents',
     'daily_log_equipment', 'daily_logs', 'equipment', 'site_attendance',
+    // Project detail sub-resources + billing (migrations 010–014). Must be reset
+    // too, otherwise re-seeding leaves rows pointing at truncated parents.
+    'quote_lines', 'quotes', 'expenses',
+    'project_documents', 'project_invoices', 'project_materials',
+    'project_absences', 'project_workers',
     'project_subcontractors', 'intervention_materials', 'intervention_status_history',
     'interventions', 'warehouse_items', 'stock_locations', 'projects',
     'users', 'subcontractors', 'clients',
@@ -297,6 +303,106 @@ try {
             ':credits' => $c[6],
             ':notes'  => null,
             ':by'     => $adminId,
+        ]);
+    }
+
+    // --- Project workers (roster of operai per cantiere, M:N) ----------------
+    $pwStmt = $pdo->prepare(
+        'INSERT INTO project_workers (project_id, user_id) VALUES (:project_id, :user_id)'
+    );
+    foreach ([[0, $worker1Id], [0, $worker2Id], [2, $worker2Id], [1, $worker1Id]] as $pw) {
+        $pwStmt->execute([':project_id' => $projectIds[$pw[0]], ':user_id' => $pw[1]]);
+    }
+
+    // --- Preventivi (quotes) + line items ------------------------------------
+    $quoteStmt = $pdo->prepare(
+        'INSERT INTO quotes (client_id, project_id, number, title, quote_date, valid_until, status, vat_rate, notes, created_by)
+         VALUES (:client_id, :project_id, :number, :title, :qdate, :valid, :status, :vat, :notes, :by)'
+    );
+    $quoteLineStmt = $pdo->prepare(
+        'INSERT INTO quote_lines (quote_id, description, qty, unit, unit_price, sort_order)
+         VALUES (:quote_id, :desc, :qty, :unit, :price, :sort)'
+    );
+    // [client_idx, project_idx|null, number, title, +/-days quote_date, +/-days valid_until, status, [ [desc, qty, unit, price], ... ] ]
+    $quotes = [
+        [0, 0, 'PREV-2026-001', 'Ristrutturazione Villa Rossi — opere murarie', -10, 20, 'sent', [
+            ['Demolizione tramezzi interni', '1.000', 'a corpo', '1200.00'],
+            ['Realizzazione nuovo massetto', '85.000', 'm²', '38.00'],
+            ['Intonaco civile pareti', '210.000', 'm²', '22.50'],
+        ]],
+        [1, null, 'PREV-2026-002', 'Condominio Via Bianchi — rifacimento facciata', -3, 27, 'draft', [
+            ['Ponteggio e messa in sicurezza', '1.000', 'a corpo', '2800.00'],
+            ['Rasatura e tinteggiatura facciata', '540.000', 'm²', '31.00'],
+        ]],
+    ];
+    foreach ($quotes as $q) {
+        $quoteStmt->execute([
+            ':client_id'  => $clientIds[$q[0]],
+            ':project_id' => $q[1] !== null ? $projectIds[$q[1]] : null,
+            ':number'     => $q[2],
+            ':title'      => $q[3],
+            ':qdate'      => $todayDt->modify(($q[4] >= 0 ? '+' : '') . $q[4] . ' days')->format('Y-m-d'),
+            ':valid'      => $todayDt->modify(($q[5] >= 0 ? '+' : '') . $q[5] . ' days')->format('Y-m-d'),
+            ':status'     => $q[6],
+            ':vat'        => '22.00',
+            ':notes'      => null,
+            ':by'         => $adminId,
+        ]);
+        $quoteId = (int) $pdo->lastInsertId();
+        foreach ($q[7] as $sort => $line) {
+            $quoteLineStmt->execute([
+                ':quote_id' => $quoteId, ':desc' => $line[0], ':qty' => $line[1],
+                ':unit' => $line[2], ':price' => $line[3], ':sort' => $sort,
+            ]);
+        }
+    }
+
+    // --- Project invoices (billing rows linked to a project) -----------------
+    $pInvStmt = $pdo->prepare(
+        'INSERT INTO project_invoices (project_id, number, issue_date, amount, status, note, created_by)
+         VALUES (:project_id, :number, :issue, :amount, :status, :note, :by)'
+    );
+    $projectInvoices = [
+        [0, 'FT-2026-0101', -25, '4200.00', 'paid',   'Acconto 30% Villa Rossi'],
+        [0, 'FT-2026-0140', -2,  '6800.00', 'issued', 'S.A.L. 1 opere murarie'],
+        [2, 'FT-2026-0072', -12, '9500.00', 'issued', 'Facciata lotto 1'],
+    ];
+    foreach ($projectInvoices as $pi) {
+        $pInvStmt->execute([
+            ':project_id' => $projectIds[$pi[0]],
+            ':number'     => $pi[1],
+            ':issue'      => $todayDt->modify(($pi[2] >= 0 ? '+' : '') . $pi[2] . ' days')->format('Y-m-d'),
+            ':amount'     => $pi[3],
+            ':status'     => $pi[4],
+            ':note'       => $pi[5],
+            ':by'         => $adminId,
+        ]);
+    }
+
+    // --- Spese (running costs outside materials) -----------------------------
+    $expStmt = $pdo->prepare(
+        'INSERT INTO expenses (expense_date, category, description, amount, worker_id, project_id, note, created_by)
+         VALUES (:date, :cat, :desc, :amount, :worker_id, :project_id, :note, :by)'
+    );
+    // [+/-days, category, description, amount, worker_idx|null, project_idx|null]
+    $expenses = [
+        [-2,  'fuel',     'Rifornimento furgone cantiere', '85.40',  0, 0],
+        [-2,  'meals',    'Pranzo squadra',                 '38.00',  1, 0],
+        [-5,  'vehicle',  'Tagliando autocarro',            '320.00', null, null],
+        [-7,  'clothing', 'Scarpe antinfortunistiche',      '110.00', 1, null],
+        [-1,  'other',    'Noleggio piccola attrezzatura',  '65.00',  null, 2],
+    ];
+    $workerIdByIdx = [0 => $worker1Id, 1 => $worker2Id];
+    foreach ($expenses as $ex) {
+        $expStmt->execute([
+            ':date'       => $todayDt->modify(($ex[0] >= 0 ? '+' : '') . $ex[0] . ' days')->format('Y-m-d'),
+            ':cat'        => $ex[1],
+            ':desc'       => $ex[2],
+            ':amount'     => $ex[3],
+            ':worker_id'  => $ex[4] !== null ? $workerIdByIdx[$ex[4]] : null,
+            ':project_id' => $ex[5] !== null ? $projectIds[$ex[5]] : null,
+            ':note'       => null,
+            ':by'         => $adminId,
         ]);
     }
 

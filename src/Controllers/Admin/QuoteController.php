@@ -12,6 +12,7 @@ use App\Services\Report\QuotePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Url;
@@ -33,12 +34,16 @@ final class QuoteController
             'client_id' => (int) $request->input('client_id', 0),
         ];
 
+        $model     = new QuoteModel();
+        $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
+
         Response::html(View::render('admin/quotes/index', [
-            'title'    => Lang::get('admin.quotes.title'),
-            'quotes'   => (new QuoteModel())->all($filters),
-            'clients'  => (new ClientModel())->all(),
-            'filters'  => $filters,
-            'statuses' => self::STATUSES,
+            'title'     => Lang::get('admin.quotes.title'),
+            'quotes'    => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'clients'   => (new ClientModel())->all(),
+            'filters'   => $filters,
+            'statuses'  => self::STATUSES,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

@@ -230,6 +230,12 @@ final class SalController
             Response::fail(Lang::get('admin.sal.signature_empty'), 422);
             return;
         }
+        // Cap the payload before decoding: a signature PNG is a few KB, so anything
+        // this large is abuse. Mirrors the worker signature/photo size guards.
+        if (strlen($dataUrl) > 5_000_000) {
+            Response::fail(Lang::get('admin.sal.signature_too_large'), 422);
+            return;
+        }
         $binary = base64_decode(substr($dataUrl, strlen($prefix)), true);
         if ($binary === false || $binary === '') {
             Response::fail(Lang::get('admin.sal.signature_empty'), 422);
