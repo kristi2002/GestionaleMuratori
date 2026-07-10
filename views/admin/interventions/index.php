@@ -36,9 +36,9 @@ $nextActions = [
         <h1 class="h4 mb-1"><?= $e($t('admin.interventions.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.interventions.subtitle')) ?></p>
     </div>
-    <button type="button" class="btn btn-success js-crud-new js-intervention-new" data-bs-toggle="modal" data-bs-target="#intervention-modal" data-target-modal="#intervention-modal">
-        <?= $e($t('admin.interventions.new')) ?>
-    </button>
+    <a class="btn btn-success" href="<?= $e(Url::to('/admin/interventions/create')) ?>">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.new')) ?>
+    </a>
 </div>
 
 <div class="btn-group mb-3" role="group">
@@ -127,11 +127,9 @@ $nextActions = [
                     <td><span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $iv['status'])) ?></span></td>
                     <td class="text-end app-row-actions">
                         <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-secondary js-crud-edit js-intervention-edit"
-                                    data-bs-toggle="modal" data-bs-target="#intervention-modal" data-target-modal="#intervention-modal"
-                                    data-record='<?= $e(json_encode($iv, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) ?>'>
+                            <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/' . $iv['id'] . '/edit')) ?>">
                                 <?= $e($t('common.edit')) ?>
-                            </button>
+                            </a>
                             <?php foreach ($nextActions[$iv['status']] ?? [] as $action): ?>
                                 <button type="button" class="btn btn-sm <?= $action['to'] === 'cancelled' ? 'btn-outline-danger' : 'btn-outline-success' ?> js-intervention-status"
                                         data-url="<?= $e(Url::to('/admin/interventions/' . $iv['id'] . '/status')) ?>"
@@ -150,86 +148,3 @@ $nextActions = [
 </div>
 
 <?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>
-
-<div class="modal fade" id="intervention-modal" tabindex="-1" data-title-create="<?= $e($t('admin.interventions.new')) ?>" data-title-edit="<?= $e($t('admin.interventions.edit')) ?>">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/interventions')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.interventions.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="id">
-                    <div class="row">
-                        <div class="col-12 col-sm-6 mb-3 js-intervention-project-field">
-                            <label class="form-label"><?= $e($t('admin.interventions.project')) ?></label>
-                            <select class="form-select" name="project_id">
-                                <option value="">—</option>
-                                <?php foreach ($projects as $p): ?>
-                                    <option value="<?= $e((string) $p['id']) ?>"><?= $e($p['name']) ?> (<?= $e($p['client_name']) ?>)</option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.interventions.worker')) ?></label>
-                            <select class="form-select" name="assigned_worker_id">
-                                <option value=""><?= $e($t('admin.interventions.unassigned')) ?></option>
-                                <?php foreach ($workers as $w): ?>
-                                    <option value="<?= $e((string) $w['id']) ?>"><?= $e($w['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.interventions.field_title')) ?></label>
-                        <input type="text" class="form-control" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $e($t('admin.interventions.description')) ?></label>
-                        <textarea class="form-control" name="description" rows="2"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.interventions.scheduled_date')) ?></label>
-                            <input type="date" class="form-control" name="scheduled_date">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.interventions.scheduled_time')) ?></label>
-                            <input type="time" class="form-control" name="scheduled_start_time">
-                        </div>
-                    </div>
-
-                    <div class="js-materials-section">
-                        <hr>
-                        <label class="form-label"><?= $e($t('admin.interventions.materials')) ?></label>
-                        <div class="js-materials-rows">
-                            <div class="row g-2 mb-2 js-material-row">
-                                <div class="col-7">
-                                    <select class="form-select" name="item_id[]">
-                                        <option value="">—</option>
-                                        <?php foreach ($warehouseItems as $wi): ?>
-                                            <option value="<?= $e((string) $wi['id']) ?>"><?= $e($wi['name']) ?> (<?= $e(rtrim(rtrim((string) $wi['qty_in_stock'], '0'), '.')) ?> <?= $e(Lang::label('units', $wi['unit'])) ?> <?= $e($t('admin.warehouse.qty_in_stock')) ?>)</option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-3">
-                                    <input type="number" step="0.001" min="0" class="form-control" name="qty_planned[]" placeholder="<?= $e($t('admin.interventions.qty_planned')) ?>">
-                                </div>
-                                <div class="col-2">
-                                    <button type="button" class="btn btn-outline-secondary w-100 js-material-remove">&times;</button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-success js-material-add"><?= $e($t('admin.interventions.add_material')) ?></button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.save')) ?></button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>

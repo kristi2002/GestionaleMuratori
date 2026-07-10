@@ -1080,6 +1080,20 @@
         });
     });
 
+    // --- Interventions: planned-material editor (add / remove rows) ----------
+    // The create form lists item_id[]/qty_planned[] rows; "Aggiungi materiale"
+    // clones the <template> row, and each row's × removes it.
+    $(function () {
+        $(document).on('click', '.js-material-add', function () {
+            var $section = $(this).closest('.js-materials-section');
+            var tpl = $section.find('.js-material-template').html();
+            $section.find('.js-materials-rows').append(tpl);
+        });
+        $(document).on('click', '.js-material-remove', function () {
+            $(this).closest('.js-material-row').remove();
+        });
+    });
+
     // --- Compliance: subject-type selector toggles the matching subject field --
     // Show the subject dropdown (operaio / subappaltatore / cantiere) that matches
     // the chosen "Soggetto", and disable the hidden ones so only the active

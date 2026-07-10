@@ -69,6 +69,44 @@ final class InterventionController
         ], 'layout'));
     }
 
+    /** GET /admin/interventions/create — blank intervention form (with material editor). */
+    public function create(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        Response::html(View::render('admin/interventions/form', [
+            'title'          => Lang::get('admin.interventions.new'),
+            'intervention'   => null,
+            'materials'      => [],
+            'projects'       => (new ProjectModel())->all(),
+            'workers'        => (new UserModel())->listByRole('worker'),
+            'warehouseItems' => (new WarehouseItemModel())->all(),
+            'statuses'       => self::STATUSES,
+        ], 'layout'));
+    }
+
+    /** GET /admin/interventions/{id}/edit — basic fields (materials are set at creation only). */
+    public function edit(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $intervention = (new InterventionModel())->find((int) $id);
+        if ($intervention === null) {
+            Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/interventions/form', [
+            'title'          => Lang::get('admin.interventions.edit'),
+            'intervention'   => $intervention,
+            'materials'      => (new InterventionMaterialModel())->forIntervention((int) $id),
+            'projects'       => (new ProjectModel())->all(),
+            'workers'        => (new UserModel())->listByRole('worker'),
+            'warehouseItems' => (new WarehouseItemModel())->all(),
+            'statuses'       => self::STATUSES,
+        ], 'layout'));
+    }
+
     /** GET /admin/interventions/{id} — full detail: materials, history, photos, signature (gap F2). */
     public function show(Request $request, string $id): void
     {

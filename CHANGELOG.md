@@ -19,11 +19,15 @@ pages and the modal markup is removed.
   the previously-hidden project_id became a labelled cantiere selector.
 - Subcontractors "assegna progetti" and warehouse movement/transfer/reconcile
   features left intact.
-- **Remaining: interventi** — its create/edit modal embeds a dynamic materials
-  editor (add/remove stock rows with reservation logic); converting it safely is a
-  focused follow-up rather than a mechanical templating pass.
+- **Interventi**: create page carries the planned-material editor, and in doing so
+  fixes a latent bug — the modal's "Aggiungi materiale"/remove buttons never worked
+  (the `js-material-add`/`js-material-remove` handlers didn't exist); they're now
+  implemented with a `<template>` clone. The edit page shows the basic fields
+  editable and the planned materials read-only (server-side `update()` only touches
+  the basic fields — materials reserve stock and are set at creation). Verified
+  end-to-end: create-with-material reserves the correct quantity.
 
-All 451 tests pass.
+Every admin create/edit modal is now a dedicated page. All 451 tests pass.
 
 ## 2026-07-10 — UX batch: dashboard, filters, exports, keyboard shortcuts
 
