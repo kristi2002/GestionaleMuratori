@@ -38,6 +38,10 @@ return [
     'storage' => [
         // Overridable so tests (and alternative mounts) can relocate uploads.
         'uploads_path' => Env::get('UPLOADS_PATH', dirname(__DIR__) . '/storage/uploads'),
+        // mPDF's scratch space (font cache + image temp). Must be writable by the
+        // web-server user: the container runs as www-data and only owns storage/,
+        // while mPDF's own default (vendor/mpdf/mpdf/tmp) is root-owned there.
+        'pdf_temp_path' => Env::get('PDF_TEMP_PATH', dirname(__DIR__) . '/storage/tmp/mpdf'),
     ],
     // Business rule: block reservations that would drive stock negative.
     // (§4.2 — configurable; default = block.)

@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-07-11 — Fix: every PDF (report/invoice/quote/S.A.L.) 500s in production
+
+All PDF endpoints returned **500** on the production container (e.g.
+`/admin/projects/{id}/report/pdf`). Root cause: mPDF's default scratch dir is
+`vendor/mpdf/mpdf/tmp`, but the image copies the repo as root and only
+`chown`s `storage/` to `www-data` — so when PHP-FPM (running as www-data) had
+mPDF write its font cache on the first render, it hit
+`Mpdf\MpdfException: Temporary files directory ... is not writable`. The failure
+was global; it looked project-specific only because the service worker was
+serving a stale cached success for one project. Local dev never hit it (the dev
+user owns `vendor/`).
+
+- New `Services\Report\MpdfFactory` builds every mPDF instance with an explicit
+  `tempDir` under the writable `storage/` tree (`config storage.pdf_temp_path`,
+  overridable via `PDF_TEMP_PATH`); it creates the dir on first use. All four
+  builders (report, invoice, quote, S.A.L.) go through it.
+- `deploy/Dockerfile` pre-creates `storage/tmp/mpdf` (chowned to www-data);
+  `storage/tmp/` is gitignored.
+- Regression test in `tests/cases/01_unit.php` asserts the temp dir is outside
+  `vendor/`, writable, and that a builder renders a valid `%PDF`. **455 tests pass.**
+
 ## 2026-07-10 — Create/edit modals → dedicated pages
 
 Converted the admin create/edit **modals** into full **pages** (matching the

@@ -2,6 +2,7 @@
 /.env
 /storage/uploads/*
 !/storage/uploads/.gitkeep
+/storage/tmp/
 .DS_Store
 Thumbs.db
 *.log

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Services\Report;
 
 use App\Support\View;
-use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
 /** Renders views/reports/quote_pdf.php to a printable A4 estimate ("preventivo"). */
@@ -14,7 +13,7 @@ final class QuotePdfBuilder
     {
         $html = View::render('reports/quote_pdf', $data, null);
 
-        $mpdf = new Mpdf([
+        $mpdf = MpdfFactory::create([
             'format'        => 'A4',
             'margin_top'    => 15,
             'margin_bottom' => 15,

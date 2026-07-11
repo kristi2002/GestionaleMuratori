@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Services\Report;
 
 use App\Support\View;
-use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
 /**
@@ -20,7 +19,7 @@ final class SalPdfBuilder
     {
         $html = View::render('reports/sal', $data, null);
 
-        $mpdf = new Mpdf([
+        $mpdf = MpdfFactory::create([
             'format'        => 'A4',
             'margin_top'    => 18,
             'margin_bottom' => 18,

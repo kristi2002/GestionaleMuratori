@@ -28,7 +28,9 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 
 # Uploads live on a named volume mounted here; make sure PHP-FPM can write.
-RUN mkdir -p storage/uploads \
+# storage/tmp is mPDF's scratch space (font cache + image temp) — PHP-FPM runs
+# as www-data and mPDF's own vendor/ default is root-owned/read-only here.
+RUN mkdir -p storage/uploads storage/tmp/mpdf \
  && chown -R www-data:www-data storage
 
 USER www-data

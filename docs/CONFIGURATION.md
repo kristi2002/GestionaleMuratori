@@ -44,6 +44,7 @@ Every setting is read from the environment (real env vars win over `.env` — se
 | Variable | Default | Notes |
 |----------|---------|-------|
 | `UPLOADS_PATH` | `storage/uploads` | Where photos/signatures/documents are written. Mount a **persistent** volume here in production. |
+| `PDF_TEMP_PATH` | `storage/tmp/mpdf` | mPDF scratch space (font cache + image temp). Must be writable by the web-server user. Created automatically; safe to be ephemeral. Only override if `storage/` isn't writable. |
 | `ALLOW_NEGATIVE_STOCK` | `false` | When `true`, reservations/transfers may drive stock negative (off by default). |
 
 ## Company identity (PDF headers) — *new*
