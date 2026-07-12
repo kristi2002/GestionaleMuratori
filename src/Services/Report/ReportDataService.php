@@ -8,7 +8,7 @@ use App\Models\PhotoModel;
 use App\Models\ProjectModel;
 use App\Models\StockMovementModel;
 use App\Support\Config;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 
 /**
  * Gathers everything needed for a project report (§5), shared by both the
@@ -26,7 +26,7 @@ final class ReportDataService
             return null;
         }
 
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
+        $storage = Storage::disk();
         $photoModel = new PhotoModel();
 
         $interventions = (new InterventionModel())->all(['project_id' => $projectId]);

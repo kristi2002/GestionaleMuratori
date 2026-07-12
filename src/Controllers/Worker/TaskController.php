@@ -15,7 +15,7 @@ use App\Support\Config;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 use App\Support\View;
 use RuntimeException;
 
@@ -144,7 +144,7 @@ final class TaskController
         }
 
         $relPath = $intervention['project_id'] . '/' . $id . '/signature.png';
-        (new LocalStorage((string) Config::get('storage.uploads_path')))->put($relPath, $binary);
+        (Storage::disk())->put($relPath, $binary);
         (new InterventionModel())->setSignaturePath((int) $id, $relPath);
 
         Response::ok();

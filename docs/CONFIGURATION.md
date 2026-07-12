@@ -43,7 +43,8 @@ Every setting is read from the environment (real env vars win over `.env` — se
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `UPLOADS_PATH` | `storage/uploads` | Where photos/signatures/documents are written. Mount a **persistent** volume here in production. |
+| `STORAGE_DRIVER` | `local` | Backing driver for uploaded files, resolved by `App\Support\Storage\Storage::disk()`. Only `local` today; an `s3` driver slots in without call-site changes (needed before running >1 app replica). |
+| `UPLOADS_PATH` | `storage/uploads` | Where photos/signatures/documents are written (local driver). Mount a **persistent** volume here in production. |
 | `PDF_TEMP_PATH` | `storage/tmp/mpdf` | mPDF scratch space (font cache + image temp). Must be writable by the web-server user. Created automatically; safe to be ephemeral. Only override if `storage/` isn't writable. |
 | `ALLOW_NEGATIVE_STOCK` | `false` | When `true`, reservations/transfers may drive stock negative (off by default). |
 

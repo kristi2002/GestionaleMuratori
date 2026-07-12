@@ -36,6 +36,10 @@ return [
         'pass' => Env::get('DB_PASS', ''),
     ],
     'storage' => [
+        // Backing driver for uploaded files. 'local' today; an 's3' driver slots
+        // into App\Support\Storage\Storage::disk() (ADR-0001 Phase 1) without any
+        // call-site change — needed before the app can run more than one replica.
+        'driver'       => Env::get('STORAGE_DRIVER', 'local'),
         // Overridable so tests (and alternative mounts) can relocate uploads.
         'uploads_path' => Env::get('UPLOADS_PATH', dirname(__DIR__) . '/storage/uploads'),
         // mPDF's scratch space (font cache + image temp). Must be writable by the

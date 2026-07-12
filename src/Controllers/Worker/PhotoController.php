@@ -12,7 +12,7 @@ use App\Support\Config;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 use App\Support\Validate;
 use App\Support\View;
 
@@ -58,7 +58,7 @@ final class PhotoController
         $relOriginal = "{$projectId}/{$id}/{$baseName}.{$ext}";
         $relThumb    = "{$projectId}/{$id}/thumb_{$baseName}.jpg";
 
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
+        $storage = Storage::disk();
         $storage->putUploadedFile($relOriginal, $file['tmp_name']);
         $this->makeThumbnail($storage->absolutePath($relOriginal), (int) $info[2], $storage->absolutePath($relThumb));
         if (!$storage->exists($relThumb)) {

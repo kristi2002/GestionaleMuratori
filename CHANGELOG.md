@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-07-12 — CI + storage driver factory
+
+- **CI (`.github/workflows/ci.yml`):** the full suite (unit + service + HTTP e2e,
+  462 tests) now runs on every push/PR against a MySQL 8 service with PHP 8.2 and
+  the app's extensions — regressions like the production PDF 500 are caught before
+  deploy. Added a status badge to the README.
+- **Storage factory (`App\Support\Storage\Storage::disk()`):** the six call sites
+  that hard-wired `new LocalStorage(...)` now resolve the driver from config
+  (`STORAGE_DRIVER`, default `local`). This makes the existing `StorageInterface`
+  promise real — uploads can move to S3 (ADR-0001 Phase 1, a prerequisite for
+  horizontal scale) by adding one factory case, with no call-site changes.
+  Behavioural no-op today; regression tests in `tests/cases/01_unit.php`.
+
 ## 2026-07-12 — Observability: structured error logging + optional alerting
 
 Uncaught 500s were written as a single free-text log line and nothing else, so a

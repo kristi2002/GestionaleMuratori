@@ -14,7 +14,7 @@ use App\Support\Config;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 use App\Support\Validate;
 use App\Support\View;
 
@@ -222,7 +222,7 @@ final class SalController
 
         $pdf = (new SalPdfBuilder())->build(['document' => $doc, 'lines' => $lines, 'signatureSrc' => null]);
         $relPath = 'sal/' . $doc['project_id'] . '/sal-' . $doc['number'] . '.pdf';
-        (new LocalStorage((string) Config::get('storage.uploads_path')))->put($relPath, $pdf);
+        (Storage::disk())->put($relPath, $pdf);
 
         (new SalDocumentModel())->markIssued((int) $id, $relPath);
         Response::ok();
@@ -262,7 +262,7 @@ final class SalController
         }
 
         $relPath = 'sal/' . $doc['project_id'] . '/sal-' . $doc['number'] . '-sign.png';
-        (new LocalStorage((string) Config::get('storage.uploads_path')))->put($relPath, $binary);
+        (Storage::disk())->put($relPath, $binary);
 
         (new SalDocumentModel())->markSigned((int) $id, $relPath);
         Response::ok();
@@ -279,7 +279,7 @@ final class SalController
             return;
         }
 
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
+        $storage = Storage::disk();
         $signatureSrc = null;
         if ($doc['status'] === 'signed' && $doc['signature_path'] !== null && $storage->exists($doc['signature_path'])) {
             $signatureSrc = 'file:///' . str_replace('\\', '/', $storage->absolutePath($doc['signature_path']));

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Support\Config;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 use App\Support\Storage\StorageInterface;
 
 /**
@@ -18,7 +18,7 @@ final class PhotoStreamService
 
     public function __construct(?StorageInterface $storage = null)
     {
-        $this->storage = $storage ?? new LocalStorage((string) Config::get('storage.uploads_path'));
+        $this->storage = $storage ?? Storage::disk();
     }
 
     /** @param array<string,mixed> $photo photos table row */

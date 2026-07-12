@@ -18,7 +18,7 @@ use App\Support\Config;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
-use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
 use App\Support\View;
 
 final class ProjectController
@@ -285,7 +285,7 @@ final class ProjectController
         }
 
         $relPath = sprintf('documents/%d/%s_%s.%s', (int) $id, date('YmdHis'), bin2hex(random_bytes(4)), $ext);
-        $storage = new LocalStorage((string) Config::get('storage.uploads_path'));
+        $storage = Storage::disk();
         $storage->putUploadedFile($relPath, $file['tmp_name']);
 
         $docId = (new ProjectDocumentModel())->create([
@@ -307,7 +307,7 @@ final class ProjectController
         AuthGuard::require($request, ['admin']);
 
         $document = (new ProjectDocumentModel())->find((int) $docId);
-        $storage  = new LocalStorage((string) Config::get('storage.uploads_path'));
+        $storage  = Storage::disk();
         if ($document === null || (int) $document['project_id'] !== (int) $id
             || !$storage->exists((string) $document['file_path'])) {
             Response::html(View::render('errors/404', ['title' => 'Pagina non trovata'], 'layout'), 404);
@@ -333,7 +333,7 @@ final class ProjectController
             return;
         }
 
-        (new LocalStorage((string) Config::get('storage.uploads_path')))->delete((string) $document['file_path']);
+        (Storage::disk())->delete((string) $document['file_path']);
         $model->delete((int) $docId);
         Response::ok();
     }

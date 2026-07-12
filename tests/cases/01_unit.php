@@ -6,6 +6,9 @@ use App\Services\Report\MpdfFactory;
 use App\Support\Config;
 use App\Support\Csrf;
 use App\Support\Logger;
+use App\Support\Storage\LocalStorage;
+use App\Support\Storage\Storage;
+use App\Support\Storage\StorageInterface;
 use App\Support\Validate;
 use Mpdf\Output\Destination;
 
@@ -73,3 +76,10 @@ T::ok(is_array($decoded), 'log line is valid JSON');
 T::equals('RuntimeException', $decoded['type'] ?? null, 'logs the exception type');
 T::equals($rid, $decoded['request_id'] ?? null, 'log line carries the request id shown to the user');
 T::equals('/x', $decoded['path'] ?? null, 'log line carries request context');
+
+// Storage is selected through a config-driven factory so uploads can move to S3
+// (ADR-0001 Phase 1) without touching call sites; guard the default wiring.
+T::section('Unit: Storage factory');
+$disk = Storage::disk();
+T::ok($disk instanceof StorageInterface, 'disk() returns a StorageInterface');
+T::ok($disk instanceof LocalStorage, 'default driver is local');
