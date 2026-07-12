@@ -32,6 +32,22 @@ final class InterventionModel
         return $stmt->fetchAll();
     }
 
+    /** Interventions scheduled within a date range, for the month calendar. */
+    public function scheduledBetween(string $from, string $to): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT i.id, i.title, i.status, i.scheduled_date, i.scheduled_start_time,
+                    p.name AS project_name, w.name AS worker_name
+             FROM interventions i
+             JOIN projects p ON p.id = i.project_id
+             LEFT JOIN users w ON w.id = i.assigned_worker_id
+             WHERE i.scheduled_date BETWEEN ? AND ?
+             ORDER BY i.scheduled_date, i.scheduled_start_time, i.id'
+        );
+        $stmt->execute([$from, $to]);
+        return $stmt->fetchAll();
+    }
+
     /** Row count for the same filters (drives pagination). */
     public function count(array $filters = []): int
     {

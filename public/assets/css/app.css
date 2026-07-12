@@ -259,6 +259,67 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     text-transform: capitalize;
 }
 
+/* --- Interventions month calendar ---------------------------------------- */
+.app-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .375rem;
+    margin-bottom: .375rem;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    color: #adb5bd;
+    text-align: center;
+}
+
+.app-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .375rem;
+}
+
+.app-cal-day {
+    min-height: 6.2rem;
+    border: 1px solid #eef0f2;
+    border-radius: .5rem;
+    padding: .25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    overflow: hidden;
+}
+
+.app-cal-day.is-empty { border-color: transparent; }
+.app-cal-day.is-today { border-color: var(--app-green); box-shadow: 0 0 0 1px var(--app-green); }
+.app-cal-daynum { font-size: .8rem; font-weight: 600; color: #6c757d; }
+
+.app-cal-event {
+    display: block;
+    font-size: .72rem;
+    line-height: 1.25;
+    padding: .12rem .3rem;
+    border-left: 3px solid #adb5bd;
+    border-radius: .25rem;
+    background: #f8fafc;
+    color: #212529;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-cal-event:hover { background: var(--app-green-soft); color: var(--app-green-dark); }
+.app-cal-time { font-weight: 600; color: #6c757d; }
+.app-cal-more { font-size: .68rem; color: #6c757d; padding-left: .3rem; }
+
+@media (max-width: 575.98px) {
+    .app-cal-day { min-height: 4.2rem; }
+    .app-cal-event { font-size: .62rem; }
+}
+
+[data-bs-theme="dark"] .app-cal-day { border-color: #2A2F37; }
+[data-bs-theme="dark"] .app-cal-event { background: #14171C; color: #E7EAEE; }
+
 /* --- Navbar global search ------------------------------------------------ */
 .app-navbar-search { max-width: 460px; width: 100%; }
 .app-navbar-search .form-control,

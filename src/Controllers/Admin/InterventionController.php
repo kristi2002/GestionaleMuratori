@@ -28,6 +28,32 @@ final class InterventionController
     /** §8 "cheap win": quick dispatch filters reusing scheduled_date, no new table. */
     private const DATE_RANGES = ['today', 'week'];
 
+    /** GET /admin/interventions/calendar — month grid of scheduled interventions. */
+    public function calendar(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $month = (string) $request->input('month', '');
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)) {
+            $month = date('Y-m');
+        }
+        $first = new \DateTimeImmutable($month . '-01');
+
+        $items  = (new InterventionModel())->scheduledBetween($first->format('Y-m-d'), $first->format('Y-m-t'));
+        $byDate = [];
+        foreach ($items as $it) {
+            $byDate[(string) $it['scheduled_date']][] = $it;
+        }
+
+        Response::html(View::render('admin/interventions/calendar', [
+            'title'  => Lang::get('admin.interventions.calendar'),
+            'month'  => $first,
+            'byDate' => $byDate,
+            'prev'   => $first->modify('-1 month')->format('Y-m'),
+            'next'   => $first->modify('+1 month')->format('Y-m'),
+        ], 'layout'));
+    }
+
     public function index(Request $request): void
     {
         AuthGuard::require($request, ['admin']);

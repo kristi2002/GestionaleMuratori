@@ -169,6 +169,7 @@ $router->post('/admin/warehouse/{id}/reconcile', [WarehouseController::class, 'r
 $router->post('/admin/warehouse/{id}/transfer',  [WarehouseController::class, 'transfer']);
 
 $router->get('/admin/interventions',               [InterventionController::class, 'index']);
+$router->get('/admin/interventions/calendar',       [InterventionController::class, 'calendar']);
 $router->get('/admin/interventions/create',         [InterventionController::class, 'create']);
 $router->get('/admin/interventions/{id}/edit',      [InterventionController::class, 'edit']);
 $router->post('/admin/interventions',               [InterventionController::class, 'store']);

@@ -142,6 +142,12 @@ T::equals(200, $rSearch['status'], 'admin search renders');
 T::ok(str_contains((string) $rSearch['body'], 'Rossi'), 'search returns matching results');
 T::equals(403, $worker1->get('/admin/search?q=x', ['json' => false])['status'], 'worker blocked from search');
 
+// Interventions calendar
+$rCal = $admin->get('/admin/interventions/calendar', ['json' => false]);
+T::equals(200, $rCal['status'], 'interventions calendar renders');
+T::ok(str_contains((string) $rCal['body'], 'app-cal-grid'), 'calendar grid present');
+T::equals(403, $worker1->get('/admin/interventions/calendar', ['json' => false])['status'], 'worker blocked from calendar');
+
 // DURC / compliance gating: expired-doc subcontractor is flagged
 $rSub = $admin->get('/admin/subcontractors', ['json' => false]);
 T::equals(200, $rSub['status'], 'subcontractors page renders');
