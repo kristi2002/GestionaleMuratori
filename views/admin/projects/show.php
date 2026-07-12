@@ -188,6 +188,15 @@ $fmtBytes  = static function (int $bytes): string {
             <span class="badge text-bg-light border ms-1"><?= $e((string) count($projectPhotos)) ?></span>
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="projTabNotesBtn" type="button" role="tab"
+                data-bs-toggle="tab" data-bs-target="#promemoria"
+                aria-controls="promemoria" aria-selected="false">
+            <i class="bi bi-sticky" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_notes')) ?>
+            <?php $openNotes = count(array_filter($projectNotes, static fn (array $n): bool => (int) $n['done'] === 0)); ?>
+            <?php if ($openNotes > 0): ?><span class="badge text-bg-success ms-1"><?= $e((string) $openNotes) ?></span><?php endif; ?>
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content">
@@ -749,6 +758,62 @@ $fmtBytes  = static function (int $bytes): string {
                             </a>
                         <?php endforeach; ?>
                     </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promemoria -->
+    <div class="tab-pane fade" id="promemoria" role="tabpanel" aria-labelledby="projTabNotesBtn">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-sticky text-success" aria-hidden="true"></i> <?= $e($t('admin.projects.notes_title')) ?>
+            </div>
+            <div class="card-body">
+                <form class="js-crud-form row g-2 align-items-end mb-3" data-base-url="<?= $e(Url::to('/admin/projects/' . $projectId . '/notes')) ?>">
+                    <div class="col-12 col-md-7">
+                        <label class="form-label" for="noteBody"><?= $e($t('admin.projects.note_body')) ?></label>
+                        <input type="text" class="form-control" id="noteBody" name="body" maxlength="500" required
+                               placeholder="<?= $e($t('admin.projects.note_placeholder')) ?>">
+                    </div>
+                    <div class="col-8 col-md-3">
+                        <label class="form-label" for="noteDue"><?= $e($t('admin.projects.note_due')) ?></label>
+                        <input type="date" class="form-control" id="noteDue" name="due_date">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('common.add')) ?></button>
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-danger py-2 mb-0 d-none js-crud-error" role="alert"></div>
+                    </div>
+                </form>
+                <?php if ($projectNotes === []): ?>
+                    <p class="text-muted small mb-0"><?= $e($t('admin.projects.no_notes')) ?></p>
+                <?php else: $today = date('Y-m-d'); ?>
+                    <ul class="list-unstyled mb-0 app-note-list">
+                        <?php foreach ($projectNotes as $n): $overdue = (int) $n['done'] === 0 && ($n['due_date'] ?? null) && $n['due_date'] < $today; ?>
+                            <li class="app-note-item<?= (int) $n['done'] === 1 ? ' is-done' : '' ?>">
+                                <form class="js-crud-form app-note-toggle" data-base-url="<?= $e(Url::to('/admin/projects/' . $projectId . '/notes/' . (int) $n['id'] . '/toggle')) ?>">
+                                    <button type="submit" class="app-note-check" title="<?= $e($t('admin.projects.note_toggle')) ?>">
+                                        <i class="bi <?= (int) $n['done'] === 1 ? 'bi-check-circle-fill' : 'bi-circle' ?>" aria-hidden="true"></i>
+                                    </button>
+                                </form>
+                                <div class="app-note-body">
+                                    <span class="app-note-text"><?= $e($n['body']) ?></span>
+                                    <?php if (($n['due_date'] ?? null)): ?>
+                                        <span class="badge <?= $overdue ? 'text-bg-danger' : 'text-bg-light border' ?> ms-1">
+                                            <i class="bi bi-calendar-event" aria-hidden="true"></i> <?= $e(date('d/m/Y', (int) strtotime((string) $n['due_date']))) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger js-crud-delete"
+                                        data-url="<?= $e(Url::to('/admin/projects/' . $projectId . '/notes/' . (int) $n['id'] . '/delete')) ?>"
+                                        data-confirm="<?= $e($t('admin.projects.note_delete_confirm')) ?>">
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                </button>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
                 <?php endif; ?>
             </div>
         </div>

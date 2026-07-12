@@ -146,6 +146,9 @@ $router->get('/admin/projects/{id}/documents/{docId}',             [ProjectContr
 $router->post('/admin/projects/{id}/documents/{docId}/delete',     [ProjectController::class, 'deleteDocument']);
 $router->post('/admin/projects/{id}/invoices',                     [ProjectController::class, 'storeInvoice']);
 $router->post('/admin/projects/{id}/invoices/{invoiceId}/delete',  [ProjectController::class, 'deleteInvoice']);
+$router->post('/admin/projects/{id}/notes',                        [ProjectController::class, 'storeNote']);
+$router->post('/admin/projects/{id}/notes/{noteId}/toggle',        [ProjectController::class, 'toggleNote']);
+$router->post('/admin/projects/{id}/notes/{noteId}/delete',        [ProjectController::class, 'deleteNote']);
 $router->post('/admin/projects/{id}/materials',                    [ProjectController::class, 'storeMaterial']);
 $router->post('/admin/projects/{id}/materials/{materialId}/delete',[ProjectController::class, 'deleteMaterial']);
 $router->post('/admin/projects/{id}/attendance',                   [ProjectController::class, 'toggleAttendance']);

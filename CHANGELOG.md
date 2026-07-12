@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-12 — Project detail: Promemoria (reminders/notes)
+
+New **Promemoria** tab on the project page: add reminders with an optional due
+date, tick them done (strike-through), and delete them. Overdue open reminders
+show a red date badge; the tab shows a green count of open items.
+
+Migration `018_project_notes.sql` (new `project_notes` table), `ProjectNoteModel`,
+admin-only `storeNote`/`toggleNote`/`deleteNote` endpoints (validated, ownership-
+checked, `{ok,data,error}`), reusing the existing `js-crud-form`/`js-crud-delete`
+JS. Italian strings, CSS. Service worker → `gm-shell-v13`. 494 tests pass.
+
+**Prod:** run `php database/migrate.php` in the app container to apply 018 (the
+tab renders without it, but adding a reminder 500s until the table exists).
+
 ## 2026-07-12 — Project detail: interventions, subcontractors, photos, map link
 
 Richer project (cantiere) detail page:

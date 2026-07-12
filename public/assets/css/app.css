@@ -259,6 +259,41 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     text-transform: capitalize;
 }
 
+/* --- Project reminders (Promemoria) -------------------------------------- */
+.app-note-list { display: flex; flex-direction: column; gap: .4rem; }
+
+.app-note-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .5rem .65rem;
+    background: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: .55rem;
+}
+
+.app-note-item.is-done { opacity: .6; }
+.app-note-item.is-done .app-note-text { text-decoration: line-through; }
+
+.app-note-toggle { margin: 0; display: flex; }
+
+.app-note-check {
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #adb5bd;
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.app-note-item.is-done .app-note-check { color: var(--app-green); }
+
+.app-note-body { flex: 1 1 auto; min-width: 0; }
+.app-note-text { word-break: break-word; }
+
+[data-bs-theme="dark"] .app-note-item { background: #191D23; border-color: #2A2F37; }
+
 /* --- Statistics charts (pure SVG/CSS, no JS library) --------------------- */
 .app-chart-donut {
     display: flex;

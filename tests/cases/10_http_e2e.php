@@ -124,6 +124,18 @@ T::equals(200, $rProj['status'], 'admin project detail renders');
 T::ok(str_contains((string) $rProj['body'], 'Andamento Economico'), 'project detail shows the financial summary');
 T::ok(str_contains((string) $rProj['body'], 'Interventi del cantiere'), 'project detail shows the interventions section');
 
+// Promemoria (project notes) CRUD + ownership
+$rNote  = $admin->post('/admin/projects/1/notes', ['body' => 'Ordinare cemento Rossi', 'due_date' => '2026-08-01']);
+T::equals(200, $rNote['status'], 'note create ok');
+$noteId = (int) ($rNote['json']['data']['id'] ?? 0);
+T::ok($noteId > 0, 'note id returned');
+T::ok(str_contains((string) $admin->get('/admin/projects/1', ['json' => false])['body'], 'Ordinare cemento Rossi'), 'note shown on the project page');
+T::equals(200, $admin->post("/admin/projects/1/notes/{$noteId}/toggle")['status'], 'note toggle ok');
+T::equals(422, $admin->post('/admin/projects/1/notes', ['body' => ''])['status'], 'empty note rejected');
+T::equals(404, $admin->post("/admin/projects/2/notes/{$noteId}/delete")['status'], "can't touch another project's note");
+T::equals(403, $worker1->post('/admin/projects/1/notes', ['body' => 'x'])['status'], 'worker cannot add notes');
+T::equals(200, $admin->post("/admin/projects/1/notes/{$noteId}/delete")['status'], 'note delete ok');
+
 // DURC / compliance gating: expired-doc subcontractor is flagged
 $rSub = $admin->get('/admin/subcontractors', ['json' => false]);
 T::equals(200, $rSub['status'], 'subcontractors page renders');

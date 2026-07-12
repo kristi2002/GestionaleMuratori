@@ -14,6 +14,7 @@ use App\Models\ProjectDocumentModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectMaterialModel;
 use App\Models\ProjectModel;
+use App\Models\ProjectNoteModel;
 use App\Models\StockLocationModel;
 use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
@@ -101,6 +102,7 @@ final class ProjectController
             'projectSubs'      => (new ProjectSubcontractorModel())->subcontractorsFor((int) $id),
             'subCompliance'    => (new ComplianceDocumentModel())->statusForSubjects('subcontractor'),
             'projectPhotos'    => (new PhotoModel())->forProject((int) $id),
+            'projectNotes'     => (new ProjectNoteModel())->forProject((int) $id),
             'documents'        => (new ProjectDocumentModel())->forProject((int) $id),
             'invoices'         => (new ProjectInvoiceModel())->forProject((int) $id),
             'projectMaterials' => $materialModel->forProject((int) $id),
@@ -415,6 +417,71 @@ final class ProjectController
         }
 
         $model->delete((int) $invoiceId);
+        Response::ok();
+    }
+
+    /** POST /admin/projects/{id}/notes — add a reminder ("promemoria"). */
+    public function storeNote(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $project = (new ProjectModel())->find((int) $id);
+        if ($project === null) {
+            Response::fail(Lang::get('admin.projects.not_found'), 404);
+            return;
+        }
+
+        $body = trim((string) $request->input('body', ''));
+        if ($body === '') {
+            Response::fail(Lang::get('admin.projects.note_body_required'), 422);
+            return;
+        }
+
+        $due = trim((string) $request->input('due_date', ''));
+        if ($due !== '' && !$this->isValidDate($due)) {
+            Response::fail(Lang::get('admin.projects.note_date_invalid'), 422);
+            return;
+        }
+
+        $noteId = (new ProjectNoteModel())->create([
+            'project_id' => (int) $id,
+            'body'       => mb_substr($body, 0, 500),
+            'due_date'   => $due !== '' ? $due : null,
+            'created_by' => Auth::id(),
+        ]);
+
+        Response::ok(['id' => $noteId]);
+    }
+
+    /** POST /admin/projects/{id}/notes/{noteId}/toggle — flip a note's done flag. */
+    public function toggleNote(Request $request, string $id, string $noteId): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new ProjectNoteModel();
+        $note  = $model->find((int) $noteId);
+        if ($note === null || (int) $note['project_id'] !== (int) $id) {
+            Response::fail(Lang::get('admin.projects.note_not_found'), 404);
+            return;
+        }
+
+        $model->toggleDone((int) $noteId);
+        Response::ok();
+    }
+
+    /** POST /admin/projects/{id}/notes/{noteId}/delete */
+    public function deleteNote(Request $request, string $id, string $noteId): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new ProjectNoteModel();
+        $note  = $model->find((int) $noteId);
+        if ($note === null || (int) $note['project_id'] !== (int) $id) {
+            Response::fail(Lang::get('admin.projects.note_not_found'), 404);
+            return;
+        }
+
+        $model->delete((int) $noteId);
         Response::ok();
     }
 
