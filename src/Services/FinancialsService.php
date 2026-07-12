@@ -86,6 +86,45 @@ final class FinancialsService
         return ['rows' => $rows, 'totals' => $totals];
     }
 
+    /** Same figures for a single cantiere (project detail page). @return array<string,mixed> */
+    public function forProject(int $projectId): array
+    {
+        $pdo = Database::pdo();
+        $inv = (float) $this->scalar($pdo, "SELECT COALESCE(SUM(amount),0) FROM project_invoices WHERE status IN ('issued','paid') AND project_id = ?", $projectId);
+        $col = (float) $this->scalar($pdo, "SELECT COALESCE(SUM(amount),0) FROM project_invoices WHERE status = 'paid' AND project_id = ?", $projectId);
+        $exp = (float) $this->scalar($pdo, "SELECT COALESCE(SUM(amount),0) FROM expenses WHERE project_id = ?", $projectId);
+        $mat = (float) $this->scalar(
+            $pdo,
+            "SELECT COALESCE(SUM(m.qty * COALESCE(w.unit_cost,0)),0)
+             FROM stock_movements m
+             JOIN warehouse_items w ON w.id = m.item_id
+             JOIN interventions i ON i.id = m.intervention_id
+             WHERE m.type = 'out' AND i.project_id = ?",
+            $projectId
+        );
+        $cost   = $mat + $exp;
+        $margin = $inv - $cost;
+
+        return [
+            'invoiced'      => $inv,
+            'collected'     => $col,
+            'outstanding'   => $inv - $col,
+            'material_cost' => $mat,
+            'expenses'      => $exp,
+            'cost'          => $cost,
+            'margin'        => $margin,
+            'margin_pct'    => $inv > 0 ? $margin / $inv * 100 : null,
+            'health'        => $this->health($inv, $margin),
+        ];
+    }
+
+    private function scalar(PDO $pdo, string $sql, int $projectId): mixed
+    {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$projectId]);
+        return $stmt->fetchColumn();
+    }
+
     /** 'danger' (loss), 'warning' (thin), 'ok', or 'none' (no revenue yet). */
     private function health(float $invoiced, float $margin): string
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\ComplianceDocumentModel;
 use App\Models\ProjectModel;
 use App\Models\ProjectSubcontractorModel;
 use App\Models\SubcontractorModel;
@@ -38,6 +39,7 @@ final class SubcontractorController
             'title'          => Lang::get('admin.subcontractors.title'),
             'subcontractors' => $subcontractors,
             'projects'       => (new ProjectModel())->all(),
+            'compliance'     => (new ComplianceDocumentModel())->statusForSubjects('subcontractor'),
             'search'         => $search,
         ], 'layout'));
     }

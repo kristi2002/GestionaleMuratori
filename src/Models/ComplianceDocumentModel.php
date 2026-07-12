@@ -67,6 +67,40 @@ final class ComplianceDocumentModel
      *
      * @return array<int,array<string,mixed>>
      */
+    /**
+     * Worst compliance status per subject of a type (for DURC/document gating):
+     * 'expired' if any doc is past its expiry, else 'expiring' within $days, else
+     * 'ok'. Subjects with no dated documents are simply absent from the map.
+     *
+     * @return array<int,string> subject_id => 'expired'|'expiring'|'ok'
+     */
+    public function statusForSubjects(string $subjectType, int $days = 30): array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT subject_id,
+                    SUM(expiry_date IS NOT NULL AND expiry_date < CURDATE()) AS expired,
+                    SUM(expiry_date IS NOT NULL AND expiry_date >= CURDATE()
+                        AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL " . (int) $days . " DAY)) AS expiring
+             FROM compliance_documents
+             WHERE subject_type = ? AND subject_id IS NOT NULL
+             GROUP BY subject_id"
+        );
+        $stmt->execute([$subjectType]);
+
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $id = (int) $row['subject_id'];
+            if ((int) $row['expired'] > 0) {
+                $out[$id] = 'expired';
+            } elseif ((int) $row['expiring'] > 0) {
+                $out[$id] = 'expiring';
+            } else {
+                $out[$id] = 'ok';
+            }
+        }
+        return $out;
+    }
+
     public function expiringSoon(int $days = 30): array
     {
         $stmt = Database::pdo()->prepare(

@@ -5,10 +5,28 @@ use App\Support\View;
 
 /** @var array<int,array<string,mixed>> $subcontractors  each with a 'project_ids' int[] */
 /** @var array<int,array<string,mixed>> $projects */
+/** @var array<int,string> $compliance  subcontractor_id => 'expired'|'expiring'|'ok' */
 /** @var string $search */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
+
+$compliance = $compliance ?? [];
+// DURC/document gating: a compliance status badge per subcontractor.
+$complianceBadge = static function (?string $status) use ($e, $t): string {
+    $map = [
+        'expired'  => ['app-status-danger',  'bi-exclamation-octagon-fill', 'admin.subcontractors.doc_expired'],
+        'expiring' => ['app-status-warning', 'bi-exclamation-triangle-fill', 'admin.subcontractors.doc_expiring'],
+        'ok'       => ['app-status-success', 'bi-check-circle-fill',         'admin.subcontractors.doc_ok'],
+    ];
+    if (!isset($map[$status])) {
+        return '<span class="text-muted">—</span>';
+    }
+    [$cls, $icon, $key] = $map[$status];
+    return '<span class="app-status ' . $cls . '"><i class="bi ' . $icon . '" aria-hidden="true"></i> '
+        . $e($t($key)) . '</span>';
+};
+$blockedCount = count(array_filter($compliance, static fn (string $s): bool => $s === 'expired'));
 ?>
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
@@ -19,6 +37,13 @@ $t = static fn (string $key): string => Lang::get($key);
         <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.subcontractors.new')) ?>
     </a>
 </div>
+
+<?php if ($blockedCount > 0): ?>
+    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+        <span><?= $e(sprintf($t('admin.subcontractors.blocked_warning'), $blockedCount)) ?></span>
+    </div>
+<?php endif; ?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
@@ -45,13 +70,14 @@ $t = static fn (string $key): string => Lang::get($key);
                     <th><?= $e($t('admin.subcontractors.vat')) ?></th>
                     <th><?= $e($t('admin.subcontractors.email')) ?></th>
                     <th><?= $e($t('admin.subcontractors.projects')) ?></th>
+                    <th><?= $e($t('admin.subcontractors.compliance')) ?></th>
                     <th><?= $e($t('admin.subcontractors.active')) ?></th>
                     <th class="text-end"></th>
                 </tr>
             </thead>
             <tbody>
             <?php if ($subcontractors === []): ?>
-                <tr><td colspan="6" class="text-center text-muted py-4"><?= $e($t('admin.subcontractors.empty')) ?></td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4"><?= $e($t('admin.subcontractors.empty')) ?></td></tr>
             <?php endif; ?>
             <?php foreach ($subcontractors as $s): ?>
                 <tr class="<?= ((int) $s['is_active']) === 1 ? '' : 'table-secondary text-muted' ?>">
@@ -59,6 +85,7 @@ $t = static fn (string $key): string => Lang::get($key);
                     <td><?= $e($s['vat_or_tax_id']) ?></td>
                     <td><?= $e($s['email']) ?></td>
                     <td><span class="badge text-bg-light border"><?= $e((string) count($s['project_ids'])) ?></span></td>
+                    <td><?= $complianceBadge($compliance[(int) $s['id']] ?? null) ?></td>
                     <td><?= ((int) $s['is_active']) === 1 ? $e($t('common.yes')) : $e($t('common.no')) ?></td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assign-modal-<?= $e((string) $s['id']) ?>">

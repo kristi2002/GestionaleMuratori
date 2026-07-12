@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-07-12 — DURC/compliance gating + per-cantiere financials on project page
+
+- **Compliance gating (subappaltatori):** the subcontractors list now shows a
+  document-status badge per subcontractor (In regola / In scadenza / **Scaduti**),
+  computed from `compliance_documents` expiry dates (`ComplianceDocumentModel::
+  statusForSubjects`), plus a red banner counting subs with expired docs (e.g.
+  DURC) — verify before assigning work or paying. Read-only flagging, no new schema.
+- **Financials on the project page:** each cantiere's detail page gets a summary
+  card (invoiced / collected + outstanding / costs / margin with health colour),
+  via `FinancialsService::forProject`, linking to the full `/admin/financials`.
+- e2e tests for both. **485 tests pass.**
+
 ## 2026-07-12 — New: per-cantiere financial dashboard (`/admin/financials`)
 
 "Andamento Economico" — cash-in vs cash-out and live margin per construction

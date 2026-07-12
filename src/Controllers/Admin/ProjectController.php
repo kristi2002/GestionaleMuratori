@@ -92,6 +92,7 @@ final class ProjectController
         Response::html(View::render('admin/projects/show', [
             'title'            => (string) $project['name'],
             'project'          => $project,
+            'finance'          => (new \App\Services\FinancialsService())->forProject((int) $id),
             'documents'        => (new ProjectDocumentModel())->forProject((int) $id),
             'invoices'         => (new ProjectInvoiceModel())->forProject((int) $id),
             'projectMaterials' => $materialModel->forProject((int) $id),

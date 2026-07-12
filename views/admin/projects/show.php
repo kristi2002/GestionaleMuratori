@@ -81,6 +81,54 @@ $fmtBytes  = static function (int $bytes): string {
     </div>
 </div>
 
+<?php $finance = $finance ?? null; ?>
+<?php if ($finance !== null):
+    $money = static fn (float $v): string => '€ ' . number_format($v, 2, ',', '.');
+    $pctf  = static fn (?float $v): string => $v === null ? '—' : number_format($v, 1, ',', '.') . '%';
+    $healthText = ['ok' => 'text-success', 'warning' => 'text-warning', 'danger' => 'text-danger', 'none' => 'text-muted'];
+?>
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><?= $e($t('admin.financials.title')) ?></span>
+        <a class="small text-decoration-none" href="<?= $e(Url::to('/admin/financials')) ?>"><?= $e($t('admin.projects.view_all_financials')) ?> →</a>
+    </div>
+    <div class="card-body">
+        <div class="app-kpi-grid">
+            <div class="app-stat-tile">
+                <span class="app-stat-chip is-pending"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                <div class="min-w-0">
+                    <div class="app-stat-label"><?= $e($t('admin.financials.invoiced')) ?></div>
+                    <div class="app-stat-value"><?= $e($money((float) $finance['invoiced'])) ?></div>
+                </div>
+            </div>
+            <div class="app-stat-tile">
+                <span class="app-stat-chip is-sites"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+                <div class="min-w-0">
+                    <div class="app-stat-label"><?= $e($t('admin.financials.collected')) ?></div>
+                    <div class="app-stat-value"><?= $e($money((float) $finance['collected'])) ?></div>
+                    <div class="app-stat-unit"><?= $e($t('admin.financials.outstanding')) ?>: <?= $e($money((float) $finance['outstanding'])) ?></div>
+                </div>
+            </div>
+            <div class="app-stat-tile">
+                <span class="app-stat-chip is-stock-alert"><i class="bi bi-cart-dash" aria-hidden="true"></i></span>
+                <div class="min-w-0">
+                    <div class="app-stat-label"><?= $e($t('admin.financials.costs')) ?></div>
+                    <div class="app-stat-value"><?= $e($money((float) $finance['cost'])) ?></div>
+                </div>
+            </div>
+            <div class="app-stat-tile">
+                <span class="app-stat-chip is-crew"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span>
+                <div class="min-w-0">
+                    <div class="app-stat-label"><?= $e($t('admin.financials.margin')) ?></div>
+                    <div class="app-stat-value <?= $e($healthText[$finance['health']] ?? '') ?>"><?= $e($money((float) $finance['margin'])) ?></div>
+                    <div class="app-stat-unit"><?= $e($pctf($finance['margin_pct'])) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <ul class="nav nav-tabs app-profile-tabs mb-3" role="tablist" data-app-tabs>
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="projTabDocumentsBtn" type="button" role="tab"

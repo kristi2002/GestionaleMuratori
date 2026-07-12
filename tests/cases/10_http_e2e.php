@@ -118,6 +118,16 @@ T::ok(str_contains((string) $rFin['body'], 'Andamento Economico'), 'financials p
 T::equals(403, $worker1->get('/admin/financials', ['json' => false])['status'], 'worker blocked from financials');
 T::equals(403, $client1->get('/admin/financials', ['json' => false])['status'], 'client blocked from financials');
 
+// Per-project financial summary on the project detail page
+$rProj = $admin->get('/admin/projects/1', ['json' => false]);
+T::equals(200, $rProj['status'], 'admin project detail renders');
+T::ok(str_contains((string) $rProj['body'], 'Andamento Economico'), 'project detail shows the financial summary');
+
+// DURC / compliance gating: expired-doc subcontractor is flagged
+$rSub = $admin->get('/admin/subcontractors', ['json' => false]);
+T::equals(200, $rSub['status'], 'subcontractors page renders');
+T::ok(str_contains((string) $rSub['body'], 'Scaduti'), 'subcontractor with expired docs is flagged');
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);
