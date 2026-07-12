@@ -1,0 +1,62 @@
+name: CI
+
+# Runs the full test suite (unit + service + HTTP e2e) on every push and PR.
+# The runner (tests/run.php) recreates a dedicated `gestionale_muratori_test`
+# database, migrates, seeds, then boots `php -S` for the HTTP tests — so CI only
+# needs a reachable MySQL with CREATE/DROP DATABASE rights and PHP 8.2 with the
+# app's extensions.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: PHP 8.2 · MySQL 8
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          # Matches deploy/Dockerfile: gd (thumbnails/mPDF), pdo_mysql, zip
+          # (PhpSpreadsheet), mbstring, curl.
+          extensions: pdo_mysql, gd, zip, mbstring, curl
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run test suite
+        env:
+          GM_TEST_DB_HOST: 127.0.0.1
+          GM_TEST_DB_PORT: '3306'
+          GM_TEST_DB_USER: root
+          GM_TEST_DB_PASS: root
+          GM_TEST_HTTP_PORT: '8099'
+        run: php tests/run.php
