@@ -136,6 +136,12 @@ T::equals(404, $admin->post("/admin/projects/2/notes/{$noteId}/delete")['status'
 T::equals(403, $worker1->post('/admin/projects/1/notes', ['body' => 'x'])['status'], 'worker cannot add notes');
 T::equals(200, $admin->post("/admin/projects/1/notes/{$noteId}/delete")['status'], 'note delete ok');
 
+// Global search
+$rSearch = $admin->get('/admin/search?q=Rossi', ['json' => false]);
+T::equals(200, $rSearch['status'], 'admin search renders');
+T::ok(str_contains((string) $rSearch['body'], 'Rossi'), 'search returns matching results');
+T::equals(403, $worker1->get('/admin/search?q=x', ['json' => false])['status'], 'worker blocked from search');
+
 // DURC / compliance gating: expired-doc subcontractor is flagged
 $rSub = $admin->get('/admin/subcontractors', ['json' => false]);
 T::equals(200, $rSub['status'], 'subcontractors page renders');

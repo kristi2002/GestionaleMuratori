@@ -590,6 +590,13 @@ return [
             'not_found'        => 'Documento non trovato.',
         ],
 
+        'search' => [
+            'title'       => 'Ricerca',
+            'placeholder' => 'Cerca cantieri, clienti, interventi…',
+            'hint'        => 'Digita una parola per cercare tra cantieri, clienti, interventi, subappaltatori e magazzino.',
+            'no_results'  => 'Nessun risultato per «%s».',
+        ],
+
         'financials' => [
             'title'        => 'Andamento Economico',
             'subtitle'     => 'Entrate e uscite per cantiere, con il margine in tempo reale.',

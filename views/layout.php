@@ -138,6 +138,15 @@ $subActive = static function (string $href) use ($reqPath): bool {
                 <span class="d-none d-sm-inline"><?= $e(Lang::get('app_name')) ?></span>
             </a>
         </div>
+        <?php if (($user['role'] ?? '') === 'admin'): ?>
+            <form class="d-none d-md-flex flex-grow-1 justify-content-center px-3" method="get" action="<?= $e(Url::to('/admin/search')) ?>" role="search">
+                <div class="input-group input-group-sm app-navbar-search">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-search" aria-hidden="true"></i></span>
+                    <input type="search" class="form-control border-0" name="q"
+                           placeholder="<?= $e(Lang::get('admin.search.placeholder')) ?>" aria-label="<?= $e(Lang::get('admin.search.title')) ?>">
+                </div>
+            </form>
+        <?php endif; ?>
         <?php if ($user !== null): ?>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge rounded-pill role"><?= $e(Lang::label('roles', $user['role'])) ?></span>

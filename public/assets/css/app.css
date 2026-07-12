@@ -259,6 +259,12 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     text-transform: capitalize;
 }
 
+/* --- Navbar global search ------------------------------------------------ */
+.app-navbar-search { max-width: 460px; width: 100%; }
+.app-navbar-search .form-control,
+.app-navbar-search .input-group-text { background: #fff; }
+.app-navbar-search .form-control:focus { box-shadow: none; }
+
 /* --- Project reminders (Promemoria) -------------------------------------- */
 .app-note-list { display: flex; flex-direction: column; gap: .4rem; }
 
