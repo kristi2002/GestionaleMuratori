@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-12 — UI: unify the interventions filter with the other list pages
+
+The interventions filter was a bare `row g-2` form with a grey outline "Cerca"
+button, visually inconsistent with the card-based filters elsewhere. Wrapped it
+in the standard `app-filter-card` + `app-filter-grid` (new `app-filter-grid-selects`
+preset for its three dropdowns), gave "Cerca" the green `btn-success` + search
+icon, moved the Oggi/settimana/Tutte range toggle inside the card, and switched
+the reset link to the shared inline `filter_clear`. Added select `aria-label`s.
+
 ## 2026-07-12 — UI: "Azzera filtri" inline on the filter row
 
 On the single-row filter pages (projects, quotes, invoices) the reset-filters

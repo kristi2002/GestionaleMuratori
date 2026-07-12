@@ -41,49 +41,44 @@ $nextActions = [
     </a>
 </div>
 
-<div class="btn-group mb-3" role="group">
-    <a class="btn btn-sm <?= $range === 'today' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('today')) ?>"><?= $e($t('admin.interventions.range_today')) ?></a>
-    <a class="btn btn-sm <?= $range === 'week' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('week')) ?>"><?= $e($t('admin.interventions.range_week')) ?></a>
-    <a class="btn btn-sm <?= $range === '' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('')) ?>"><?= $e($t('admin.interventions.range_all')) ?></a>
-</div>
-
-<form method="get" class="row g-2 mb-3">
-    <input type="hidden" name="range" value="<?= $e($range) ?>">
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="project_id">
-            <option value=""><?= $e($t('admin.interventions.project')) ?> — <?= $e($t('common.all')) ?></option>
-            <?php foreach ($projects as $p): ?>
-                <option value="<?= $e((string) $p['id']) ?>" <?= ((int) $filters['project_id'] === (int) $p['id']) ? 'selected' : '' ?>><?= $e($p['name']) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="worker_id">
-            <option value=""><?= $e($t('admin.interventions.worker')) ?> — <?= $e($t('common.all')) ?></option>
-            <?php foreach ($workers as $w): ?>
-                <option value="<?= $e((string) $w['id']) ?>" <?= ((int) $filters['worker_id'] === (int) $w['id']) ? 'selected' : '' ?>><?= $e($w['name']) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="status">
-            <option value=""><?= $e($t('admin.interventions.status')) ?> — <?= $e($t('common.all')) ?></option>
-            <?php foreach ($statuses as $s): ?>
-                <option value="<?= $e($s) ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>><?= $e(Lang::label('intervention_status', $s)) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
-    </div>
-    <?php if ($filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== ''): ?>
-        <div class="col-auto">
-            <a class="btn btn-link text-decoration-none" href="<?= $e(Url::to('/admin/interventions') . ($range !== '' ? '?range=' . $e($range) : '')) ?>">
-                <i class="bi bi-x-circle" aria-hidden="true"></i> <?= $e($t('common.reset_filters')) ?>
-            </a>
+<div class="card app-filter-card mb-3">
+    <div class="card-body">
+        <div class="btn-group btn-group-sm mb-3" role="group" aria-label="<?= $e($t('admin.interventions.title')) ?>">
+            <a class="btn <?= $range === 'today' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('today')) ?>"><?= $e($t('admin.interventions.range_today')) ?></a>
+            <a class="btn <?= $range === 'week' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('week')) ?>"><?= $e($t('admin.interventions.range_week')) ?></a>
+            <a class="btn <?= $range === '' ? 'btn-success' : 'btn-outline-secondary' ?>" href="<?= $e($rangeLink('')) ?>"><?= $e($t('admin.interventions.range_all')) ?></a>
         </div>
-    <?php endif; ?>
-</form>
+        <form method="get" class="app-filter-grid app-filter-grid-selects">
+            <input type="hidden" name="range" value="<?= $e($range) ?>">
+            <select class="form-select" name="project_id" aria-label="<?= $e($t('admin.interventions.project')) ?>">
+                <option value=""><?= $e($t('admin.interventions.project')) ?> — <?= $e($t('common.all')) ?></option>
+                <?php foreach ($projects as $p): ?>
+                    <option value="<?= $e((string) $p['id']) ?>" <?= ((int) $filters['project_id'] === (int) $p['id']) ? 'selected' : '' ?>><?= $e($p['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select class="form-select" name="worker_id" aria-label="<?= $e($t('admin.interventions.worker')) ?>">
+                <option value=""><?= $e($t('admin.interventions.worker')) ?> — <?= $e($t('common.all')) ?></option>
+                <?php foreach ($workers as $w): ?>
+                    <option value="<?= $e((string) $w['id']) ?>" <?= ((int) $filters['worker_id'] === (int) $w['id']) ? 'selected' : '' ?>><?= $e($w['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select class="form-select" name="status" aria-label="<?= $e($t('admin.interventions.status')) ?>">
+                <option value=""><?= $e($t('admin.interventions.status')) ?> — <?= $e($t('common.all')) ?></option>
+                <?php foreach ($statuses as $s): ?>
+                    <option value="<?= $e($s) ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>><?= $e(Lang::label('intervention_status', $s)) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
+            </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== '',
+                'href'   => '/admin/interventions' . ($range !== '' ? '?range=' . $range : ''),
+                'inline' => true,
+            ], null) ?>
+        </form>
+    </div>
+</div>
 
 <div class="card">
     <div class="table-responsive">

@@ -203,6 +203,12 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     .app-filter-grid.app-filter-grid-4 {
         grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr)) auto auto;
     }
+
+    /* Interventi: three equal dropdowns (no free-text search), then "Cerca"
+       and the inline reset. */
+    .app-filter-grid.app-filter-grid-selects {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
+    }
 }
 
 /* Unified "Dal / Al" range control that reads as a single input. */
