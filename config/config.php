@@ -43,6 +43,14 @@ return [
         // while mPDF's own default (vendor/mpdf/mpdf/tmp) is root-owned there.
         'pdf_temp_path' => Env::get('PDF_TEMP_PATH', dirname(__DIR__) . '/storage/tmp/mpdf'),
     ],
+    // Error alerting: when a webhook URL is set, uncaught 500s best-effort POST a
+    // compact {text: …} message (Slack/Discord/Teams-compatible). Off by default;
+    // structured JSON logging to stderr happens regardless. See App\Support\Logger.
+    'alerts' => [
+        'webhook_url'  => Env::get('ALERT_WEBHOOK_URL', ''),
+        // Per-error-signature throttle (seconds) so a recurring fault can't flood.
+        'min_interval' => (int) Env::get('ALERT_MIN_INTERVAL', '300'),
+    ],
     // Business rule: block reservations that would drive stock negative.
     // (§4.2 — configurable; default = block.)
     'inventory' => [

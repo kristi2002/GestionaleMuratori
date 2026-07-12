@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-12 — Observability: structured error logging + optional alerting
+
+Uncaught 500s were written as a single free-text log line and nothing else, so a
+production error was effectively invisible (the 2026-07-11 PDF incident alerted
+no one). Added `App\Support\Logger`:
+
+- Every uncaught exception is now logged as **one structured JSON line** prefixed
+  `gm ` (type, message, file:line, request method/path, user id, trace) — greppable
+  in the container's stderr.
+- Each request gets a short **correlation id**, shown to the user on the error page
+  (`errors.reference`) and included in the log line, so a user report maps straight
+  to a log entry.
+- Optional **webhook alerting** (`ALERT_WEBHOOK_URL`, Slack/Discord/Teams-style),
+  off by default, best-effort, throttled per error signature (`ALERT_MIN_INTERVAL`).
+  All logging/alerting is guarded — it never throws and never masks the original error.
+- Regression tests in `tests/cases/01_unit.php`. **462 tests pass.**
+
 ## 2026-07-11 — Fix: every PDF (report/invoice/quote/S.A.L.) 500s in production
 
 All PDF endpoints returned **500** on the production container (e.g.

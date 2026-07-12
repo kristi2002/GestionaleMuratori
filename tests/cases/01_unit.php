@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Services\Report\MpdfFactory;
 use App\Support\Config;
 use App\Support\Csrf;
+use App\Support\Logger;
 use App\Support\Validate;
 use Mpdf\Output\Destination;
 
@@ -46,3 +47,29 @@ T::ok(is_writable($tempDir), 'temp dir is writable');
 $mpdf->WriteHTML('<h1>Test</h1><p>Regression guard for mPDF temp dir.</p>');
 $pdf = $mpdf->Output('', Destination::STRING_RETURN);
 T::ok(strncmp($pdf, '%PDF', 4) === 0, 'renders a valid PDF to the configured temp dir');
+
+// Uncaught 500s must be logged as one structured, correlatable JSON line so a
+// production error is never silent again (regression guard for the observability
+// added after the 2026-07-11 PDF incident).
+T::section('Unit: Logger');
+$rid = Logger::requestId();
+T::ok(strlen($rid) === 12 && ctype_xdigit($rid), 'request id is 12 hex chars');
+T::equals($rid, Logger::requestId(), 'request id is stable within a request');
+
+$logFile = tempnam(sys_get_temp_dir(), 'gmlog');
+$prevLog = ini_get('error_log');
+ini_set('error_log', $logFile);
+Logger::exception(new RuntimeException('kaboom'), ['method' => 'GET', 'path' => '/x']);
+ini_set('error_log', $prevLog === false ? '' : $prevLog);
+
+$content = (string) file_get_contents($logFile);
+@unlink($logFile);
+// error_log to a file prepends "[date] "; stderr (production) does not — locate
+// the greppable marker rather than assume it starts the line.
+$pos = strpos($content, 'gm ');
+T::ok($pos !== false, 'log line carries the greppable "gm " marker');
+$decoded = json_decode(trim(substr($content, (int) $pos + 3)), true);
+T::ok(is_array($decoded), 'log line is valid JSON');
+T::equals('RuntimeException', $decoded['type'] ?? null, 'logs the exception type');
+T::equals($rid, $decoded['request_id'] ?? null, 'log line carries the request id shown to the user');
+T::equals('/x', $decoded['path'] ?? null, 'log line carries request context');

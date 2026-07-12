@@ -919,6 +919,7 @@ return [
         'unexpected'          => 'Si è verificato un errore imprevisto.',
         'retry_hint'          => 'Riprova tra qualche istante. Se il problema persiste, contatta l\'amministratore.',
         'back_home'           => 'Torna alla home',
+        'reference'           => 'Codice di riferimento',
     ],
 
     // PDF/Excel document labels (previously hardcoded in views/reports/*).

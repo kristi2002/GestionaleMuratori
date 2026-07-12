@@ -47,6 +47,18 @@ Every setting is read from the environment (real env vars win over `.env` — se
 | `PDF_TEMP_PATH` | `storage/tmp/mpdf` | mPDF scratch space (font cache + image temp). Must be writable by the web-server user. Created automatically; safe to be ephemeral. Only override if `storage/` isn't writable. |
 | `ALLOW_NEGATIVE_STOCK` | `false` | When `true`, reservations/transfers may drive stock negative (off by default). |
 
+## Observability & alerting
+
+Uncaught 500s are always written to the PHP error log as one structured JSON line
+prefixed `gm ` (production logs to container stderr, so `docker logs`/Coolify show
+them). Each request carries a short reference id shown to the user on the error
+page and logged, so a user report maps straight to a log line.
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `ALERT_WEBHOOK_URL` | *(empty)* | When set, uncaught 500s best-effort POST a compact `{ "text": … }` payload (Slack/Discord/Teams-compatible incoming webhook). Off by default; structured logging happens regardless. |
+| `ALERT_MIN_INTERVAL` | `300` | Per-error-signature throttle (seconds) so one recurring fault can't flood the alert channel. `0` disables throttling. |
+
 ## Company identity (PDF headers) — *new*
 
 Printed on invoice / quote / S.A.L. PDFs. Previously blank; now env-driven.

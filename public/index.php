@@ -46,6 +46,7 @@ use App\Http\Router;
 use App\Support\Config;
 use App\Support\Csrf;
 use App\Support\Lang;
+use App\Support\Logger;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Session;
@@ -285,16 +286,20 @@ $router->get('/client/projects/{id}/report/excel', [ClientReportController::clas
 try {
     $router->dispatch($request);
 } catch (\Throwable $e) {
-    error_log('[' . $request->method . ' ' . $request->path . '] ' . $e->getMessage()
-        . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
+    Logger::exception($e, [
+        'method'  => $request->method,
+        'path'    => $request->path,
+        'user_id' => Auth::id(),
+    ]);
 
     if (Config::get('app.debug', false)) {
         throw $e;
     }
 
+    $ref = Logger::requestId();
     if ($request->wantsJson()) {
-        Response::fail('Si è verificato un errore imprevisto.', 500);
+        Response::fail(Lang::get('errors.unexpected') . ' (' . Lang::get('errors.reference') . ': ' . $ref . ')', 500);
     } else {
-        Response::html(View::render('errors/500', ['title' => 'Errore'], 'layout'), 500);
+        Response::html(View::render('errors/500', ['title' => 'Errore', 'ref' => $ref], 'layout'), 500);
     }
 }
