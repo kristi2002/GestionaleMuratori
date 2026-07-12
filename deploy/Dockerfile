@@ -33,4 +33,11 @@ COPY --from=vendor /app/vendor ./vendor
 RUN mkdir -p storage/uploads storage/tmp/mpdf \
  && chown -R www-data:www-data storage
 
+# Entrypoint applies pending migrations before serving (see deploy/entrypoint.sh).
+COPY deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER www-data
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
