@@ -10,7 +10,7 @@
 // vendored Bootstrap/jQuery) — the `activate` handler deletes any cache whose
 // name differs, so a bump is what forces returning clients to fetch fresh assets
 // instead of serving the stale cache-first copy.
-var VERSION = 'gm-shell-v16';
+var VERSION = 'gm-shell-v17';
 var SCOPE = self.registration.scope; // e.g. https://host/  or  https://host/app/public/
 
 function scoped(path) {

@@ -114,15 +114,21 @@ body {
 }
 
 /* --- Native date / month / time pickers ---------------------------------- */
-/* Pointer cursor, a soft green hover chip, and — crucially — a visible icon in
-   dark mode (the default calendar glyph is near-black on the dark input). */
+/* NOTE: the browser's pop-up calendar itself is OS-rendered and not stylable in
+   any browser. What CSS can control is the input field and the calendar icon
+   (the picker indicator) — which we replace with an app-green calendar glyph
+   (data-URI SVG, CSP-safe) plus a soft-green hover chip. */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     padding: .12rem;
-    border-radius: .3rem;
+    border-radius: .35rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232e7d32'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 1rem;
     transition: background-color .15s ease;
 }
 
@@ -137,7 +143,20 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 [data-bs-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator,
 [data-bs-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator,
 [data-bs-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.15);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2334B368'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+}
+
+/* The editable date text inside the field, kept in the app's ink colour. */
+input[type="date"]::-webkit-datetime-edit,
+input[type="month"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
+    color: #212529;
+}
+
+[data-bs-theme="dark"] input[type="date"]::-webkit-datetime-edit,
+[data-bs-theme="dark"] input[type="month"]::-webkit-datetime-edit,
+[data-bs-theme="dark"] input[type="time"]::-webkit-datetime-edit {
+    color: #E7EAEE;
 }
 
 /* --- Filter card (all list pages) --------------------------------------- */
