@@ -30,6 +30,9 @@ $showDemo = Config::get('app.env', 'local') !== 'production';
                     </div>
                     <button type="submit" class="btn btn-success w-100" id="login-submit">Accedi</button>
                 </form>
+                <div class="text-center mt-3">
+                    <a class="small" href="<?= $e(Url::to('/forgot-password')) ?>">Password dimenticata?</a>
+                </div>
             </div>
         </div>
 

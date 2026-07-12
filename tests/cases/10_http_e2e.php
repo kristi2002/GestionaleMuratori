@@ -172,6 +172,22 @@ T::equals(200, $admin->get('/admin/clients?page=2', ['json' => false])['status']
 T::equals(200, $admin->get('/admin/subcontractors?page=2', ['json' => false])['status'], 'subcontractors list paginates');
 T::equals(200, $admin->get('/admin/warehouse?page=2', ['json' => false])['status'], 'warehouse list paginates');
 
+// Self-service password reset
+T::equals(200, $anon->get('/forgot-password', ['json' => false])['status'], 'forgot-password page renders');
+T::equals(200, $admin->post('/forgot-password', ['email' => 'admin@gestionale.local'])['status'], 'forgot submit ok (generic)');
+T::ok((int) $pdo->query('SELECT COUNT(*) FROM password_resets')->fetchColumn() >= 1, 'a reset token row was created');
+
+$adminId = (int) $pdo->query("SELECT id FROM users WHERE email = 'admin@gestionale.local'")->fetchColumn();
+$pdo->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))')
+    ->execute([$adminId, hash('sha256', 'KNOWN-TOKEN-123')]);
+T::ok(str_contains((string) $anon->get('/reset-password?token=KNOWN-TOKEN-123', ['json' => false])['body'], 'new_password'), 'valid token shows the reset form');
+T::ok(str_contains((string) $anon->get('/reset-password?token=bogus', ['json' => false])['body'], 'non è valido'), 'invalid token is rejected');
+$rWeak = $admin->post('/reset-password', ['token' => 'KNOWN-TOKEN-123', 'new_password' => 'short', 'new_password_confirm' => 'short']);
+T::ok(str_contains((string) $rWeak['body'], 'almeno'), 'reset rejects a too-short password');
+T::equals(200, $admin->post('/reset-password', ['token' => 'KNOWN-TOKEN-123', 'new_password' => 'NuovaPass123', 'new_password_confirm' => 'NuovaPass123'])['status'], 'reset with a valid token succeeds');
+T::equals(200, (new HttpClient($baseUrl))->login('admin@gestionale.local', 'NuovaPass123')['status'], 'login works with the reset password');
+$pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([password_hash('password', PASSWORD_DEFAULT), $adminId]);
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

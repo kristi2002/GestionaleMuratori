@@ -4,14 +4,18 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Services\LoginRateLimiter;
 use App\Support\Auth;
+use App\Support\Config;
 use App\Support\Lang;
+use App\Support\Mailer;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Url;
 use App\Support\View;
+use DateTimeImmutable;
 
 final class AuthController
 {
@@ -104,5 +108,103 @@ final class AuthController
 
         $model->updatePassword((int) $user['id'], password_hash($new, PASSWORD_DEFAULT));
         Response::ok();
+    }
+
+    /** GET /forgot-password — request-a-reset form. */
+    public function showForgot(Request $request): void
+    {
+        if (Auth::check()) {
+            Response::redirect(Auth::homeFor(Auth::role()));
+            return;
+        }
+        Response::html(View::render('auth/forgot', ['title' => Lang::get('auth.forgot_title')], 'layout'));
+    }
+
+    /**
+     * POST /forgot-password — issue a reset token and e-mail it. Always shows the
+     * same generic confirmation (no account enumeration).
+     */
+    public function sendForgot(Request $request): void
+    {
+        $email = trim((string) $request->input('email', ''));
+        $user  = $email !== '' ? (new UserModel())->findByEmail($email) : null;
+
+        if ($user !== null && (int) $user['is_active'] === 1) {
+            $resets = new PasswordResetModel();
+            $resets->deleteForUser((int) $user['id']);
+            $token = bin2hex(random_bytes(32));
+            $resets->create(
+                (int) $user['id'],
+                hash('sha256', $token),
+                (new DateTimeImmutable('+1 hour'))->format('Y-m-d H:i:s')
+            );
+            $this->sendResetEmail((string) $user['email'], (string) $user['name'], $token);
+        }
+
+        Response::html(View::render('auth/forgot', [
+            'title' => Lang::get('auth.forgot_title'),
+            'sent'  => true,
+        ], 'layout'));
+    }
+
+    /** GET /reset-password?token= — new-password form (validates the token). */
+    public function showReset(Request $request): void
+    {
+        $token = (string) $request->input('token', '');
+        $valid = $token !== '' && (new PasswordResetModel())->findValid(hash('sha256', $token)) !== null;
+
+        Response::html(View::render('auth/reset', [
+            'title' => Lang::get('auth.reset_title'),
+            'token' => $token,
+            'valid' => $valid,
+        ], 'layout'));
+    }
+
+    /** POST /reset-password — set the new password if the token is valid. */
+    public function doReset(Request $request): void
+    {
+        $token   = (string) $request->input('token', '');
+        $new     = (string) $request->input('new_password', '');
+        $confirm = (string) $request->input('new_password_confirm', '');
+
+        $resets = new PasswordResetModel();
+        $row    = $token !== '' ? $resets->findValid(hash('sha256', $token)) : null;
+
+        $error = null;
+        if ($row === null) {
+            $error = Lang::get('auth.reset_invalid');
+        } elseif (strlen($new) < self::MIN_PASSWORD_LENGTH) {
+            $error = sprintf(Lang::get('auth.password_too_short'), self::MIN_PASSWORD_LENGTH);
+        } elseif ($new !== $confirm) {
+            $error = Lang::get('auth.password_mismatch');
+        }
+
+        if ($error !== null) {
+            Response::html(View::render('auth/reset', [
+                'title' => Lang::get('auth.reset_title'),
+                'token' => $token,
+                'valid' => $row !== null,
+                'error' => $error,
+            ], 'layout'));
+            return;
+        }
+
+        (new UserModel())->updatePassword((int) $row['user_id'], password_hash($new, PASSWORD_DEFAULT));
+        $resets->markUsed((int) $row['id']);
+
+        Response::html(View::render('auth/reset', [
+            'title' => Lang::get('auth.reset_title'),
+            'done'  => true,
+        ], 'layout'));
+    }
+
+    private function sendResetEmail(string $to, string $name, string $token): void
+    {
+        $link = rtrim((string) Config::get('app.url', ''), '/') . Url::to('/reset-password?token=' . $token);
+        $body = '<p>' . View::e(sprintf(Lang::get('auth.reset_email_greeting'), $name)) . '</p>'
+              . '<p>' . View::e(Lang::get('auth.reset_email_body')) . '</p>'
+              . '<p><a href="' . View::e($link) . '">' . View::e($link) . '</a></p>'
+              . '<p>' . View::e(Lang::get('auth.reset_email_expiry')) . '</p>';
+        Mailer::send($to, Lang::get('auth.reset_email_subject'), $body);
     }
 }
