@@ -16,6 +16,18 @@ $lead        = (int) $month->format('N') - 1; // Monday-first leading blanks
 $today       = date('Y-m-d');
 $weekdays    = array_map(static fn (int $d): string => Lang::label('weekdays_short', (string) $d), range(1, 7));
 $statusColor = ['pending' => '#a3aebc', 'in_progress' => '#2c6e9b', 'on_hold' => '#e07c10', 'completed' => '#2e7d32', 'cancelled' => '#c0504d'];
+
+// Month jump dropdown: 12 months back to 6 forward around the displayed month.
+$currentMonth = $month->format('Y-m');
+$monthOptions = [];
+$cursor       = $month->modify('-12 months');
+for ($k = 0; $k <= 18; $k++) {
+    $monthOptions[] = [
+        'value' => $cursor->format('Y-m'),
+        'label' => Lang::label('months', (string) (int) $cursor->format('n')) . ' ' . $cursor->format('Y'),
+    ];
+    $cursor = $cursor->modify('+1 month');
+}
 ?>
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
@@ -34,17 +46,19 @@ $statusColor = ['pending' => '#a3aebc', 'in_progress' => '#2c6e9b', 'on_hold' =>
 
 <div class="card">
     <div class="card-body">
-        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+        <form method="get" action="<?= $e(Url::to('/admin/interventions/calendar')) ?>" class="d-flex align-items-center justify-content-center gap-2 mb-3">
             <a class="app-att-nav-btn" href="<?= $e(Url::to('/admin/interventions/calendar?month=' . $prev)) ?>" aria-label="<?= $e($t('admin.projects.attendance_prev')) ?>">
                 <i class="bi bi-chevron-left" aria-hidden="true"></i>
             </a>
-            <span class="app-att-month fw-semibold">
-                <?= $e(Lang::label('months', (string) (int) $month->format('n'))) ?> <?= $e($month->format('Y')) ?>
-            </span>
+            <select name="month" class="form-select form-select-sm app-cal-month-select js-auto-submit" aria-label="<?= $e($t('admin.interventions.calendar')) ?>">
+                <?php foreach ($monthOptions as $opt): ?>
+                    <option value="<?= $e($opt['value']) ?>"<?= $opt['value'] === $currentMonth ? ' selected' : '' ?>><?= $e($opt['label']) ?></option>
+                <?php endforeach; ?>
+            </select>
             <a class="app-att-nav-btn" href="<?= $e(Url::to('/admin/interventions/calendar?month=' . $next)) ?>" aria-label="<?= $e($t('admin.projects.attendance_next')) ?>">
                 <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </a>
-        </div>
+        </form>
 
         <div class="app-cal-weekdays" aria-hidden="true">
             <?php foreach ($weekdays as $wd): ?><span><?= $e($wd) ?></span><?php endforeach; ?>

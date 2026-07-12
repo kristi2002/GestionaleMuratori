@@ -91,6 +91,8 @@ T::equals(200, $client1->get('/client', ['json' => false])['status'], 'client ho
 $rStats = $admin->get('/admin/statistics', ['json' => false]);
 T::equals(200, $rStats['status'], 'admin statistics page renders');
 T::ok(str_contains((string) $rStats['body'], 'app-chart-donut'), 'statistics page includes charts');
+T::ok(str_contains((string) $rStats['body'], 'app-linechart'), 'statistics has the line chart');
+T::ok(str_contains((string) $rStats['body'], 'app-legend-pct'), 'donut legend shows percentages');
 T::equals(403, $worker1->get('/admin/statistics', ['json' => false])['status'], 'worker blocked from statistics');
 T::equals(403, $client1->get('/admin/statistics', ['json' => false])['status'], 'client blocked from statistics');
 
@@ -146,6 +148,7 @@ T::equals(403, $worker1->get('/admin/search?q=x', ['json' => false])['status'], 
 $rCal = $admin->get('/admin/interventions/calendar', ['json' => false]);
 T::equals(200, $rCal['status'], 'interventions calendar renders');
 T::ok(str_contains((string) $rCal['body'], 'app-cal-grid'), 'calendar grid present');
+T::ok(str_contains((string) $rCal['body'], 'app-cal-month-select'), 'calendar has the month picker dropdown');
 T::equals(403, $worker1->get('/admin/interventions/calendar', ['json' => false])['status'], 'worker blocked from calendar');
 
 // CSV exports

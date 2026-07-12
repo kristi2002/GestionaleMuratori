@@ -998,6 +998,11 @@
         });
     });
 
+    // Auto-submit a form when a marked control changes (e.g. calendar month jump).
+    $(document).on('change', '.js-auto-submit', function () {
+        if (this.form) { this.form.submit(); }
+    });
+
     // --- Quotes: dynamic line editor (Preventivi form) -------------------------
     // Rows are added from a <template> with a per-form running index so the
     // lines[i][field] names stay unique; totals recompute live on every input.

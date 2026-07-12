@@ -39,11 +39,12 @@ foreach ($segments as $s) {
         <p class="text-muted small mb-0 mt-2"><?= $e($empty ?? '—') ?></p>
     <?php else: ?>
         <ul class="app-chart-legend">
-            <?php foreach ($segments as $s): ?>
+            <?php foreach ($segments as $s): $pct = $total > 0 ? (float) $s['value'] / $total * 100 : 0; ?>
                 <li>
                     <span class="app-legend-dot" style="background:<?= $e($s['color']) ?>"></span>
                     <span class="app-legend-label"><?= $e((string) $s['label']) ?></span>
                     <span class="app-legend-val"><?= $e((string) ($s['display'] ?? (string) $s['value'])) ?></span>
+                    <span class="app-legend-pct"><?= $e(number_format($pct, $pct < 10 ? 1 : 0, ',', '.')) ?>%</span>
                 </li>
             <?php endforeach; ?>
         </ul>

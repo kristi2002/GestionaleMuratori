@@ -116,7 +116,7 @@ $kpi = $stats['kpi'];
         <div class="card h-100">
             <div class="card-header"><?= $e($t('admin.statistics.interventions_trend')) ?></div>
             <div class="card-body">
-                <?= View::render('partials/chart_vbars', ['points' => $stats['interventions_by_month']], null) ?>
+                <?= View::render('partials/chart_line', ['points' => $stats['interventions_by_month']], null) ?>
             </div>
         </div>
     </div>
