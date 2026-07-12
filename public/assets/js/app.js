@@ -1069,19 +1069,76 @@
         recompute();
     });
 
-    // --- Filter date-range control -------------------------------------------
-    // The per-input native calendar indicators are hidden (the group shows one
-    // shared icon), so clicking anywhere in a "Dal / Al" field must open the
-    // browser's date picker itself.
+    // --- Filter date-range control: custom themeable calendar popup ----------
+    // The native date-picker overlay can't be styled, so for the "Dal / Al"
+    // fields we render our own in-page calendar (month names / weekday labels
+    // come from data- attributes so they stay translated).
     $(function () {
-        $(document).on('click', '.app-date-field input[type="date"]', function () {
-            if (typeof this.showPicker === 'function') {
-                try {
-                    this.showPicker();
-                } catch (e) {
-                    // Ignore: picker already open or blocked; the field stays focusable.
-                }
+        var $range = $('.app-date-range');
+        if (!$range.length) { return; }
+
+        var months = [], weekdays = [];
+        try { months = JSON.parse($range.attr('data-months') || '[]'); } catch (e) {}
+        try { weekdays = JSON.parse($range.attr('data-weekdays') || '[]'); } catch (e) {}
+        if (months.length !== 12) { months = ['1','2','3','4','5','6','7','8','9','10','11','12']; }
+
+        var $pop = null, input = null, vy = 0, vm = 0;
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        function fmt(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
+
+        function close() {
+            if ($pop) { $pop.remove(); $pop = null; input = null; $(document).off('.appdp'); }
+        }
+
+        function render() {
+            var first = new Date(vy, vm, 1);
+            var lead = (first.getDay() + 6) % 7;               // Monday-first
+            var days = new Date(vy, vm + 1, 0).getDate();
+            var t = new Date(), sel = input && input.value ? input.value : '';
+            var h = '<div class="app-dp-head">'
+                  + '<button type="button" class="app-dp-nav" data-dp="prev" aria-label="-">&lsaquo;</button>'
+                  + '<span class="app-dp-title">' + months[vm] + ' ' + vy + '</span>'
+                  + '<button type="button" class="app-dp-nav" data-dp="next" aria-label="+">&rsaquo;</button></div>'
+                  + '<div class="app-dp-weekdays">';
+            for (var w = 0; w < 7; w++) { h += '<span>' + (weekdays[w] || '') + '</span>'; }
+            h += '</div><div class="app-dp-grid">';
+            for (var i = 0; i < lead; i++) { h += '<span class="app-dp-day is-empty"></span>'; }
+            for (var d = 1; d <= days; d++) {
+                var c = 'app-dp-day';
+                if (vy === t.getFullYear() && vm === t.getMonth() && d === t.getDate()) { c += ' is-today'; }
+                if (sel === fmt(vy, vm, d)) { c += ' is-selected'; }
+                h += '<button type="button" class="' + c + '" data-d="' + d + '">' + d + '</button>';
             }
+            $pop.html(h + '</div>');
+        }
+
+        function open(el) {
+            close();
+            input = el;
+            var p = el.value ? el.value.split('-') : null;
+            var base = p ? new Date(+p[0], +p[1] - 1, +p[2]) : new Date();
+            vy = base.getFullYear(); vm = base.getMonth();
+            $pop = $('<div class="app-dp"></div>').appendTo(document.body);
+            render();
+            var r = el.getBoundingClientRect();
+            $pop.css({ top: (window.pageYOffset + r.bottom + 4) + 'px', left: (window.pageXOffset + r.left) + 'px' });
+            setTimeout(function () {
+                $(document).on('mousedown.appdp', function (ev) {
+                    if ($pop && !$pop[0].contains(ev.target) && ev.target !== el) { close(); }
+                });
+                $(document).on('keydown.appdp', function (ev) { if (ev.key === 'Escape') { close(); } });
+            }, 0);
+        }
+
+        $(document).on('click', '.app-date-field input[type="date"]', function () { open(this); });
+        $(document).on('click', '.app-dp [data-dp]', function () {
+            if ($(this).attr('data-dp') === 'prev') { if (--vm < 0) { vm = 11; vy--; } }
+            else { if (++vm > 11) { vm = 0; vy++; } }
+            render();
+        });
+        $(document).on('click', '.app-dp-day[data-d]', function () {
+            if (input) { input.value = fmt(vy, vm, +$(this).attr('data-d')); $(input).trigger('change'); }
+            close();
         });
     });
 

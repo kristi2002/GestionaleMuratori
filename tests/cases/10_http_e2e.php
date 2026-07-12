@@ -155,6 +155,7 @@ T::equals(403, $worker1->get('/admin/interventions/calendar', ['json' => false])
 $rCsv = $admin->get('/admin/expenses/export', ['json' => false]);
 T::equals(200, $rCsv['status'], 'expenses CSV export ok');
 T::ok(stripos((string) $rCsv['headers'], 'text/csv') !== false, 'expenses export is text/csv');
+T::ok(str_contains((string) $admin->get('/admin/expenses', ['json' => false])['body'], 'data-months'), 'spese filter wires the custom date picker');
 T::equals(200, $admin->get('/admin/interventions/export', ['json' => false])['status'], 'interventions CSV export ok');
 T::equals(403, $worker1->get('/admin/expenses/export', ['json' => false])['status'], 'worker blocked from CSV export');
 T::equals(200, $admin->get('/admin/clients/export', ['json' => false])['status'], 'clients CSV export ok');

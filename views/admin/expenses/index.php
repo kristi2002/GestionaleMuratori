@@ -106,7 +106,9 @@ $catBadges = [
                     </option>
                 <?php endforeach; ?>
             </select>
-            <div class="app-date-range">
+            <div class="app-date-range"
+                 data-months="<?= $e(json_encode(array_map(static fn (int $m): string => Lang::label('months', (string) $m), range(1, 12)), JSON_UNESCAPED_UNICODE)) ?>"
+                 data-weekdays="<?= $e(json_encode(array_map(static fn (int $d): string => Lang::label('weekdays_short', (string) $d), range(1, 7)), JSON_UNESCAPED_UNICODE)) ?>">
                 <i class="bi bi-calendar3 app-date-range-icon" aria-hidden="true"></i>
                 <label class="app-date-field">
                     <span class="app-date-prefix"><?= $e($t('admin.interventions.filter_date_from_short')) ?>:</span>
