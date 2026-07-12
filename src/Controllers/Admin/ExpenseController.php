@@ -8,6 +8,7 @@ use App\Models\ExpenseModel;
 use App\Models\ProjectModel;
 use App\Models\UserModel;
 use App\Support\Auth;
+use App\Support\Csv;
 use App\Support\Lang;
 use App\Support\Paginator;
 use App\Support\Request;
@@ -54,6 +55,44 @@ final class ExpenseController
             'categories' => self::CATEGORIES,
             'paginator'  => $paginator,
         ], 'layout'));
+    }
+
+    /** GET /admin/expenses/export — CSV of the currently-filtered expenses. */
+    public function exportCsv(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $category = (string) $request->input('category', '');
+        if (!in_array($category, self::CATEGORIES, true)) {
+            $category = '';
+        }
+        $filters = [
+            'search'     => trim((string) $request->input('q', '')),
+            'category'   => $category,
+            'worker_id'  => (int) $request->input('worker_id', 0),
+            'project_id' => (int) $request->input('project_id', 0),
+            'date_from'  => $this->dateInput($request, 'date_from'),
+            'date_to'    => $this->dateInput($request, 'date_to'),
+        ];
+
+        $rows = (new ExpenseModel())->all($filters);
+        $data = array_map(static fn (array $e): array => [
+            $e['expense_date'],
+            Lang::label('expense_categories', (string) $e['category']),
+            $e['description'],
+            number_format((float) $e['amount'], 2, ',', '.'),
+            $e['worker_name'] ?? '',
+            $e['project_name'] ?? '',
+        ], $rows);
+
+        Csv::send('spese.csv', [
+            Lang::get('admin.expenses.date'),
+            Lang::get('admin.expenses.category'),
+            Lang::get('admin.expenses.description'),
+            Lang::get('admin.expenses.amount'),
+            Lang::get('admin.expenses.worker'),
+            Lang::get('admin.expenses.project_optional'),
+        ], $data);
     }
 
     public function create(Request $request): void

@@ -35,7 +35,18 @@ $catBadges = [
         <h1 class="h4 mb-1"><?= $e($t('admin.expenses.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.expenses.subtitle')) ?></p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <?php $expExportQ = http_build_query(array_filter([
+            'q'          => $filters['search'] ?? '',
+            'category'   => $filters['category'] ?? '',
+            'worker_id'  => ($filters['worker_id'] ?? 0) ?: null,
+            'project_id' => ($filters['project_id'] ?? 0) ?: null,
+            'date_from'  => $filters['date_from'] ?? '',
+            'date_to'    => $filters['date_to'] ?? '',
+        ], static fn ($v): bool => $v !== '' && $v !== null)); ?>
+        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/expenses/export' . ($expExportQ !== '' ? '?' . $expExportQ : ''))) ?>">
+            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
+        </a>
         <a class="btn btn-success" href="<?= $e(Url::to('/admin/expenses/create')) ?>">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.expenses.new')) ?>
         </a>

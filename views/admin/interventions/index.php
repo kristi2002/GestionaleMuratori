@@ -36,9 +36,18 @@ $nextActions = [
         <h1 class="h4 mb-1"><?= $e($t('admin.interventions.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.interventions.subtitle')) ?></p>
     </div>
+    <?php $exportQ = http_build_query(array_filter([
+        'project_id' => $filters['project_id'] ?: null,
+        'worker_id'  => $filters['worker_id'] ?: null,
+        'status'     => $filters['status'] ?: null,
+        'range'      => $range ?: null,
+    ])); ?>
     <div class="d-flex gap-2 flex-wrap">
         <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/calendar')) ?>">
             <i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($t('admin.interventions.calendar_view')) ?>
+        </a>
+        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/export' . ($exportQ !== '' ? '?' . $exportQ : ''))) ?>">
+            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
         </a>
         <a class="btn btn-success" href="<?= $e(Url::to('/admin/interventions/create')) ?>">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.new')) ?>

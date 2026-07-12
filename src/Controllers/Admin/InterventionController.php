@@ -13,6 +13,7 @@ use App\Models\WarehouseItemModel;
 use App\Services\InterventionService;
 use App\Services\PhotoStreamService;
 use App\Support\Auth;
+use App\Support\Csv;
 use App\Support\Lang;
 use App\Support\Paginator;
 use App\Support\Request;
@@ -52,6 +53,40 @@ final class InterventionController
             'prev'   => $first->modify('-1 month')->format('Y-m'),
             'next'   => $first->modify('+1 month')->format('Y-m'),
         ], 'layout'));
+    }
+
+    /** GET /admin/interventions/export — CSV of the currently-filtered interventions. */
+    public function exportCsv(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $range = (string) $request->input('range', '');
+        if (!in_array($range, self::DATE_RANGES, true)) {
+            $range = '';
+        }
+        $filters = [
+            'project_id' => (int) $request->input('project_id', 0),
+            'worker_id'  => (int) $request->input('worker_id', 0),
+            'status'     => (string) $request->input('status', ''),
+        ];
+        [$filters['date_from'], $filters['date_to']] = $this->dateRangeBounds($range);
+
+        $rows = (new InterventionModel())->all($filters);
+        $data = array_map(static fn (array $i): array => [
+            $i['title'],
+            $i['project_name'],
+            $i['worker_name'] ?? '',
+            $i['scheduled_date'],
+            Lang::label('intervention_status', (string) $i['status']),
+        ], $rows);
+
+        Csv::send('interventi.csv', [
+            Lang::get('admin.interventions.field_title'),
+            Lang::get('admin.interventions.project'),
+            Lang::get('admin.interventions.worker'),
+            Lang::get('admin.interventions.scheduled_date'),
+            Lang::get('admin.interventions.status'),
+        ], $data);
     }
 
     public function index(Request $request): void

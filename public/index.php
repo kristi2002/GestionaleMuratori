@@ -170,6 +170,7 @@ $router->post('/admin/warehouse/{id}/transfer',  [WarehouseController::class, 't
 
 $router->get('/admin/interventions',               [InterventionController::class, 'index']);
 $router->get('/admin/interventions/calendar',       [InterventionController::class, 'calendar']);
+$router->get('/admin/interventions/export',         [InterventionController::class, 'exportCsv']);
 $router->get('/admin/interventions/create',         [InterventionController::class, 'create']);
 $router->get('/admin/interventions/{id}/edit',      [InterventionController::class, 'edit']);
 $router->post('/admin/interventions',               [InterventionController::class, 'store']);
@@ -199,6 +200,7 @@ $router->post('/admin/invoices/{id}/delete',  [InvoiceController::class, 'destro
 
 // --- Spese (Expenses) ---
 $router->get('/admin/expenses',               [ExpenseController::class, 'index']);
+$router->get('/admin/expenses/export',        [ExpenseController::class, 'exportCsv']);
 $router->get('/admin/expenses/create',        [ExpenseController::class, 'create']);
 $router->get('/admin/expenses/{id}/edit',     [ExpenseController::class, 'edit']);
 $router->post('/admin/expenses',              [ExpenseController::class, 'store']);

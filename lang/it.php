@@ -212,6 +212,7 @@ return [
     'common' => [
         'save'    => 'Salva',
         'add'     => 'Aggiungi',
+        'export_csv' => 'Esporta CSV',
         'cancel'  => 'Annulla',
         'edit'    => 'Modifica',
         'delete'  => 'Elimina',
