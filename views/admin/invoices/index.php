@@ -60,11 +60,12 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['project_id'] > 0,
+                'href'   => '/admin/invoices',
+                'inline' => true,
+            ], null) ?>
         </form>
-        <?= View::render('partials/filter_clear', [
-            'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['project_id'] > 0,
-            'href'   => '/admin/invoices',
-        ], null) ?>
     </div>
 </div>
 

@@ -50,11 +50,12 @@ $t = static fn (string $key): string => Lang::get($key);
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $filters['search'] !== '' || $filters['client_id'] > 0 || $filters['status'] !== '',
+                'href'   => '/admin/projects',
+                'inline' => true,
+            ], null) ?>
         </form>
-        <?= View::render('partials/filter_clear', [
-            'active' => $filters['search'] !== '' || $filters['client_id'] > 0 || $filters['status'] !== '',
-            'href'   => '/admin/projects',
-        ], null) ?>
     </div>
 </div>
 

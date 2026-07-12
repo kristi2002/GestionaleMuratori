@@ -62,11 +62,12 @@ $badge = [
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['client_id'] > 0,
+                'href'   => '/admin/quotes',
+                'inline' => true,
+            ], null) ?>
         </form>
-        <?= View::render('partials/filter_clear', [
-            'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['client_id'] > 0,
-            'href'   => '/admin/quotes',
-        ], null) ?>
     </div>
 </div>
 

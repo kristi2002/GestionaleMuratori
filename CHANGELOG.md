@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-12 — UI: "Azzera filtri" inline on the filter row
+
+On the single-row filter pages (projects, quotes, invoices) the reset-filters
+link now sits inline at the end of the row, right after "Cerca", filling the
+grid's previously-empty trailing column (removing the dead gap). The
+`partials/filter_clear` partial gained an `inline` flag; interventions keeps its
+inline `col-auto` reset; expenses (a wrapping multi-row filter) keeps the
+right-aligned link below the row. Bumped the service-worker cache to
+`gm-shell-v6` so the CSS tweak isn't served stale.
+
 ## 2026-07-12 — CI + storage driver factory
 
 - **CI (`.github/workflows/ci.yml`):** the full suite (unit + service + HTTP e2e,
