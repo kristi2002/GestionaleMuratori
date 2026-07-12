@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-12 — Platform features: global search, calendar, CSV export
+
+- **Global search:** navbar search box (admin) + `/admin/search` results page —
+  LIKE lookups across projects, interventions, clients, subcontractors and
+  warehouse items, grouped with status badges and deep links.
+- **Interventions calendar:** `/admin/interventions/calendar` — a Monday-first
+  month grid of scheduled interventions with colour-coded event chips and a
+  Calendario/Elenco toggle on the list page.
+- **CSV export:** "Esporta CSV" on the clients, projects, interventions and
+  expenses lists, exporting the currently-filtered rows (UTF-8 BOM + `;` for
+  Italian Excel) via the new `Support\Csv` helper.
+
+All admin-only, native (no external deps, CSP-safe). 506 tests pass.
+
 ## 2026-07-12 — Project detail: Promemoria (reminders/notes)
 
 New **Promemoria** tab on the project page: add reminders with an optional due

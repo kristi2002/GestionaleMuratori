@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
+use App\Support\Csv;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
@@ -24,6 +25,25 @@ final class ClientController
             'clients' => $clients,
             'search'  => $search,
         ], 'layout'));
+    }
+
+    /** GET /admin/clients/export — CSV of the (optionally searched) clients. */
+    public function exportCsv(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $rows = (new ClientModel())->all(trim((string) $request->input('q', '')));
+        $data = array_map(static fn (array $c): array => [
+            $c['name'], $c['vat_or_tax_id'], $c['email'], $c['phone'], $c['address'],
+        ], $rows);
+
+        Csv::send('clienti.csv', [
+            Lang::get('admin.clients.name'),
+            Lang::get('admin.clients.vat'),
+            Lang::get('admin.clients.email'),
+            Lang::get('admin.clients.phone'),
+            Lang::get('admin.clients.address'),
+        ], $data);
     }
 
     /** GET /admin/clients/create — blank client form page. */

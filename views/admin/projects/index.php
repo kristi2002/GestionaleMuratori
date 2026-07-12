@@ -16,7 +16,15 @@ $t = static fn (string $key): string => Lang::get($key);
         <h1 class="h4 mb-1"><?= $e($t('admin.projects.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.projects.subtitle')) ?></p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <?php $projExportQ = http_build_query(array_filter([
+            'q'         => $filters['search'] ?? '',
+            'client_id' => ($filters['client_id'] ?? 0) ?: null,
+            'status'    => $filters['status'] ?? '',
+        ], static fn ($v): bool => $v !== '' && $v !== null)); ?>
+        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/projects/export' . ($projExportQ !== '' ? '?' . $projExportQ : ''))) ?>">
+            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
+        </a>
         <a class="btn btn-success" href="<?= $e(Url::to('/admin/projects/create')) ?>">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.projects.new')) ?>
         </a>

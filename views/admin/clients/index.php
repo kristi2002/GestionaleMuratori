@@ -14,9 +14,14 @@ $t = static fn (string $key): string => Lang::get($key);
         <h1 class="h4 mb-1"><?= $e($t('admin.clients.title')) ?></h1>
         <p class="text-muted mb-0"><?= $e($t('admin.clients.subtitle')) ?></p>
     </div>
-    <a class="btn btn-success" href="<?= $e(Url::to('/admin/clients/create')) ?>">
-        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.clients.new')) ?>
-    </a>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/clients/export' . ($search !== '' ? '?q=' . rawurlencode($search) : ''))) ?>">
+            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
+        </a>
+        <a class="btn btn-success" href="<?= $e(Url::to('/admin/clients/create')) ?>">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.clients.new')) ?>
+        </a>
+    </div>
 </div>
 
 <div class="card app-filter-card mb-3">

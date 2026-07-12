@@ -20,6 +20,7 @@ use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
 use App\Support\Auth;
 use App\Support\Config;
+use App\Support\Csv;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
@@ -66,6 +67,32 @@ final class ProjectController
     }
 
     /** GET /admin/projects/{id} — project dashboard: documents, invoices, materials summary. */
+    /** GET /admin/projects/export — CSV of the currently-filtered projects. */
+    public function exportCsv(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $filters = [
+            'search'    => trim((string) $request->input('q', '')),
+            'client_id' => (int) $request->input('client_id', 0),
+            'status'    => (string) $request->input('status', ''),
+        ];
+        $rows = (new ProjectModel())->all($filters);
+        $data = array_map(static fn (array $p): array => [
+            $p['name'], $p['client_name'], $p['location'], $p['start_date'], $p['end_date'],
+            Lang::label('project_status', (string) $p['status']),
+        ], $rows);
+
+        Csv::send('cantieri.csv', [
+            Lang::get('admin.projects.name'),
+            Lang::get('admin.projects.client'),
+            Lang::get('admin.projects.location'),
+            Lang::get('admin.projects.start_date'),
+            Lang::get('admin.projects.end_date'),
+            Lang::get('admin.projects.status'),
+        ], $data);
+    }
+
     public function show(Request $request, string $id): void
     {
         AuthGuard::require($request, ['admin']);

@@ -154,6 +154,8 @@ T::equals(200, $rCsv['status'], 'expenses CSV export ok');
 T::ok(stripos((string) $rCsv['headers'], 'text/csv') !== false, 'expenses export is text/csv');
 T::equals(200, $admin->get('/admin/interventions/export', ['json' => false])['status'], 'interventions CSV export ok');
 T::equals(403, $worker1->get('/admin/expenses/export', ['json' => false])['status'], 'worker blocked from CSV export');
+T::equals(200, $admin->get('/admin/clients/export', ['json' => false])['status'], 'clients CSV export ok');
+T::equals(200, $admin->get('/admin/projects/export', ['json' => false])['status'], 'projects CSV export ok');
 
 // DURC / compliance gating: expired-doc subcontractor is flagged
 $rSub = $admin->get('/admin/subcontractors', ['json' => false]);

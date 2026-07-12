@@ -129,6 +129,7 @@ $router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
 $router->post('/shortcuts', [DashboardController::class, 'saveShortcuts']);
 
 $router->get('/admin/clients',              [ClientController::class, 'index']);
+$router->get('/admin/clients/export',       [ClientController::class, 'exportCsv']);
 $router->get('/admin/clients/create',       [ClientController::class, 'create']);
 $router->get('/admin/clients/{id}/edit',    [ClientController::class, 'edit']);
 $router->post('/admin/clients',             [ClientController::class, 'store']);
@@ -136,6 +137,7 @@ $router->post('/admin/clients/{id}',        [ClientController::class, 'update'])
 $router->post('/admin/clients/{id}/delete', [ClientController::class, 'destroy']);
 
 $router->get('/admin/projects',              [ProjectController::class, 'index']);
+$router->get('/admin/projects/export',       [ProjectController::class, 'exportCsv']);
 $router->get('/admin/projects/create',       [ProjectController::class, 'create']);
 $router->get('/admin/projects/{id}/edit',    [ProjectController::class, 'edit']);
 $router->get('/admin/projects/{id}',         [ProjectController::class, 'show']);
