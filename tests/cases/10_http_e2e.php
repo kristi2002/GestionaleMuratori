@@ -88,6 +88,12 @@ T::equals(200, $admin->get('/admin', ['json' => false])['status'], 'admin dashbo
 T::equals(200, $worker1->get('/worker', ['json' => false])['status'], 'worker home renders');
 T::equals(200, $client1->get('/client', ['json' => false])['status'], 'client home renders');
 
+$rStats = $admin->get('/admin/statistics', ['json' => false]);
+T::equals(200, $rStats['status'], 'admin statistics page renders');
+T::ok(str_contains((string) $rStats['body'], 'app-chart-donut'), 'statistics page includes charts');
+T::equals(403, $worker1->get('/admin/statistics', ['json' => false])['status'], 'worker blocked from statistics');
+T::equals(403, $client1->get('/admin/statistics', ['json' => false])['status'], 'client blocked from statistics');
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

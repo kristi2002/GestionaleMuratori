@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-12 — New: statistics dashboard (`/admin/statistics`)
+
+Read-only analytics page for admins: a KPI row (active projects, interventions
+this month, low-stock items, revenue from paid invoices) plus charts —
+projects / interventions / quotes / invoices by status (donuts), interventions
+per month (trend bars), expenses by category and top clients (horizontal bars).
+
+All charts are **pure inline SVG/CSS with no JavaScript library** (CSP-safe —
+no CDN, matching the app's existing no-chart-lib approach). New
+`StatisticsService` (plain grouped COUNT/SUM, read-only), `StatisticsController`
+(admin-only), three reusable chart partials (`chart_donut`, `chart_hbars`,
+`chart_vbars`), a sidebar nav entry, Italian strings, and e2e tests (admin 200 +
+charts present, worker/client 403). Service worker bumped to `gm-shell-v8`.
+**468 tests pass.**
+
 ## 2026-07-12 — UI: one consistent filter design across all list pages
 
 Converted the remaining `row g-2` filter forms (clienti, subappaltatori,

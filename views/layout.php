@@ -25,6 +25,7 @@ if ($user !== null) {
     $menu = match ($user['role'] ?? '') {
         'admin' => [
             [Lang::get('admin.nav.dashboard'),        '/admin',               'bi-grid-1x2'],
+            [Lang::get('admin.statistics.title'),     '/admin/statistics',    'bi-bar-chart-line'],
             [Lang::get('admin.clients.title'),        '/admin/clients',       'bi-people'],
             [Lang::get('admin.projects.title'),       '/admin/projects',      'bi-buildings'],
             [Lang::get('admin.subcontractors.title'), '/admin/subcontractors','bi-diagram-3'],

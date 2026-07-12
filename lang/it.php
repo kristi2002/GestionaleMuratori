@@ -577,6 +577,23 @@ return [
             'not_found'        => 'Documento non trovato.',
         ],
 
+        'statistics' => [
+            'title'                    => 'Statistiche',
+            'subtitle'                 => 'Panoramica e analisi dei dati operativi.',
+            'kpi_active_projects'      => 'Cantieri attivi',
+            'kpi_interventions_month'  => 'Interventi questo mese',
+            'kpi_low_stock'            => 'Articoli sotto scorta',
+            'kpi_revenue'              => 'Incassato (fatture pagate)',
+            'projects_by_status'       => 'Cantieri per stato',
+            'interventions_by_status'  => 'Interventi per stato',
+            'invoices_by_status'       => 'Fatture per stato',
+            'quotes_by_status'         => 'Preventivi per stato',
+            'expenses_by_category'     => 'Spese per categoria',
+            'top_clients'              => 'Clienti principali (per cantieri)',
+            'interventions_trend'      => 'Interventi per mese',
+            'no_data'                  => 'Nessun dato disponibile.',
+        ],
+
         'exports' => [
             'title'           => 'Esportazioni',
             'subtitle'        => 'Report per la contabilità e il commercialista.',

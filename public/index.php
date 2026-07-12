@@ -28,6 +28,7 @@ use App\Controllers\Admin\DailyLogController;
 use App\Controllers\Admin\ExportController;
 use App\Controllers\Admin\ReportController as AdminReportController;
 use App\Controllers\Admin\SalController;
+use App\Controllers\Admin\StatisticsController;
 use App\Controllers\Admin\SubcontractorController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\WarehouseController;
@@ -118,6 +119,7 @@ $router->post('/logout', [AuthController::class, 'logout']);
 $router->get('/password',  [AuthController::class, 'showPassword']);
 $router->post('/password', [AuthController::class, 'changePassword']);
 $router->get('/admin',   [DashboardController::class, 'admin']);
+$router->get('/admin/statistics', [StatisticsController::class, 'index']);
 $router->get('/health',  [DashboardController::class, 'health']);
 $router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
 
