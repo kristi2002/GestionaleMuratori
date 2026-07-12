@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
 use App\Support\Csv;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\View;
@@ -17,13 +18,15 @@ final class ClientController
     {
         AuthGuard::require($request, ['admin']);
 
-        $search  = trim((string) $request->input('q', ''));
-        $clients = (new ClientModel())->all($search);
+        $search    = trim((string) $request->input('q', ''));
+        $model     = new ClientModel();
+        $paginator = Paginator::fromRequest($request, $model->count($search), 24);
 
         Response::html(View::render('admin/clients/index', [
-            'title'   => Lang::get('admin.clients.title'),
-            'clients' => $clients,
-            'search'  => $search,
+            'title'     => Lang::get('admin.clients.title'),
+            'clients'   => $model->all($search, $paginator->perPage, $paginator->offset),
+            'search'    => $search,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

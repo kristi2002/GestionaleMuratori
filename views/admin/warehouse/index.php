@@ -89,3 +89,5 @@ $t = static fn (string $key): string => Lang::get($key);
         </table>
     </div>
 </div>
+
+<?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>

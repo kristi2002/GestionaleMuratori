@@ -143,3 +143,5 @@ $blockedCount = count(array_filter($compliance, static fn (string $s): bool => $
         </div>
     </div>
 <?php endforeach; ?>
+
+<?php if (isset($paginator)) { echo View::render('partials/pagination', ['paginator' => $paginator], null); } ?>

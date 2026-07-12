@@ -22,6 +22,7 @@ use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Csv;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Storage\Storage;
@@ -57,12 +58,16 @@ final class ProjectController
             'status'    => (string) $request->input('status', ''),
         ];
 
+        $model     = new ProjectModel();
+        $paginator = Paginator::fromRequest($request, $model->count($filters), 24);
+
         Response::html(View::render('admin/projects/index', [
-            'title'    => Lang::get('admin.projects.title'),
-            'projects' => (new ProjectModel())->all($filters),
-            'clients'  => (new ClientModel())->all(),
-            'filters'  => $filters,
-            'statuses' => self::STATUSES,
+            'title'     => Lang::get('admin.projects.title'),
+            'projects'  => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'clients'   => (new ClientModel())->all(),
+            'filters'   => $filters,
+            'statuses'  => self::STATUSES,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

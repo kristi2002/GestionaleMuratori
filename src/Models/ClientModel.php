@@ -8,18 +8,35 @@ use App\Support\Database;
 final class ClientModel
 {
     /** @return array<int,array<string,mixed>> */
-    public function all(string $search = ''): array
+    public function all(string $search = '', ?int $limit = null, int $offset = 0): array
     {
-        if ($search !== '') {
-            $stmt = Database::pdo()->prepare(
-                'SELECT * FROM clients WHERE name LIKE ? OR vat_or_tax_id LIKE ? ORDER BY name'
-            );
-            $like = '%' . $search . '%';
-            $stmt->execute([$like, $like]);
-        } else {
-            $stmt = Database::pdo()->query('SELECT * FROM clients ORDER BY name');
+        [$where, $params] = $this->filterSql($search);
+        $sql = 'SELECT * FROM clients' . $where . ' ORDER BY name';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
         }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same search (drives pagination). */
+    public function count(string $search = ''): int
+    {
+        [$where, $params] = $this->filterSql($search);
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM clients' . $where);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{0:string,1:array<int,mixed>} */
+    private function filterSql(string $search): array
+    {
+        if ($search === '') {
+            return ['', []];
+        }
+        $like = '%' . $search . '%';
+        return [' WHERE name LIKE ? OR vat_or_tax_id LIKE ?', [$like, $like]];
     }
 
     public function find(int $id): ?array

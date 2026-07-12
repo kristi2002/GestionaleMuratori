@@ -166,6 +166,12 @@ $rSub = $admin->get('/admin/subcontractors', ['json' => false]);
 T::equals(200, $rSub['status'], 'subcontractors page renders');
 T::ok(str_contains((string) $rSub['body'], 'Scaduti'), 'subcontractor with expired docs is flagged');
 
+// Paginated list pages render (incl. an out-of-range page)
+T::equals(200, $admin->get('/admin/projects?page=2', ['json' => false])['status'], 'projects list paginates');
+T::equals(200, $admin->get('/admin/clients?page=2', ['json' => false])['status'], 'clients list paginates');
+T::equals(200, $admin->get('/admin/subcontractors?page=2', ['json' => false])['status'], 'subcontractors list paginates');
+T::equals(200, $admin->get('/admin/warehouse?page=2', ['json' => false])['status'], 'warehouse list paginates');
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

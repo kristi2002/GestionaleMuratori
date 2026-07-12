@@ -11,37 +11,55 @@ final class ProjectModel
      * @param array{client_id?:int,status?:string,search?:string} $filters
      * @return array<int,array<string,mixed>>
      */
-    public function all(array $filters = []): array
+    public function all(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
-        $sql    = 'SELECT p.*, c.name AS client_name,
-                        (SELECT GROUP_CONCAT(u.name ORDER BY u.name SEPARATOR \', \')
-                           FROM project_workers pw
-                           JOIN users u ON u.id = pw.user_id
-                          WHERE pw.project_id = p.id) AS worker_names
-                    FROM projects p
-                    JOIN clients c ON c.id = p.client_id
-                    WHERE 1 = 1';
-        $params = [];
-
-        if (!empty($filters['client_id'])) {
-            $sql           .= ' AND p.client_id = ?';
-            $params[]       = (int) $filters['client_id'];
+        [$where, $params] = $this->filterSql($filters);
+        $sql = 'SELECT p.*, c.name AS client_name,
+                       (SELECT GROUP_CONCAT(u.name ORDER BY u.name SEPARATOR \', \')
+                          FROM project_workers pw
+                          JOIN users u ON u.id = pw.user_id
+                         WHERE pw.project_id = p.id) AS worker_names
+                   FROM projects p
+                   JOIN clients c ON c.id = p.client_id' . $where
+            . ' ORDER BY p.start_date DESC, p.name';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
         }
-        if (!empty($filters['status'])) {
-            $sql           .= ' AND p.status = ?';
-            $params[]       = $filters['status'];
-        }
-        if (!empty($filters['search'])) {
-            $sql           .= ' AND (p.name LIKE ? OR p.location LIKE ?)';
-            $like           = '%' . $filters['search'] . '%';
-            $params[]       = $like;
-            $params[]       = $like;
-        }
-        $sql .= ' ORDER BY p.start_date DESC, p.name';
 
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same filters (drives pagination). */
+    public function count(array $filters = []): int
+    {
+        [$where, $params] = $this->filterSql($filters);
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM projects p' . $where);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{0:string,1:array<int,mixed>} shared WHERE for all()/count() */
+    private function filterSql(array $filters): array
+    {
+        $where  = ' WHERE 1 = 1';
+        $params = [];
+        if (!empty($filters['client_id'])) {
+            $where   .= ' AND p.client_id = ?';
+            $params[] = (int) $filters['client_id'];
+        }
+        if (!empty($filters['status'])) {
+            $where   .= ' AND p.status = ?';
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $where   .= ' AND (p.name LIKE ? OR p.location LIKE ?)';
+            $like     = '%' . $filters['search'] . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+        return [$where, $params];
     }
 
     /** Number of projects in the given status (dashboard KPI). */

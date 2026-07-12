@@ -13,6 +13,7 @@ use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Database;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
@@ -30,13 +31,16 @@ final class WarehouseController
     {
         AuthGuard::require($request, ['admin']);
 
-        $search = trim((string) $request->input('q', ''));
+        $search    = trim((string) $request->input('q', ''));
+        $model     = new WarehouseItemModel();
+        $paginator = Paginator::fromRequest($request, $model->count($search), 25);
 
         Response::html(View::render('admin/warehouse/index', [
-            'title' => Lang::get('admin.warehouse.title'),
-            'items' => (new WarehouseItemModel())->all($search),
-            'search' => $search,
-            'units' => self::UNITS,
+            'title'     => Lang::get('admin.warehouse.title'),
+            'items'     => $model->all($search, $paginator->perPage, $paginator->offset),
+            'search'    => $search,
+            'units'     => self::UNITS,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

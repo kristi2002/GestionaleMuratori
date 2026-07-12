@@ -9,6 +9,7 @@ use App\Models\ProjectModel;
 use App\Models\ProjectSubcontractorModel;
 use App\Models\SubcontractorModel;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\View;
@@ -24,11 +25,12 @@ final class SubcontractorController
     {
         AuthGuard::require($request, ['admin']);
 
-        $search = trim((string) $request->input('q', ''));
-        $model  = new SubcontractorModel();
-        $links  = new ProjectSubcontractorModel();
+        $search    = trim((string) $request->input('q', ''));
+        $model     = new SubcontractorModel();
+        $links     = new ProjectSubcontractorModel();
+        $paginator = Paginator::fromRequest($request, $model->count($search), 24);
 
-        $subcontractors = $model->all($search);
+        $subcontractors = $model->all($search, $paginator->perPage, $paginator->offset);
         // Attach each subcontractor's assigned project ids for the assignment modal.
         foreach ($subcontractors as &$s) {
             $s['project_ids'] = $links->projectIdsFor((int) $s['id']);
@@ -41,6 +43,7 @@ final class SubcontractorController
             'projects'       => (new ProjectModel())->all(),
             'compliance'     => (new ComplianceDocumentModel())->statusForSubjects('subcontractor'),
             'search'         => $search,
+            'paginator'      => $paginator,
         ], 'layout'));
     }
 
