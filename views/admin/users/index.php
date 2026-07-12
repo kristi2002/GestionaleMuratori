@@ -24,22 +24,27 @@ $t = static fn (string $key): string => Lang::get($key);
     </a>
 </div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-12 col-sm-4">
-        <input type="text" class="form-control" name="q" value="<?= $e($search) ?>" placeholder="<?= $e($t('common.search')) ?>">
+<div class="card app-filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="app-filter-grid app-filter-grid-3">
+            <input type="text" class="form-control" name="q" value="<?= $e($search) ?>" placeholder="<?= $e($t('common.search')) ?>" aria-label="<?= $e($t('common.search')) ?>">
+            <select class="form-select" name="role" aria-label="<?= $e($t('admin.users.role')) ?>">
+                <option value=""><?= $e($t('common.all')) ?></option>
+                <?php foreach ($roles as $r): ?>
+                    <option value="<?= $e($r) ?>" <?= $role === $r ? 'selected' : '' ?>><?= $e(Lang::label('roles', $r)) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
+            </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $search !== '' || $role !== '',
+                'href'   => '/admin/users',
+                'inline' => true,
+            ], null) ?>
+        </form>
     </div>
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="role">
-            <option value=""><?= $e($t('common.all')) ?></option>
-            <?php foreach ($roles as $r): ?>
-                <option value="<?= $e($r) ?>" <?= $role === $r ? 'selected' : '' ?>><?= $e(Lang::label('roles', $r)) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
-    </div>
-</form>
+</div>
 
 <div class="card">
     <div class="table-responsive">

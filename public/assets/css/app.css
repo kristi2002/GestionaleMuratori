@@ -165,9 +165,38 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Inline "Azzera filtri": sits in the grid's trailing column, on the same row
-   as "Cerca". Center it vertically so it lines up with the taller inputs. */
+   as "Cerca" — muted link by default, soft-green chip on hover/focus. */
 .app-filter-grid .app-filter-reset {
     align-self: center;
+    white-space: nowrap;
+    color: #6c757d;
+    font-weight: 500;
+    transition: color .15s ease, background-color .15s ease;
+}
+
+.app-filter-grid .app-filter-reset:hover,
+.app-filter-grid .app-filter-reset:focus {
+    color: var(--app-green-dark);
+    background-color: var(--app-green-soft);
+    border-radius: .5rem;
+}
+
+/* Same treatment for the below-the-row variant (Spese). */
+.app-filter-clear .btn-link {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.app-filter-clear .btn-link:hover,
+.app-filter-clear .btn-link:focus {
+    color: var(--app-green-dark);
+}
+
+/* Checkbox filters (e.g. Scadenzario "in scadenza") aligned on the grid row. */
+.app-filter-grid .app-filter-check {
+    align-self: center;
+    white-space: nowrap;
+    margin: 0;
 }
 
 @media (min-width: 576px) {

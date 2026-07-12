@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-12 — UI: one consistent filter design across all list pages
+
+Converted the remaining `row g-2` filter forms (clienti, subappaltatori,
+magazzino, utenti, scadenzario sicurezza) to the standard `app-filter-card` +
+`app-filter-grid` used elsewhere: green `btn-success` "Cerca" with a search icon,
+and the shared inline "Azzera filtri" reset. Every admin list page now shares the
+same filter-card design. Added hover styling to the reset link (muted → soft-green
+chip), a `app-filter-check` helper for the compliance checkbox, and bumped the
+service-worker cache to `gm-shell-v7`.
+
 ## 2026-07-12 — UI: unify the interventions filter with the other list pages
 
 The interventions filter was a bare `row g-2` form with a grey outline "Cerca"

@@ -36,33 +36,36 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
     </a>
 </div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="subject_type">
-            <option value=""><?= $e($t('common.all')) ?></option>
-            <?php foreach ($subjectTypes as $st): ?>
-                <option value="<?= $e($st) ?>" <?= $filters['subject_type'] === $st ? 'selected' : '' ?>><?= $e(Lang::label('compliance_subject', $st)) ?></option>
-            <?php endforeach; ?>
-        </select>
+<div class="card app-filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="app-filter-grid app-filter-grid-selects">
+            <select class="form-select" name="subject_type" aria-label="<?= $e($t('admin.compliance.title')) ?>">
+                <option value=""><?= $e($t('common.all')) ?></option>
+                <?php foreach ($subjectTypes as $st): ?>
+                    <option value="<?= $e($st) ?>" <?= $filters['subject_type'] === $st ? 'selected' : '' ?>><?= $e(Lang::label('compliance_subject', $st)) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select class="form-select" name="doc_type" aria-label="<?= $e($t('admin.compliance.title')) ?>">
+                <option value=""><?= $e($t('common.all')) ?></option>
+                <?php foreach ($docTypes as $dt): ?>
+                    <option value="<?= $e($dt) ?>" <?= $filters['doc_type'] === $dt ? 'selected' : '' ?>><?= $e(Lang::label('compliance_doc', $dt)) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <div class="form-check app-filter-check">
+                <input class="form-check-input" type="checkbox" name="expiring" value="1" id="f-expiring" <?= $filters['expiring'] ? 'checked' : '' ?>>
+                <label class="form-check-label" for="f-expiring"><?= $e($t('admin.compliance.filter_expiring')) ?></label>
+            </div>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
+            </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $filters['subject_type'] !== '' || $filters['doc_type'] !== '' || !empty($filters['expiring']),
+                'href'   => '/admin/compliance',
+                'inline' => true,
+            ], null) ?>
+        </form>
     </div>
-    <div class="col-6 col-sm-3">
-        <select class="form-select" name="doc_type">
-            <option value=""><?= $e($t('common.all')) ?></option>
-            <?php foreach ($docTypes as $dt): ?>
-                <option value="<?= $e($dt) ?>" <?= $filters['doc_type'] === $dt ? 'selected' : '' ?>><?= $e(Lang::label('compliance_doc', $dt)) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="col-auto d-flex align-items-center">
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="expiring" value="1" id="f-expiring" <?= $filters['expiring'] ? 'checked' : '' ?>>
-            <label class="form-check-label" for="f-expiring"><?= $e($t('admin.compliance.filter_expiring')) ?></label>
-        </div>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
-    </div>
-</form>
+</div>
 
 <div class="card">
     <div class="table-responsive">

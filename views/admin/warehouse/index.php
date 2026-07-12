@@ -20,14 +20,21 @@ $t = static fn (string $key): string => Lang::get($key);
     </a>
 </div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-12 col-sm-4">
-        <input type="text" class="form-control" name="q" value="<?= $e($search) ?>" placeholder="<?= $e($t('common.search')) ?>">
+<div class="card app-filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="app-filter-grid app-filter-grid-2">
+            <input type="text" class="form-control" name="q" value="<?= $e($search) ?>" placeholder="<?= $e($t('common.search')) ?>" aria-label="<?= $e($t('common.search')) ?>">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
+            </button>
+            <?= View::render('partials/filter_clear', [
+                'active' => $search !== '',
+                'href'   => '/admin/warehouse',
+                'inline' => true,
+            ], null) ?>
+        </form>
     </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
-    </div>
-</form>
+</div>
 
 <div class="card">
     <div class="table-responsive">
