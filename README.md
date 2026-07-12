@@ -1,5 +1,7 @@
 # Gestionale Muratori — Field Service & Construction Management
 
+[![CI](https://github.com/kristi2002/GestionaleMuratori/actions/workflows/ci.yml/badge.svg)](https://github.com/kristi2002/GestionaleMuratori/actions/workflows/ci.yml)
+
 Management platform for construction sites, on-site technical interventions, real-time
 warehouse inventory and client-facing reports. Three roles, three experiences:
 
