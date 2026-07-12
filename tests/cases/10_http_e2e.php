@@ -122,6 +122,7 @@ T::equals(403, $client1->get('/admin/financials', ['json' => false])['status'], 
 $rProj = $admin->get('/admin/projects/1', ['json' => false]);
 T::equals(200, $rProj['status'], 'admin project detail renders');
 T::ok(str_contains((string) $rProj['body'], 'Andamento Economico'), 'project detail shows the financial summary');
+T::ok(str_contains((string) $rProj['body'], 'Interventi del cantiere'), 'project detail shows the interventions section');
 
 // DURC / compliance gating: expired-doc subcontractor is flagged
 $rSub = $admin->get('/admin/subcontractors', ['json' => false]);

@@ -22,6 +22,11 @@ $t = static fn (string $key): string => Lang::get($key);
 
 $projectId = (int) $project['id'];
 $dash      = static fn ($v): string => ($v ?? '') !== '' ? (string) $v : '—';
+// CSP-safe map link: coordinates when present, otherwise the address string.
+$mapQuery  = ($project['lat'] ?? null) !== null && ($project['lng'] ?? null) !== null
+    ? $project['lat'] . ',' . $project['lng']
+    : (string) ($project['location'] ?? '');
+$mapUrl    = $mapQuery !== '' ? 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($mapQuery) : '';
 $fmtQty    = static fn (string $qty): string => rtrim(rtrim($qty, '0'), '.');
 $fmtBytes  = static function (int $bytes): string {
     return $bytes >= 1048576
@@ -54,6 +59,9 @@ $fmtBytes  = static function (int $bytes): string {
                 <li class="list-inline-item">
                     <i class="bi bi-geo-alt" aria-hidden="true"></i>
                     <?= $e($dash($project['location'])) ?>
+                    <?php if ($mapUrl !== ''): ?>
+                        <a href="<?= $e($mapUrl) ?>" target="_blank" rel="noopener" class="text-decoration-none ms-1" title="<?= $e($t('admin.projects.open_map')) ?>"><i class="bi bi-map" aria-hidden="true"></i></a>
+                    <?php endif; ?>
                 </li>
                 <li class="list-inline-item">
                     <i class="bi bi-calendar-event" aria-hidden="true"></i>
@@ -129,9 +137,17 @@ $fmtBytes  = static function (int $bytes): string {
 
 <ul class="nav nav-tabs app-profile-tabs mb-3" role="tablist" data-app-tabs>
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="projTabDocumentsBtn" type="button" role="tab"
+        <button class="nav-link active" id="projTabInterventionsBtn" type="button" role="tab"
+                data-bs-toggle="tab" data-bs-target="#interventi"
+                aria-controls="interventi" aria-selected="true">
+            <i class="bi bi-calendar-week" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_interventions')) ?>
+            <span class="badge text-bg-light border ms-1"><?= $e((string) count($interventions)) ?></span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="projTabDocumentsBtn" type="button" role="tab"
                 data-bs-toggle="tab" data-bs-target="#documenti"
-                aria-controls="documenti" aria-selected="true">
+                aria-controls="documenti" aria-selected="false">
             <i class="bi bi-folder2-open" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_documents')) ?>
         </button>
     </li>
@@ -156,11 +172,64 @@ $fmtBytes  = static function (int $bytes): string {
             <i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_attendance')) ?>
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="projTabSubsBtn" type="button" role="tab"
+                data-bs-toggle="tab" data-bs-target="#subappaltatori"
+                aria-controls="subappaltatori" aria-selected="false">
+            <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_subcontractors')) ?>
+            <span class="badge text-bg-light border ms-1"><?= $e((string) count($projectSubs)) ?></span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="projTabPhotosBtn" type="button" role="tab"
+                data-bs-toggle="tab" data-bs-target="#foto"
+                aria-controls="foto" aria-selected="false">
+            <i class="bi bi-images" aria-hidden="true"></i> <?= $e($t('admin.projects.tab_photos')) ?>
+            <span class="badge text-bg-light border ms-1"><?= $e((string) count($projectPhotos)) ?></span>
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content">
+    <!-- Interventi -->
+    <div class="tab-pane fade show active" id="interventi" role="tabpanel" aria-labelledby="projTabInterventionsBtn">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-calendar-week text-success" aria-hidden="true"></i> <?= $e($t('admin.projects.interventions_title')) ?></span>
+                <a class="btn btn-sm btn-success" href="<?= $e(Url::to('/admin/interventions/create?project_id=' . $projectId)) ?>">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.new')) ?>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><?= $e($t('admin.interventions.field_title')) ?></th>
+                            <th><?= $e($t('admin.interventions.worker')) ?></th>
+                            <th><?= $e($t('admin.interventions.scheduled_date')) ?></th>
+                            <th><?= $e($t('admin.interventions.status')) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($interventions === []): ?>
+                        <tr><td colspan="4" class="text-center text-muted py-4"><?= $e($t('admin.projects.no_interventions')) ?></td></tr>
+                    <?php endif; ?>
+                    <?php foreach ($interventions as $iv): ?>
+                        <tr>
+                            <td><a href="<?= $e(Url::to('/admin/interventions/' . $iv['id'])) ?>" class="text-decoration-none fw-semibold"><?= $e($iv['title']) ?></a></td>
+                            <td><?= $e($iv['worker_name'] ?? $t('admin.interventions.unassigned')) ?></td>
+                            <td class="small"><?= $e($dash($iv['scheduled_date'])) ?><?= ($iv['scheduled_start_time'] ?? null) ? ' ' . $e(substr((string) $iv['scheduled_start_time'], 0, 5)) : '' ?></td>
+                            <td><?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $iv['status']], null) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Documenti -->
-    <div class="tab-pane fade show active" id="documenti" role="tabpanel" aria-labelledby="projTabDocumentsBtn">
+    <div class="tab-pane fade" id="documenti" role="tabpanel" aria-labelledby="projTabDocumentsBtn">
         <div class="card mb-3">
             <div class="card-header bg-white fw-semibold">
                 <i class="bi bi-cloud-arrow-up text-success" aria-hidden="true"></i>
@@ -614,6 +683,73 @@ $fmtBytes  = static function (int $bytes): string {
                         <?php endforeach; ?>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subappaltatori -->
+    <div class="tab-pane fade" id="subappaltatori" role="tabpanel" aria-labelledby="projTabSubsBtn">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-diagram-3 text-success" aria-hidden="true"></i> <?= $e($t('admin.projects.subcontractors_title')) ?>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><?= $e($t('admin.subcontractors.name')) ?></th>
+                            <th><?= $e($t('admin.subcontractors.vat')) ?></th>
+                            <th><?= $e($t('admin.subcontractors.compliance')) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($projectSubs === []): ?>
+                        <tr><td colspan="3" class="text-center text-muted py-4"><?= $e($t('admin.projects.no_subcontractors')) ?></td></tr>
+                    <?php endif; ?>
+                    <?php
+                    $subBadge = ['expired' => ['app-status-danger', 'doc_expired'], 'expiring' => ['app-status-warning', 'doc_expiring'], 'ok' => ['app-status-success', 'doc_ok']];
+                    foreach ($projectSubs as $s): $st = $subCompliance[(int) $s['id']] ?? null; ?>
+                        <tr>
+                            <td class="fw-semibold"><?= $e($s['name']) ?></td>
+                            <td><?= $e($s['vat_or_tax_id']) ?></td>
+                            <td>
+                                <?php if (isset($subBadge[$st])): [$cls, $k] = $subBadge[$st]; ?>
+                                    <span class="app-status <?= $e($cls) ?>"><?= $e($t('admin.subcontractors.' . $k)) ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Foto -->
+    <div class="tab-pane fade" id="foto" role="tabpanel" aria-labelledby="projTabPhotosBtn">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-images text-success" aria-hidden="true"></i> <?= $e($t('admin.projects.photos_title')) ?>
+            </div>
+            <div class="card-body">
+                <?php if ($projectPhotos === []): ?>
+                    <div class="app-empty-state py-4">
+                        <i class="bi bi-images" aria-hidden="true"></i>
+                        <p class="small mb-0"><?= $e($t('admin.projects.no_photos')) ?></p>
+                    </div>
+                <?php else: ?>
+                    <div class="app-photo-grid">
+                        <?php foreach ($projectPhotos as $ph): $label = Lang::label('photo_types', (string) $ph['type']); ?>
+                            <a href="<?= $e(Url::to('/admin/photos/' . $ph['id'])) ?>" target="_blank" rel="noopener"
+                               class="app-photo-thumb" title="<?= $e($label . (($ph['intervention_title'] ?? '') !== '' ? ' — ' . $ph['intervention_title'] : '')) ?>">
+                                <img src="<?= $e(Url::to('/admin/photos/' . $ph['id'] . '/thumb')) ?>" alt="<?= $e($label) ?>" loading="lazy">
+                                <span class="app-photo-tag"><?= $e($label) ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -5,7 +5,11 @@ namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
+use App\Models\ComplianceDocumentModel;
+use App\Models\InterventionModel;
+use App\Models\PhotoModel;
 use App\Models\ProjectAbsenceModel;
+use App\Models\ProjectSubcontractorModel;
 use App\Models\ProjectDocumentModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectMaterialModel;
@@ -93,6 +97,10 @@ final class ProjectController
             'title'            => (string) $project['name'],
             'project'          => $project,
             'finance'          => (new \App\Services\FinancialsService())->forProject((int) $id),
+            'interventions'    => (new InterventionModel())->all(['project_id' => (int) $id]),
+            'projectSubs'      => (new ProjectSubcontractorModel())->subcontractorsFor((int) $id),
+            'subCompliance'    => (new ComplianceDocumentModel())->statusForSubjects('subcontractor'),
+            'projectPhotos'    => (new PhotoModel())->forProject((int) $id),
             'documents'        => (new ProjectDocumentModel())->forProject((int) $id),
             'invoices'         => (new ProjectInvoiceModel())->forProject((int) $id),
             'projectMaterials' => $materialModel->forProject((int) $id),

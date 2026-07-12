@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-12 — Project detail: interventions, subcontractors, photos, map link
+
+Richer project (cantiere) detail page:
+- **Interventi tab** (now the default): the project's interventions — title,
+  worker, date, status — with a "Nuovo intervento" shortcut.
+- **Subappaltatori tab:** subcontractors assigned to the project with their
+  DURC/compliance status badge.
+- **Foto tab:** before/during/after photo gallery across the project's
+  interventions (thumbnails via the permission-checked photo controller).
+- **Map link:** a CSP-safe "Apri nella mappa" link next to the location (uses the
+  project's lat/lng when set, else the address).
+
+New `PhotoModel::forProject`, extra data in `ProjectController::show`, Italian
+strings, gallery CSS. Service worker → `gm-shell-v12`. 486 tests pass.
+
 ## 2026-07-12 — UI: sticky project header on the project detail page
 
 The project's identity bar (name, status, client, location, period, workers +

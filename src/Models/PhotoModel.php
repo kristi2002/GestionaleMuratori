@@ -47,6 +47,21 @@ final class PhotoModel
         return $stmt->fetchAll();
     }
 
+    /** All photos on a project (across its interventions), newest first, capped. */
+    public function forProject(int $projectId, int $limit = 120): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT p.*, i.title AS intervention_title
+             FROM photos p
+             LEFT JOIN interventions i ON i.id = p.intervention_id
+             WHERE p.project_id = ?
+             ORDER BY p.created_at DESC, p.id DESC
+             LIMIT ' . (int) $limit
+        );
+        $stmt->execute([$projectId]);
+        return $stmt->fetchAll();
+    }
+
     /** §4.4 completion gate — at least one 'after' photo must exist. */
     public function hasAfterPhoto(int $interventionId): bool
     {
