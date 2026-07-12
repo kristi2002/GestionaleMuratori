@@ -76,14 +76,11 @@ $nextActions = [
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><?= $e($t('common.search')) ?></button>
     </div>
-    <?php if ($filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== ''): ?>
-        <div class="col-auto">
-            <a class="btn btn-link text-decoration-none" href="<?= $e(Url::to('/admin/interventions') . ($range !== '' ? '?range=' . $e($range) : '')) ?>">
-                <i class="bi bi-x-circle" aria-hidden="true"></i> <?= $e($t('common.reset_filters')) ?>
-            </a>
-        </div>
-    <?php endif; ?>
 </form>
+<?= View::render('partials/filter_clear', [
+    'active' => $filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== '',
+    'href'   => '/admin/interventions' . ($range !== '' ? '?range=' . $range : ''),
+], null) ?>
 
 <div class="card">
     <div class="table-responsive">
