@@ -39,6 +39,7 @@ return [
         'then'             => 'poi',
         'go_dashboard'     => 'Pannello',
         'go_statistics'    => 'Statistiche',
+        'go_financials'    => 'Andamento Economico',
         'go_clients'       => 'Clienti',
         'go_projects'      => 'Progetti',
         'go_interventions' => 'Interventi',
@@ -581,6 +582,21 @@ return [
             'expiry_before_issue' => 'La scadenza non può precedere la data di emissione.',
             'credits_invalid'  => 'I crediti devono essere un numero intero non negativo.',
             'not_found'        => 'Documento non trovato.',
+        ],
+
+        'financials' => [
+            'title'        => 'Andamento Economico',
+            'subtitle'     => 'Entrate e uscite per cantiere, con il margine in tempo reale.',
+            'invoiced'     => 'Fatturato',
+            'collected'    => 'Incassato',
+            'outstanding'  => 'Da incassare',
+            'costs'        => 'Costi',
+            'margin'       => 'Margine',
+            'by_project'   => 'Dettaglio per cantiere',
+            'margin_note'  => 'Margine = fatturato − costi (materiali a costo unitario + spese).',
+            'project'      => 'Cantiere',
+            'cost_ratio'   => 'Incidenza dei costi sul fatturato',
+            'empty'        => 'Nessun dato economico disponibile.',
         ],
 
         'statistics' => [

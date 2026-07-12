@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-12 — New: per-cantiere financial dashboard (`/admin/financials`)
+
+"Andamento Economico" — cash-in vs cash-out and live margin per construction
+site, the visibility feature competitors (Pillar / Edilizia in Cloud) lead with,
+built natively over data already captured (no AI, no new schema):
+
+- KPI row: total invoiced (issued+paid), collected (paid), costs, margin (+ %).
+- Per-cantiere table: invoiced, collected, outstanding, costs (materials valued
+  at `warehouse_items.unit_cost` + logged expenses), margin with a health colour
+  (loss / thin <15% / ok) and an inline cost-incidence bar.
+- New read-only `FinancialsService` (grouped queries merged in PHP to avoid
+  double-counting), admin-only `FinancialsController`, sidebar entry + "R"
+  shortcut, Italian strings, e2e tests. Service worker → `gm-shell-v10`.
+  **481 tests pass.**
+
 ## 2026-07-12 — New: customizable keyboard shortcuts
 
 Admins can now remap the "G-then-key" navigation shortcuts to their own keys on

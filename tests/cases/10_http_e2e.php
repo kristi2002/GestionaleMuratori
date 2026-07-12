@@ -111,6 +111,13 @@ T::equals(403, $worker1->post('/shortcuts', ['shortcuts' => ['clients' => 'x']])
 
 $admin->post('/shortcuts', ['shortcuts' => []]); // reset to defaults
 
+// Per-cantiere financials dashboard (admin-only)
+$rFin = $admin->get('/admin/financials', ['json' => false]);
+T::equals(200, $rFin['status'], 'admin financials page renders');
+T::ok(str_contains((string) $rFin['body'], 'Andamento Economico'), 'financials page shows its title');
+T::equals(403, $worker1->get('/admin/financials', ['json' => false])['status'], 'worker blocked from financials');
+T::equals(403, $client1->get('/admin/financials', ['json' => false])['status'], 'client blocked from financials');
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

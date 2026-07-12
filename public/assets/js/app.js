@@ -1320,9 +1320,9 @@
         // Defaults (fallback); the server injects the user's effective key->href
         // map (incl. any customisations) into body[data-shortcuts].
         var navMap = {
-            d: '/admin', t: '/admin/statistics', c: '/admin/clients', p: '/admin/projects',
-            i: '/admin/interventions', q: '/admin/quotes', f: '/admin/invoices', s: '/admin/expenses',
-            m: '/admin/warehouse', b: '/admin/attendance', u: '/admin/users', e: '/admin/exports'
+            d: '/admin', t: '/admin/statistics', r: '/admin/financials', c: '/admin/clients',
+            p: '/admin/projects', i: '/admin/interventions', q: '/admin/quotes', f: '/admin/invoices',
+            s: '/admin/expenses', m: '/admin/warehouse', b: '/admin/attendance', u: '/admin/users', e: '/admin/exports'
         };
         try {
             var custom = JSON.parse(document.body.getAttribute('data-shortcuts') || '');

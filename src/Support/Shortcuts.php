@@ -16,6 +16,7 @@ final class Shortcuts
     public const NAV = [
         'dashboard'     => ['d', '/admin',               'shortcuts.go_dashboard'],
         'statistics'    => ['t', '/admin/statistics',    'shortcuts.go_statistics'],
+        'financials'    => ['r', '/admin/financials',    'shortcuts.go_financials'],
         'clients'       => ['c', '/admin/clients',       'shortcuts.go_clients'],
         'projects'      => ['p', '/admin/projects',      'shortcuts.go_projects'],
         'interventions' => ['i', '/admin/interventions', 'shortcuts.go_interventions'],
