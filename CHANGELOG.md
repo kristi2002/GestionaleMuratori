@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-12 — New: customizable keyboard shortcuts
+
+Admins can now remap the "G-then-key" navigation shortcuts to their own keys on
+the `/shortcuts` page (edit the key next to each destination, Save, or Reset to
+defaults). Overrides persist per user and take effect app-wide.
+
+- New `App\Support\Shortcuts` is the single source of truth (defaults, merge,
+  validation — single letter, unique, "G" reserved); `app.js` and the editor
+  build off it so they never drift.
+- Migration `017_user_shortcuts.sql` adds `users.shortcuts` (JSON overrides);
+  loaded into the session at login, injected into `body[data-shortcuts]` for the
+  global handler. New `POST /shortcuts` endpoint (admin-only, validated,
+  `{ok,data,error}`). Also added a shortcut for the new Statistiche page ("T").
+- Italian strings, CSS for the editable key input, e2e tests (save/persist,
+  duplicate + reserved rejected, worker blocked). Service worker → `gm-shell-v9`.
+  **477 tests pass.**
+
 ## 2026-07-12 — New: statistics dashboard (`/admin/statistics`)
 
 Read-only analytics page for admins: a KPI row (active projects, interventions

@@ -8,12 +8,15 @@ use App\Models\ComplianceDocumentModel;
 use App\Models\InterventionModel;
 use App\Models\ProjectModel;
 use App\Models\SiteAttendanceModel;
+use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
 use App\Support\Auth;
 use App\Support\Database;
 use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
+use App\Support\Session;
+use App\Support\Shortcuts;
 use App\Support\Url;
 use App\Support\View;
 
@@ -78,9 +81,44 @@ final class DashboardController
     {
         AuthGuard::require($request); // any authenticated user
 
+        // Fresh overrides from the DB so the editor reflects the saved state even
+        // if the session snapshot predates the last save.
+        $stored = Auth::role() === 'admin'
+            ? (new UserModel())->findById((int) Auth::id())['shortcuts'] ?? null
+            : null;
+
         Response::html(View::render('shortcuts', [
-            'title' => Lang::get('shortcuts.title'),
+            'title'      => Lang::get('shortcuts.title'),
+            'shortcuts'  => Shortcuts::effective($stored),
         ], 'layout'));
+    }
+
+    /** POST /shortcuts — save the admin's navigation-shortcut overrides (JSON). */
+    public function saveShortcuts(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $raw = $request->input('shortcuts', []);
+        if (!is_array($raw)) {
+            $raw = [];
+        }
+
+        [$overrides, $error] = Shortcuts::validate($raw);
+        if ($error !== null) {
+            Response::fail(Lang::get($error), 422);
+            return;
+        }
+
+        $json = $overrides === [] ? null : json_encode($overrides, JSON_UNESCAPED_SLASHES);
+        (new UserModel())->saveShortcuts((int) Auth::id(), $json);
+
+        // Reflect the change in the session so the global handler updates without
+        // a re-login (Auth::user() is a session snapshot).
+        $user = Auth::user();
+        $user['shortcuts'] = $json;
+        Session::set('user', $user);
+
+        Response::json(['ok' => true, 'data' => ['shortcuts' => Shortcuts::effective($json)]]);
     }
 
     /** GET /health — public lightweight readiness probe. */

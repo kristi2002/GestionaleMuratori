@@ -94,6 +94,23 @@ T::ok(str_contains((string) $rStats['body'], 'app-chart-donut'), 'statistics pag
 T::equals(403, $worker1->get('/admin/statistics', ['json' => false])['status'], 'worker blocked from statistics');
 T::equals(403, $client1->get('/admin/statistics', ['json' => false])['status'], 'client blocked from statistics');
 
+// Editable keyboard shortcuts (admin-only)
+$rSc = $admin->get('/shortcuts', ['json' => false]);
+T::equals(200, $rSc['status'], 'shortcuts page renders for admin');
+T::ok(str_contains((string) $rSc['body'], 'js-shortcuts-form'), 'admin sees the shortcuts editor');
+
+$rSave = $admin->post('/shortcuts', ['shortcuts' => ['clients' => 'x', 'projects' => 'p']]);
+T::equals(200, $rSave['status'], 'valid shortcuts save ok');
+T::ok(($rSave['json']['ok'] ?? false) === true, 'save returns ok');
+T::equals('x', $rSave['json']['data']['shortcuts']['clients'] ?? null, 'custom key reflected in response');
+T::ok(str_contains((string) $admin->get('/shortcuts', ['json' => false])['body'], 'value="X"'), 'saved key persists in the editor');
+
+T::equals(422, $admin->post('/shortcuts', ['shortcuts' => ['clients' => 'p']])['status'], 'duplicate key rejected');
+T::equals(422, $admin->post('/shortcuts', ['shortcuts' => ['clients' => 'g']])['status'], 'reserved key rejected');
+T::equals(403, $worker1->post('/shortcuts', ['shortcuts' => ['clients' => 'x']])['status'], 'worker cannot save shortcuts');
+
+$admin->post('/shortcuts', ['shortcuts' => []]); // reset to defaults
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

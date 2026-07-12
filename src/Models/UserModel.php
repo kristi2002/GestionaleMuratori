@@ -29,6 +29,13 @@ final class UserModel
         return $stmt->execute([$hash, $id]);
     }
 
+    /** Persist a user's keyboard-shortcut overrides (JSON string, or null to reset). */
+    public function saveShortcuts(int $id, ?string $json): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE users SET shortcuts = ? WHERE id = ?');
+        return $stmt->execute([$json, $id]);
+    }
+
     /**
      * User list for the admin panel. Deliberately excludes password_hash:
      * rows are embedded in the page as JSON for the edit modal.

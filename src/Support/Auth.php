@@ -34,6 +34,7 @@ final class Auth
             'role'             => (string) $user['role'],
             'client_id'        => $user['client_id'] !== null ? (int) $user['client_id'] : null,
             'subcontractor_id' => ($user['subcontractor_id'] ?? null) !== null ? (int) $user['subcontractor_id'] : null,
+            'shortcuts'        => $user['shortcuts'] ?? null,
         ]);
     }
 

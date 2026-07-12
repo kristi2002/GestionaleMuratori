@@ -38,6 +38,7 @@ return [
         'close'            => 'Chiudi finestra, menu o filtro',
         'then'             => 'poi',
         'go_dashboard'     => 'Pannello',
+        'go_statistics'    => 'Statistiche',
         'go_clients'       => 'Clienti',
         'go_projects'      => 'Progetti',
         'go_interventions' => 'Interventi',
@@ -49,6 +50,11 @@ return [
         'go_users'         => 'Utenti',
         'go_exports'       => 'Esportazioni',
         'admin_only_note'  => 'Le scorciatoie di navigazione sono disponibili nel pannello amministratore.',
+        'edit_hint'        => 'Personalizza i tasti, poi premi Salva.',
+        'reset'            => 'Ripristina predefiniti',
+        'saved'            => 'Scorciatoie salvate.',
+        'err_invalid_key'  => 'Usa una singola lettera (A–Z), diversa da «G».',
+        'err_duplicate'    => 'Ogni scorciatoia deve avere un tasto diverso.',
     ],
 
     // In-app alert feed + the scheduled-automation messages (scripts/scheduler.php).

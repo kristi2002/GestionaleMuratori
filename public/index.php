@@ -122,6 +122,7 @@ $router->get('/admin',   [DashboardController::class, 'admin']);
 $router->get('/admin/statistics', [StatisticsController::class, 'index']);
 $router->get('/health',  [DashboardController::class, 'health']);
 $router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
+$router->post('/shortcuts', [DashboardController::class, 'saveShortcuts']);
 
 $router->get('/admin/clients',              [ClientController::class, 'index']);
 $router->get('/admin/clients/create',       [ClientController::class, 'create']);

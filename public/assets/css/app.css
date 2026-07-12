@@ -1111,6 +1111,42 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     border-top-color: #2A2F37;
 }
 
+/* Editable key (shortcuts editor): a .app-kbd you can type into. */
+.app-kbd-input {
+    width: 2.1rem;
+    padding: .2rem;
+    font-family: var(--font-mono, monospace);
+    font-size: .8rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+    color: #334155;
+    background-color: #f8fafc;
+    border: 1px solid #d7dde3;
+    border-bottom-width: 2px;
+    border-radius: .4rem;
+}
+
+.app-kbd-input:focus {
+    outline: none;
+    border-color: var(--app-green);
+    background-color: #fff;
+    box-shadow: 0 0 0 .2rem rgba(46, 125, 50, .15);
+}
+
+.app-kbd-input.is-dup {
+    border-color: #c02f2b;
+    background-color: #fbe4e4;
+    color: #a12622;
+}
+
+[data-bs-theme="dark"] .app-kbd-input {
+    color: #E7EAEE;
+    background-color: #14171C;
+    border-color: #2A2F37;
+}
+
 /* --- Empty states -------------------------------------------------------- */
 
 .app-empty-state {

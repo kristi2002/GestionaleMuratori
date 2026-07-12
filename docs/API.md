@@ -35,6 +35,9 @@ Conventions:
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/admin` | Operations dashboard: active projects, open interventions, today's interventions by status, low-stock alert table, section links. |
+| GET | `/admin/statistics` | Read-only analytics: KPI row + status donuts, monthly interventions trend, expenses-by-category and top-clients bars (pure SVG/CSS). |
+| GET | `/shortcuts` | Keyboard-shortcut guide; for admins, an editor for the "G-then-key" nav shortcuts. Any authenticated user. |
+| POST | `/shortcuts` | `shortcuts[<action>]=<key>` map. Admin only. Validates (single letter, unique, "G" reserved), persists overrides → `{ok,data:{shortcuts}}` or `{ok:false,error}` (422). |
 
 ### Clients
 | Method | Path | Body / params | Description |

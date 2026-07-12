@@ -1317,11 +1317,17 @@
     // views/shortcuts.php. Never fires while the user is typing in a field.
     $(function () {
         var role = document.body.getAttribute('data-role') || '';
+        // Defaults (fallback); the server injects the user's effective key->href
+        // map (incl. any customisations) into body[data-shortcuts].
         var navMap = {
-            d: '/admin', c: '/admin/clients', p: '/admin/projects', i: '/admin/interventions',
-            q: '/admin/quotes', f: '/admin/invoices', s: '/admin/expenses', m: '/admin/warehouse',
-            b: '/admin/attendance', u: '/admin/users', e: '/admin/exports'
+            d: '/admin', t: '/admin/statistics', c: '/admin/clients', p: '/admin/projects',
+            i: '/admin/interventions', q: '/admin/quotes', f: '/admin/invoices', s: '/admin/expenses',
+            m: '/admin/warehouse', b: '/admin/attendance', u: '/admin/users', e: '/admin/exports'
         };
+        try {
+            var custom = JSON.parse(document.body.getAttribute('data-shortcuts') || '');
+            if (custom && typeof custom === 'object' && Object.keys(custom).length) { navMap = custom; }
+        } catch (err) { /* keep defaults */ }
         var pendingG = false;
         var pendingTimer = null;
 
@@ -1366,6 +1372,58 @@
                 pendingG = true;
                 pendingTimer = window.setTimeout(clearPendingG, 1200);
             }
+        });
+    });
+
+    // --- Keyboard-shortcut editor (/shortcuts, admins) -----------------------
+    // Each row has a single-letter key input; Save posts the {action: key} map,
+    // the server validates (single letter, unique, "g" reserved) and persists it.
+    $(function () {
+        var $form = $('.js-shortcuts-form');
+        if (!$form.length) { return; }
+        var $msg  = $form.find('.js-shortcuts-msg');
+        var $keys = $form.find('.js-shortcut-key');
+
+        function normalize() {
+            $keys.each(function () {
+                this.value = (this.value || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 1);
+            });
+            var seen = {};
+            $keys.each(function () { if (this.value) { seen[this.value] = (seen[this.value] || 0) + 1; } });
+            $keys.each(function () { $(this).toggleClass('is-dup', !!this.value && seen[this.value] > 1); });
+        }
+
+        $form.on('input', '.js-shortcut-key', normalize);
+        normalize();
+
+        $form.find('.js-shortcuts-reset').on('click', function () {
+            $keys.each(function () { this.value = $(this).data('default'); });
+            normalize();
+            $form.trigger('submit');
+        });
+
+        $form.on('submit', function (e) {
+            e.preventDefault();
+            var payload = {};
+            $keys.each(function () {
+                var m = /^shortcuts\[(.+)\]$/.exec(this.name || '');
+                if (m) { payload[m[1]] = (this.value || '').toLowerCase(); }
+            });
+            $msg.removeClass('text-success text-danger').text('');
+            $.ajax({
+                url: $form.data('url'),
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ shortcuts: payload })
+            }).done(function (res) {
+                if (res && res.ok) {
+                    $msg.addClass('text-success').text($form.data('saved') || 'OK');
+                } else {
+                    $msg.addClass('text-danger').text((res && res.error) || '');
+                }
+            }).fail(function (xhr) {
+                $msg.addClass('text-danger').text((xhr.responseJSON && xhr.responseJSON.error) || '');
+            });
         });
     });
 }(jQuery));

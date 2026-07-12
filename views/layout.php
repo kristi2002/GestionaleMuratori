@@ -5,11 +5,16 @@
 /** @var string|null $title */
 use App\Support\Csrf;
 use App\Support\Lang;
+use App\Support\Shortcuts;
 use App\Support\View;
 use App\Support\Url;
 
 $base = $base ?? '';
 $user = $user ?? null;
+// Effective key => href map for the admin nav shortcuts, read by app.js.
+$shortcutMap = ($user['role'] ?? '') === 'admin'
+    ? json_encode(Shortcuts::keyHrefMap($user['shortcuts'] ?? null), JSON_UNESCAPED_SLASHES)
+    : '';
 $e = static fn (?string $v): string => View::e($v);
 
 // Theme is persisted in a cookie and rendered server-side so there is no flash
@@ -116,7 +121,7 @@ $subActive = static function (string $href) use ($reqPath): bool {
     <?php // filemtime cache-buster: browsers drop stale copies whenever the file changes. ?>
     <link href="<?= $e($base) ?>/assets/css/app.css?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/css/app.css') ?>" rel="stylesheet">
 </head>
-<body data-base="<?= $e($base) ?>" data-role="<?= $e($user['role'] ?? '') ?>">
+<body data-base="<?= $e($base) ?>" data-role="<?= $e($user['role'] ?? '') ?>" data-shortcuts="<?= $e($shortcutMap) ?>">
 <nav class="navbar navbar-dark app-navbar sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center">
