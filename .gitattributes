@@ -1,0 +1,4 @@
+# Shell scripts must keep LF line endings or they break in Linux containers
+# (a CRLF shebang gives "/bin/sh^M: bad interpreter"). Force it regardless of
+# the committer's platform / core.autocrlf setting.
+*.sh text eol=lf
