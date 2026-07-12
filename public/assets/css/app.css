@@ -199,6 +199,25 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     margin: 0;
 }
 
+/* --- Sticky project context bar (project detail) ------------------------- */
+/* The project's identity + actions follow the scroll, docked just under the
+   sticky top navbar, so name/location/status stay visible on long pages. */
+.app-project-bar {
+    position: sticky;
+    top: var(--app-topbar-h);
+    z-index: 1010;
+    background: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: .75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    padding: .55rem 1rem;
+}
+
+[data-bs-theme="dark"] .app-project-bar {
+    background: #191D23;
+    border-color: #2A2F37;
+}
+
 /* --- Statistics charts (pure SVG/CSS, no JS library) --------------------- */
 .app-chart-donut {
     display: flex;

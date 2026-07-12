@@ -39,44 +39,42 @@ $fmtBytes  = static function (int $bytes): string {
     [(string) $project['name'], null],
 ]], null) ?>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div class="min-w-0">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <h1 class="h4 mb-0 text-truncate"><?= $e($project['name']) ?></h1>
-                    <?= View::render('partials/status_badge', ['group' => 'project_status', 'value' => (string) $project['status']], null) ?>
-                </div>
-                <ul class="list-inline small text-muted mt-1 mb-0 app-profile-meta">
-                    <li class="list-inline-item">
-                        <i class="bi bi-person" aria-hidden="true"></i>
-                        <?= $e($project['client_name']) ?>
-                    </li>
-                    <li class="list-inline-item">
-                        <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                        <?= $e($dash($project['location'])) ?>
-                    </li>
-                    <li class="list-inline-item">
-                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
-                        <?= $e((string) $project['start_date']) ?><?= ($project['end_date'] ?? '') !== '' && $project['end_date'] !== null ? ' → ' . $e((string) $project['end_date']) : '' ?>
-                    </li>
-                    <li class="list-inline-item">
-                        <i class="bi bi-people" aria-hidden="true"></i>
-                        <?= $e(($project['worker_names'] ?? '') !== '' && $project['worker_names'] !== null ? $project['worker_names'] : $t('admin.projects.no_workers')) ?>
-                    </li>
-                </ul>
+<div class="app-project-bar mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="min-w-0">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1 class="h5 mb-0 text-truncate"><?= $e($project['name']) ?></h1>
+                <?= View::render('partials/status_badge', ['group' => 'project_status', 'value' => (string) $project['status']], null) ?>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a class="btn btn-success" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/edit')) ?>">
-                    <i class="bi bi-pencil" aria-hidden="true"></i> <?= $e($t('common.edit')) ?>
-                </a>
-                <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/report/pdf')) ?>">
-                    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= $e($t('report.pdf')) ?>
-                </a>
-                <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/report/excel')) ?>">
-                    <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= $e($t('report.excel')) ?>
-                </a>
-            </div>
+            <ul class="list-inline small text-muted mt-1 mb-0 app-profile-meta">
+                <li class="list-inline-item">
+                    <i class="bi bi-person" aria-hidden="true"></i>
+                    <?= $e($project['client_name']) ?>
+                </li>
+                <li class="list-inline-item">
+                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                    <?= $e($dash($project['location'])) ?>
+                </li>
+                <li class="list-inline-item">
+                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                    <?= $e((string) $project['start_date']) ?><?= ($project['end_date'] ?? '') !== '' && $project['end_date'] !== null ? ' → ' . $e((string) $project['end_date']) : '' ?>
+                </li>
+                <li class="list-inline-item">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <?= $e(($project['worker_names'] ?? '') !== '' && $project['worker_names'] !== null ? $project['worker_names'] : $t('admin.projects.no_workers')) ?>
+                </li>
+            </ul>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-success btn-sm" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/edit')) ?>">
+                <i class="bi bi-pencil" aria-hidden="true"></i> <?= $e($t('common.edit')) ?>
+            </a>
+            <a class="btn btn-outline-secondary btn-sm" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/report/pdf')) ?>">
+                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= $e($t('report.pdf')) ?>
+            </a>
+            <a class="btn btn-outline-secondary btn-sm" href="<?= $e(Url::to('/admin/projects/' . $projectId . '/report/excel')) ?>">
+                <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= $e($t('report.excel')) ?>
+            </a>
         </div>
     </div>
 </div>

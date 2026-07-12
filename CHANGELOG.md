@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-12 — UI: sticky project header on the project detail page
+
+The project's identity bar (name, status, client, location, period, workers +
+Edit/PDF/Excel actions) is now a sticky context bar that docks just under the top
+navbar (`position: sticky; top: --app-topbar-h`), so the key project info stays
+visible while scrolling through the tabs. Made slightly more compact (h5, small
+buttons). Service worker → `gm-shell-v11`.
+
 ## 2026-07-12 — DURC/compliance gating + per-cantiere financials on project page
 
 - **Compliance gating (subappaltatori):** the subcontractors list now shows a
