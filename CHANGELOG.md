@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-12 — Production hardening: pagination, auto-migrate, reset, audit
+
+Deployment-readiness batch:
+- **Pagination** on the projects, clients, subcontractors and warehouse lists
+  (they previously loaded every row). CSV exports/dropdowns unaffected.
+- **Auto-migrate on deploy:** `deploy/entrypoint.sh` runs `migrate.php` (idempotent,
+  with DB-warmup retries) before serving — no more manual migrate step. `.sh`
+  files pinned to LF via `.gitattributes`.
+- **Self-service password reset** (`/forgot-password` → e-mailed single-use,
+  1-hour token → `/reset-password`), no account enumeration.
+- **Audit log** (`/admin/audit`): who created/updated/deleted what, wired into
+  user management, deletes and invoice writes.
+- (DB backup/restore already shipped in `scripts/backup.sh` + docs.)
+
+Migrations 019 (password_resets) and 020 (audit_log) auto-apply on next deploy.
+526 tests pass.
+
 ## 2026-07-12 — Platform features: global search, calendar, CSV export
 
 - **Global search:** navbar search box (admin) + `/admin/search` results page —
