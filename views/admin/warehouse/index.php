@@ -74,7 +74,7 @@ $t = static fn (string $key): string => Lang::get($key);
                     </td>
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-primary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>#trasferisci"><?= $e($t('admin.warehouse.transfer.action')) ?></a>
-                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>"><?= $e($t('admin.warehouse.ledger')) ?></a>
+                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'])) ?>#registro"><?= $e($t('admin.warehouse.ledger')) ?></a>
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/warehouse/' . $it['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>
                         </a>

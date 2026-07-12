@@ -81,7 +81,7 @@ $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
             </ul>
         </div>
 
-        <div class="card mt-3">
+        <div class="card mt-3 app-anchor" id="trasferisci">
             <div class="card-body">
                 <h2 class="h6 mb-3"><?= $e($t('admin.warehouse.transfer.title')) ?></h2>
                 <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
@@ -117,7 +117,7 @@ $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
     </div>
 
     <div class="col-12 col-lg-8">
-        <div class="card">
+        <div class="card app-anchor" id="registro">
             <div class="card-header bg-white"><?= $e($t('admin.warehouse.ledger')) ?></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">

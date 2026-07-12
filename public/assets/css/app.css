@@ -237,6 +237,9 @@ input[type="time"]::-webkit-datetime-edit {
     border-color: #2A2F37;
 }
 
+/* Sections targeted by an in-page #anchor: leave room for the sticky navbar. */
+.app-anchor { scroll-margin-top: 4.5rem; }
+
 /* --- Project photo gallery ----------------------------------------------- */
 .app-photo-grid {
     display: grid;
