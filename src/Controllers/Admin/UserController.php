@@ -8,6 +8,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
 use App\Models\SubcontractorModel;
 use App\Models\UserModel;
+use App\Support\AuditLog;
 use App\Support\Auth;
 use App\Support\Lang;
 use App\Support\Request;
@@ -95,6 +96,7 @@ final class UserController
         $data['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
 
         $id = (new UserModel())->create($data);
+        AuditLog::record('created', 'user', $id, (string) ($data['name'] ?? ''));
         Response::ok(['id' => $id]);
     }
 
@@ -121,6 +123,7 @@ final class UserController
         }
 
         $model->update((int) $id, $data);
+        AuditLog::record('updated', 'user', (int) $id, (string) ($data['name'] ?? $user['name']));
 
         // Optional password reset piggybacked on the edit form.
         $password = (string) $request->input('password', '');
@@ -151,7 +154,9 @@ final class UserController
             return;
         }
 
-        $model->setActive((int) $id, ((int) $user['is_active']) !== 1);
+        $newActive = ((int) $user['is_active']) !== 1;
+        $model->setActive((int) $id, $newActive);
+        AuditLog::record($newActive ? 'activated' : 'deactivated', 'user', (int) $id, (string) $user['name']);
         Response::ok();
     }
 

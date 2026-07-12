@@ -18,6 +18,7 @@ use App\Models\ProjectNoteModel;
 use App\Models\StockLocationModel;
 use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
+use App\Support\AuditLog;
 use App\Support\Auth;
 use App\Support\Config;
 use App\Support\Csv;
@@ -433,6 +434,7 @@ final class ProjectController
             'created_by' => Auth::id(),
         ]);
 
+        AuditLog::record('created', 'invoice', $invoiceId, 'N. ' . $number . ' · € ' . $amount);
         Response::ok(['id' => $invoiceId]);
     }
 
@@ -449,6 +451,7 @@ final class ProjectController
         }
 
         $model->delete((int) $invoiceId);
+        AuditLog::record('deleted', 'invoice', (int) $invoiceId, (string) ($invoice['number'] ?? ''));
         Response::ok();
     }
 
@@ -611,6 +614,7 @@ final class ProjectController
         }
 
         $model->delete((int) $id);
+        AuditLog::record('deleted', 'project', (int) $id, (string) $project['name']);
         Response::ok();
     }
 

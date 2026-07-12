@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ExpenseModel;
 use App\Models\ProjectModel;
 use App\Models\UserModel;
+use App\Support\AuditLog;
 use App\Support\Auth;
 use App\Support\Csv;
 use App\Support\Lang;
@@ -164,13 +165,15 @@ final class ExpenseController
     {
         AuthGuard::require($request, ['admin']);
 
-        $model = new ExpenseModel();
-        if ($model->find((int) $id) === null) {
+        $model    = new ExpenseModel();
+        $expense  = $model->find((int) $id);
+        if ($expense === null) {
             Response::fail(Lang::get('admin.expenses.not_found'), 404);
             return;
         }
 
         $model->delete((int) $id);
+        AuditLog::record('deleted', 'expense', (int) $id, (string) ($expense['description'] ?? ''));
         Response::ok();
     }
 

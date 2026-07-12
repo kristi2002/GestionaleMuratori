@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
+use App\Support\AuditLog;
 use App\Support\Csv;
 use App\Support\Lang;
 use App\Support\Paginator;
@@ -122,6 +123,7 @@ final class ClientController
         }
 
         $model->delete((int) $id);
+        AuditLog::record('deleted', 'client', (int) $id, (string) $client['name']);
         Response::ok();
     }
 

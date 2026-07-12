@@ -188,6 +188,13 @@ T::equals(200, $admin->post('/reset-password', ['token' => 'KNOWN-TOKEN-123', 'n
 T::equals(200, (new HttpClient($baseUrl))->login('admin@gestionale.local', 'NuovaPass123')['status'], 'login works with the reset password');
 $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([password_hash('password', PASSWORD_DEFAULT), $adminId]);
 
+// Audit log
+T::equals(200, $admin->get('/admin/audit', ['json' => false])['status'], 'audit page renders');
+T::equals(403, $worker1->get('/admin/audit', ['json' => false])['status'], 'worker blocked from audit');
+$admin->post('/admin/users', ['name' => 'Audit Test', 'email' => 'audit-test@x.local', 'role' => 'worker', 'password' => 'Password123']);
+T::ok((int) $pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'created' AND entity = 'user'")->fetchColumn() >= 1, 'user creation is audited');
+T::ok(str_contains((string) $admin->get('/admin/audit', ['json' => false])['body'], 'Audit Test'), 'audit entry appears on the page');
+
 // ---------------------------------------------------------------------------
 T::section('E2E: admin CRUD (client / project / warehouse + ledger)');
 $r = $admin->post('/admin/clients', ['name' => 'Cliente E2E Srl', 'email' => 'e2e@cliente.it']);

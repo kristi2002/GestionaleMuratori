@@ -209,6 +209,24 @@ return [
         'site'      => 'Cantiere',
     ],
 
+    'audit_actions' => [
+        'created'     => 'Creazione',
+        'updated'     => 'Modifica',
+        'deleted'     => 'Eliminazione',
+        'activated'   => 'Attivazione',
+        'deactivated' => 'Disattivazione',
+        'reset'       => 'Reimpostazione',
+    ],
+
+    'audit_entities' => [
+        'user'          => 'Utente',
+        'client'        => 'Cliente',
+        'project'       => 'Cantiere',
+        'invoice'       => 'Fattura',
+        'expense'       => 'Spesa',
+        'subcontractor' => 'Subappaltatore',
+    ],
+
     'common' => [
         'save'    => 'Salva',
         'add'     => 'Aggiungi',
@@ -605,6 +623,17 @@ return [
             'expiry_before_issue' => 'La scadenza non può precedere la data di emissione.',
             'credits_invalid'  => 'I crediti devono essere un numero intero non negativo.',
             'not_found'        => 'Documento non trovato.',
+        ],
+
+        'audit' => [
+            'title'    => 'Registro attività',
+            'subtitle' => 'Chi ha fatto cosa: creazioni, modifiche ed eliminazioni.',
+            'when'     => 'Data/ora',
+            'user'     => 'Utente',
+            'action'   => 'Azione',
+            'entity'   => 'Oggetto',
+            'detail'   => 'Dettaglio',
+            'empty'    => 'Nessuna attività registrata.',
         ],
 
         'search' => [
