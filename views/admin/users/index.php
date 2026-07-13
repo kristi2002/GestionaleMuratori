@@ -65,7 +65,7 @@ $t = static fn (string $key): string => Lang::get($key);
             <?php endif; ?>
             <?php foreach ($users as $u): ?>
                 <tr class="<?= ((int) $u['is_active']) === 1 ? '' : 'table-secondary text-muted' ?>">
-                    <td><?= $e($u['name']) ?></td>
+                    <td><a class="app-card-title-link fw-semibold" href="<?= $e(Url::to('/admin/users/' . $u['id'])) ?>"><?= $e($u['name']) ?></a></td>
                     <td><?= $e($u['email']) ?></td>
                     <td><span class="badge text-bg-light border"><?= $e(Lang::label('roles', $u['role'])) ?></span></td>
                     <td><?= $e($u['client_name'] ?? $u['subcontractor_name'] ?? '—') ?></td>

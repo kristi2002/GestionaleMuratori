@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-07-14 — Redesigned login + financials, new operaio profile
+
+Second design pass over three mockup-driven pages:
+
+- **Login** — split-screen: a navy brand hero (headline, feature checklist) beside
+  a themed sign-in card. Form logic unchanged (AJAX login, forgot-password, demo
+  creds); no fabricated features added. Hero collapses to form-only on phones.
+- **Fatturazione & Preventivi** (`/admin/financials`) — rebuilt around the mockup:
+  a month chip + "Nuova fattura" CTA, four KPI cards (invoiced-this-month with a
+  real 12-month sparkline, collected, outstanding, margin), an **Andamento
+  fatturato** bar chart, and a **Riepilogo pagamenti** panel of outstanding by
+  client. New data comes from a real query on `project_invoices.issue_date` —
+  nothing invented (`FinancialsService` now returns `months` + `current_month`).
+- **Operaio / user profile** (`GET /admin/users/{id}`, **new page**) — identity
+  card with avatar (upload + permission-checked serve, initials fallback), job
+  title, tenure from hire date; vivid metric cards (hours this month, presences,
+  current cantiere); a monthly attendance heatmap; assigned interventions; and
+  personal compliance documents with freshness pills. All from existing tables.
+
+Schema: migration **021** adds `users.job_title`, `phone`, `hire_date`,
+`avatar_path`; the user form and validation gained those fields. Avatars are
+stored via the Storage disk and streamed through `UserController::avatar`
+(never static), like photos/signatures. New routes: `GET /admin/users/{id}`,
+`GET|POST /admin/users/{id}/avatar`. 526 tests pass. sw.js → gm-shell-v21.
+
 ## 2026-07-13 — Visual redesign: Navy + Orange design system
 
 Full restyle of the app shell and every page onto a deep-navy + orange identity

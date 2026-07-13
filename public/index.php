@@ -215,12 +215,15 @@ $router->post('/admin/expenses',              [ExpenseController::class, 'store'
 $router->post('/admin/expenses/{id}',         [ExpenseController::class, 'update']);
 $router->post('/admin/expenses/{id}/delete',  [ExpenseController::class, 'destroy']);
 
-$router->get('/admin/users',              [UserController::class, 'index']);
-$router->get('/admin/users/create',       [UserController::class, 'create']);
-$router->get('/admin/users/{id}/edit',    [UserController::class, 'edit']);
-$router->post('/admin/users',             [UserController::class, 'store']);
-$router->post('/admin/users/{id}',        [UserController::class, 'update']);
-$router->post('/admin/users/{id}/toggle', [UserController::class, 'toggleActive']);
+$router->get('/admin/users',                [UserController::class, 'index']);
+$router->get('/admin/users/create',         [UserController::class, 'create']);
+$router->get('/admin/users/{id}/edit',      [UserController::class, 'edit']);
+$router->get('/admin/users/{id}/avatar',    [UserController::class, 'avatar']);
+$router->get('/admin/users/{id}',           [UserController::class, 'show']);
+$router->post('/admin/users',               [UserController::class, 'store']);
+$router->post('/admin/users/{id}/avatar',   [UserController::class, 'uploadAvatar']);
+$router->post('/admin/users/{id}',          [UserController::class, 'update']);
+$router->post('/admin/users/{id}/toggle',   [UserController::class, 'toggleActive']);
 
 $router->get('/admin/notifications',                 [NotificationController::class, 'index']);
 $router->post('/admin/notifications/read-all',       [NotificationController::class, 'readAll']);

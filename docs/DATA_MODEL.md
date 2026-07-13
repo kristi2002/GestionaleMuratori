@@ -16,7 +16,11 @@ Relations are strict: **Client 1→N Projects 1→N Interventions**. v2 adds a
 |--------|------|-------|
 | id | BIGINT UNSIGNED PK | |
 | name | VARCHAR(190) | |
+| job_title | VARCHAR(120) NULL | qualifica, shown on the profile page (migration 021) |
 | email | VARCHAR(190) UNIQUE | login identifier |
+| phone | VARCHAR(40) NULL | contact phone (migration 021) |
+| hire_date | DATE NULL | drives the "anni di esperienza" tenure (migration 021) |
+| avatar_path | VARCHAR(255) NULL | stored avatar, served via `UserController::avatar` only (migration 021) |
 | password_hash | VARCHAR(255) | `password_hash()` (bcrypt/argon per PHP default) |
 | role | ENUM admin/worker/client/subcontractor | `subcontractor` added in v2 (migration 004) |
 | client_id | FK → clients, NULL | only for role=client (`ON DELETE SET NULL`) |

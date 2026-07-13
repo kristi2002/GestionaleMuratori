@@ -495,6 +495,11 @@ input[type="time"]::-webkit-datetime-edit {
 
 .app-hbars { display: flex; flex-direction: column; gap: .55rem; }
 
+/* Client payment-summary rows (financials right panel). */
+.app-payrow + .app-payrow { margin-top: .85rem; }
+.app-payrow-name { font-size: .85rem; font-weight: 600; color: var(--app-slate); min-width: 0; }
+.app-payrow-val { font-size: .82rem; font-weight: 700; white-space: nowrap; }
+
 .app-hbar-row { display: flex; align-items: center; gap: .6rem; }
 
 .app-hbar-label {
@@ -2026,6 +2031,287 @@ input[type="time"]::-webkit-datetime-edit {
     filter: drop-shadow(0 4px 10px rgba(194, 65, 12, .25));
 }
 
+/* --- Split-screen login (navy hero + sign-in card) ----------------------- */
+.app-login-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1040px;
+    margin: 1.5rem auto;
+    border: 1px solid var(--bs-border-color, #e6e9ef);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(8, 13, 26, .18);
+}
+
+@media (min-width: 768px) {
+    .app-login-split {
+        grid-template-columns: 1.05fr 1fr;
+        min-height: 560px;
+    }
+}
+
+/* Left hero — always navy, brand-forward. Hidden on phones (form-first). */
+.app-login-hero {
+    display: none;
+    position: relative;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2.25rem;
+    color: #fff;
+    background:
+        radial-gradient(120% 80% at 90% 10%, rgba(249, 115, 22, .28), transparent 60%),
+        linear-gradient(160deg, #0D1426 0%, #0A0F1E 70%);
+}
+
+@media (min-width: 768px) {
+    .app-login-hero { display: flex; }
+}
+
+.app-login-hero-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -.01em;
+}
+
+.app-login-hero-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FB923C, #F97316);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, .18);
+}
+
+.app-login-hero-body { position: relative; z-index: 1; }
+
+.app-login-hero-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    margin: 0 0 .75rem;
+}
+
+.app-login-hero-sub {
+    font-size: 1.02rem;
+    color: #94A3B8;
+    max-width: 30ch;
+    margin: 0 0 1.6rem;
+}
+
+.app-login-hero-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+}
+
+.app-login-hero-features li {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    align-self: flex-start;
+    padding: .5rem .95rem;
+    border-radius: 50rem;
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .1);
+    font-size: .92rem;
+    font-weight: 600;
+}
+
+.app-login-hero-features .bi {
+    color: #34D399;
+    font-size: 1.05rem;
+}
+
+.app-login-hero-foot {
+    position: relative;
+    z-index: 1;
+    font-size: .8rem;
+    color: #64748B;
+}
+
+.app-login-hero-glyph {
+    position: absolute;
+    right: -1.5rem;
+    bottom: -2rem;
+    font-size: 12rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, .05);
+    z-index: 0;
+}
+
+/* Right panel — themeable surface holding the form. */
+.app-login-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.75rem;
+    background: #fff;
+}
+
+[data-bs-theme="dark"] .app-login-panel { background: #0D1426; }
+
+.app-login-card {
+    width: 100%;
+    max-width: 380px;
+}
+
+.app-login-mark {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 12px !important;
+    font-size: 1.15rem !important;
+    margin-bottom: 1.1rem;
+}
+
+.app-login-title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+}
+
+.app-login-lead {
+    color: var(--app-slate);
+    margin: 0 0 1.5rem;
+}
+
+.app-login-forgot {
+    color: var(--orange-700);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-login-forgot:hover { text-decoration: underline; }
+
+[data-bs-theme="dark"] .app-login-forgot { color: #FB923C; }
+
+.app-login-demo {
+    margin-top: 1.5rem;
+    padding: .8rem .95rem;
+    border-radius: .65rem;
+    background: var(--app-green-soft);
+    border: 1px solid var(--bs-border-color, #eef0f2);
+    font-size: .8rem;
+    color: var(--app-slate);
+    line-height: 1.5;
+}
+
+.app-login-demo code { color: var(--orange-700); }
+[data-bs-theme="dark"] .app-login-demo { background: rgba(249, 115, 22, .08); }
+[data-bs-theme="dark"] .app-login-demo code { color: #FB923C; }
+
+/* --- Operaio / user profile page ----------------------------------------- */
+.app-avatar-ring {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 0 3px var(--orange), 0 0 0 8px rgba(249, 115, 22, .16);
+}
+
+.app-avatar-ring.is-off {
+    box-shadow: 0 0 0 3px #64748B, 0 0 0 8px rgba(100, 116, 139, .14);
+}
+
+.app-avatar-img {
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.app-avatar-initials {
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--app-green-soft);
+    color: var(--orange);
+    font-size: 2.1rem;
+    font-weight: 800;
+}
+
+.app-badge-role {
+    background: linear-gradient(135deg, #FB923C, #F97316);
+    color: #fff;
+    font-weight: 700;
+    padding: .42em 1.05em;
+    font-size: .82rem;
+}
+
+.app-mini-stat {
+    display: flex;
+    flex-direction: column;
+    padding: .55rem .25rem;
+    border-radius: .6rem;
+    background: rgba(148, 163, 184, .1);
+}
+
+.app-mini-val { font-size: 1.15rem; font-weight: 800; line-height: 1; }
+.app-mini-lab { font-size: .62rem; color: #94A3B8; margin-top: .25rem; text-transform: uppercase; letter-spacing: .03em; }
+
+/* Vivid metric cards (hours / presence / current site). */
+.app-metric {
+    border-radius: .85rem;
+    padding: 1rem 1.1rem;
+    color: #fff;
+    height: 100%;
+    box-shadow: 0 4px 14px rgba(8, 13, 26, .12);
+}
+
+.app-metric-lab { font-size: .8rem; opacity: .92; font-weight: 600; }
+.app-metric-val { font-size: 1.6rem; font-weight: 800; line-height: 1.1; margin-top: .35rem; }
+.app-metric-val-sm { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-metric.is-hours    { background: linear-gradient(135deg, #FB923C, #F97316); }
+.app-metric.is-presence { background: linear-gradient(135deg, #34D399, #10B981); }
+.app-metric.is-cantiere { background: linear-gradient(135deg, #A78BFA, #8B5CF6); }
+
+/* Personal-documents grid. */
+.app-doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: .6rem;
+}
+
+.app-doc-card {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem .8rem;
+    border: 1px solid var(--bs-border-color, #eef0f2);
+    border-radius: .7rem;
+}
+
+.app-doc-ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: .55rem;
+    background: var(--app-green-soft);
+    color: var(--orange);
+    font-size: 1.1rem;
+}
+
+.app-doc-name { font-weight: 600; font-size: .88rem; }
+
+/* Read-only attendance heatmap cells (non-interactive divs). */
+.app-att-grid .app-att-day { cursor: default; }
+
 /* --- Mobile bottom navigation + quick-create FAB ------------------------- */
 /* A fixed navy tab bar shown only below the desktop breakpoint (the sidebar
    takes over at lg+). Admin gets a raised centre FAB that opens a bottom
@@ -2245,6 +2531,12 @@ body{font-family:var(--font-sans);}
 .gm-kpi.alert::before{background:var(--gm-bad);}
 .gm-kpi.alert .gm-kpi-val{color:var(--gm-bad);}
 .gm-kpi.alert .gm-kpi-ic{color:var(--gm-bad);opacity:1;}
+/* Semantic accent variants (financials cards). */
+.gm-kpi.ok::before{background:var(--app-success);}
+.gm-kpi.ok .gm-kpi-ic{color:var(--app-success);opacity:1;}
+.gm-kpi.warn::before{background:#F59E0B;}
+.gm-kpi.warn .gm-kpi-ic{color:#F59E0B;opacity:1;}
+.gm-kpi .gm-kpi-sub{font-size:.72rem;color:#94A3B8;margin-top:.15rem;font-variant-numeric:tabular-nums;}
 canvas.gm-spark{display:block;width:100%;height:34px;}
 tr.sev-bad  > td:first-child{box-shadow:inset 3px 0 0 var(--gm-bad);}
 tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}

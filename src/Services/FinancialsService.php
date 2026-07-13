@@ -83,7 +83,30 @@ final class FinancialsService
         $totals['margin_pct']  = $totals['invoiced'] > 0 ? $totals['margin'] / $totals['invoiced'] * 100 : null;
         $totals['outstanding'] = $totals['invoiced'] - $totals['collected'];
 
-        return ['rows' => $rows, 'totals' => $totals];
+        // Monthly invoiced revenue (issued+paid) for the trailing 12 months,
+        // gaps filled with 0 so the chart always shows a full year.
+        $byMonth = [];
+        foreach ($pdo->query(
+            "SELECT DATE_FORMAT(issue_date,'%Y-%m') AS ym, SUM(COALESCE(amount,0)) AS v
+             FROM project_invoices
+             WHERE status IN ('issued','paid')
+             GROUP BY ym"
+        )->fetchAll() as $row) {
+            $byMonth[(string) $row['ym']] = (float) $row['v'];
+        }
+        $shortMonths = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+        $months      = [];
+        $first       = new \DateTimeImmutable('first day of this month');
+        for ($i = 11; $i >= 0; $i--) {
+            $m        = $first->modify("-{$i} months");
+            $months[] = [
+                'label' => $shortMonths[(int) $m->format('n')],
+                'value' => (int) round($byMonth[$m->format('Y-m')] ?? 0),
+            ];
+        }
+        $totals['current_month'] = (float) ($byMonth[$first->format('Y-m')] ?? 0);
+
+        return ['rows' => $rows, 'totals' => $totals, 'months' => $months];
     }
 
     /** Same figures for a single cantiere (project detail page). @return array<string,mixed> */

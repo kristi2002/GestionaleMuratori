@@ -86,12 +86,15 @@ final class UserModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO users (name, email, password_hash, role, client_id, subcontractor_id, is_active)
-             VALUES (:name, :email, :hash, :role, :client_id, :subcontractor_id, 1)'
+            'INSERT INTO users (name, job_title, email, phone, hire_date, password_hash, role, client_id, subcontractor_id, is_active)
+             VALUES (:name, :job_title, :email, :phone, :hire_date, :hash, :role, :client_id, :subcontractor_id, 1)'
         );
         $stmt->execute([
             ':name'             => $data['name'],
+            ':job_title'        => $data['job_title'] ?? null,
             ':email'            => $data['email'],
+            ':phone'            => $data['phone'] ?? null,
+            ':hire_date'        => $data['hire_date'] ?? null,
             ':hash'             => $data['password_hash'],
             ':role'             => $data['role'],
             ':client_id'        => $data['client_id'],
@@ -104,18 +107,29 @@ final class UserModel
     public function update(int $id, array $data): bool
     {
         $stmt = Database::pdo()->prepare(
-            'UPDATE users SET name = :name, email = :email, role = :role,
+            'UPDATE users SET name = :name, job_title = :job_title, email = :email,
+                phone = :phone, hire_date = :hire_date, role = :role,
                 client_id = :client_id, subcontractor_id = :subcontractor_id
              WHERE id = :id'
         );
         return $stmt->execute([
             ':name'             => $data['name'],
+            ':job_title'        => $data['job_title'] ?? null,
             ':email'            => $data['email'],
+            ':phone'            => $data['phone'] ?? null,
+            ':hire_date'        => $data['hire_date'] ?? null,
             ':role'             => $data['role'],
             ':client_id'        => $data['client_id'],
             ':subcontractor_id' => $data['subcontractor_id'] ?? null,
             ':id'               => $id,
         ]);
+    }
+
+    /** Persist the relative path of a stored avatar image (or null to clear it). */
+    public function setAvatarPath(int $id, ?string $path): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE users SET avatar_path = ? WHERE id = ?');
+        return $stmt->execute([$path, $id]);
     }
 
     public function setActive(int $id, bool $active): bool

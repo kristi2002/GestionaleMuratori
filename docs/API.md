@@ -82,8 +82,11 @@ Conventions:
 | Method | Path | Body / params | Description |
 |--------|------|---------------|-------------|
 | GET | `/admin/users` | `q` search, `role` filter | HTML list (never exposes password hashes). |
-| POST | `/admin/users` | `name`*, `email`* (unique), `role`* (`admin|worker|client`), `client_id` (required iff role=client), `password`* (min 8) | Create login. |
+| GET | `/admin/users/{id}` | — | Read-only profile: identity, attendance heatmap, assigned interventions, personal compliance docs. |
+| POST | `/admin/users` | `name`*, `email`* (unique), `role`* (`admin|worker|client`), `client_id` (required iff role=client), `password`* (min 8), optional `job_title`, `phone`, `hire_date` | Create login. |
 | POST | `/admin/users/{id}` | same; `password` optional (sets a new one when non-empty) | Update / reset password. Demoting your own admin account → 422. |
+| POST | `/admin/users/{id}/avatar` | multipart `avatar` (JPEG/PNG, ≤4 MB) | Replace avatar; stored via Storage disk, then 302 back to the profile. |
+| GET | `/admin/users/{id}/avatar` | — | Streams the stored avatar (permission-checked; 404 when none). |
 | POST | `/admin/users/{id}/toggle` | — | Activate/deactivate. Deactivating yourself → 422. |
 
 ### Photos

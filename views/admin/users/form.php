@@ -37,13 +37,30 @@ $selectedRole = $isEdit ? (string) ($record['role'] ?? '') : (string) ($roles[0]
               data-redirect="<?= $e(Url::to('/admin/users')) ?>">
             <input type="hidden" name="id" value="<?= $e($isEdit ? (string) $record['id'] : '') ?>">
 
-            <div class="mb-3">
-                <label class="form-label"><?= $e($t('admin.users.name')) ?></label>
-                <input type="text" class="form-control" name="name" value="<?= $e($value('name')) ?>" required>
+            <div class="row">
+                <div class="col-12 col-md-7 mb-3">
+                    <label class="form-label"><?= $e($t('admin.users.name')) ?></label>
+                    <input type="text" class="form-control" name="name" value="<?= $e($value('name')) ?>" required>
+                </div>
+                <div class="col-12 col-md-5 mb-3">
+                    <label class="form-label"><?= $e($t('admin.users.job_title')) ?></label>
+                    <input type="text" class="form-control" name="job_title" value="<?= $e($value('job_title')) ?>"
+                           placeholder="<?= $e($t('admin.users.job_title_placeholder')) ?>">
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label"><?= $e($t('admin.users.email')) ?></label>
-                <input type="email" class="form-control" name="email" value="<?= $e($value('email')) ?>" required>
+            <div class="row">
+                <div class="col-12 col-md-6 mb-3">
+                    <label class="form-label"><?= $e($t('admin.users.email')) ?></label>
+                    <input type="email" class="form-control" name="email" value="<?= $e($value('email')) ?>" required>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.users.phone')) ?></label>
+                    <input type="text" class="form-control" name="phone" value="<?= $e($value('phone')) ?>">
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.users.hire_date')) ?></label>
+                    <input type="date" class="form-control" name="hire_date" value="<?= $e($value('hire_date')) ?>">
+                </div>
             </div>
             <div class="row">
                 <div class="col-12 col-md-6 mb-3">
