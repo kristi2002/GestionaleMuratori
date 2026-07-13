@@ -15,7 +15,7 @@ $daysInMonth = (int) $month->format('t');
 $lead        = (int) $month->format('N') - 1; // Monday-first leading blanks
 $today       = date('Y-m-d');
 $weekdays    = array_map(static fn (int $d): string => Lang::label('weekdays_short', (string) $d), range(1, 7));
-$statusColor = ['pending' => '#a3aebc', 'in_progress' => '#2c6e9b', 'on_hold' => '#e07c10', 'completed' => '#2e7d32', 'cancelled' => '#c0504d'];
+$statusColor = ['pending' => '#94A3B8', 'in_progress' => '#3B82F6', 'on_hold' => '#F59E0B', 'completed' => '#10B981', 'cancelled' => '#EF4444'];
 
 // Month jump dropdown: 12 months back to 6 forward around the displayed month.
 $currentMonth = $month->format('Y-m');

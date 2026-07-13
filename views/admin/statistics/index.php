@@ -10,12 +10,12 @@ $money = static fn (float $v): string => '€ ' . number_format($v, 2, ',', '.')
 
 // Semantic colours for the status donuts (fall back to slate grey).
 $colors = [
-    'project_status'      => ['active' => '#2e7d32', 'on_hold' => '#e07c10', 'closed' => '#adb5bd'],
-    'intervention_status' => ['pending' => '#a3aebc', 'in_progress' => '#2c6e9b', 'on_hold' => '#e07c10', 'completed' => '#2e7d32', 'cancelled' => '#c0504d'],
-    'invoice_status'      => ['draft' => '#adb5bd', 'issued' => '#2c6e9b', 'paid' => '#2e7d32'],
-    'quote_status'        => ['draft' => '#adb5bd', 'sent' => '#2c6e9b', 'accepted' => '#2e7d32', 'rejected' => '#c0504d', 'expired' => '#e07c10'],
+    'project_status'      => ['active' => '#10B981', 'on_hold' => '#F59E0B', 'closed' => '#94A3B8'],
+    'intervention_status' => ['pending' => '#94A3B8', 'in_progress' => '#3B82F6', 'on_hold' => '#F59E0B', 'completed' => '#10B981', 'cancelled' => '#EF4444'],
+    'invoice_status'      => ['draft' => '#94A3B8', 'issued' => '#3B82F6', 'paid' => '#10B981'],
+    'quote_status'        => ['draft' => '#94A3B8', 'sent' => '#3B82F6', 'accepted' => '#10B981', 'rejected' => '#EF4444', 'expired' => '#F59E0B'],
 ];
-$palette = ['#2e7d32', '#2c6e9b', '#e07c10', '#7a5195', '#4aa3a2', '#c0504d'];
+$palette = ['#F97316', '#3B82F6', '#10B981', '#8B5CF6', '#14B8A6', '#EF4444'];
 
 /** Build donut segments from a status=>count map. */
 $statusDonut = static function (array $counts, string $group) use ($colors): array {

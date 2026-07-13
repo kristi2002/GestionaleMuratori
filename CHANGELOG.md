@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-13 — Visual redesign: Navy + Orange design system
+
+Full restyle of the app shell and every page onto a deep-navy + orange identity
+(mockup-driven), with no markup rewrites for most pages — the change is carried
+by the CSS token layer so all `.app-*` / Bootstrap components inherit it.
+
+- **Palette:** the brand accent moves from green to **orange** (`#F97316`). The
+  legacy `--app-green*` variable names are kept as aliases (now orange) so the
+  hundreds of existing usages flip with no per-view churn. Genuine *success*
+  semantics (completed/valid status pills, "worked" attendance days, success
+  badges) are restored to real green (`#10B981`) via new `--app-success*` tokens.
+- **Navy shell:** the top bar is deep navy (`#080D1A`) in every theme; the
+  sidebar is a distinct navy panel in dark mode. **Dark is now the default look**
+  (page `#0A0F1E`, cards `#0D1426`, borders `#1E2A44`) to match the mockups; the
+  light theme is retained as a toggle (navy header, white sidebar/cards).
+- **Dashboard hero:** new warm-gradient welcome banner (localized Italian long
+  date, greeting, at-a-glance chips) at the top of the admin dashboard.
+- **Accents:** orange top-accent on record cards, orange KPI stripe, orange
+  brand chip/logo (favicon + logo SVGs recolored), orange focus rings.
+- **Charts & status colors** (statistics, financials health bars, calendar
+  events) rebased on the new semantic palette (orange primary series, green =
+  success, blue = in-progress, amber = on-hold, red = cancelled). Sparkline
+  palette updated in `app.js`. PDF report header rebranded orange.
+- **Mobile bottom navigation** (`< lg`): a fixed navy tab bar with a role-aware
+  subset of the menu (admin: Home / Progetti / Sicurezza / Magazzino; worker:
+  Interventi / Presenze; client: Progetti / Preventivi). Admins get a raised
+  centre **＋ FAB** that opens a bottom quick-create action sheet (project,
+  intervention, quote, invoice, expense). Hidden at `lg+` where the sidebar
+  takes over; content gets bottom padding only on mobile.
+
+Presentational only — no routes, schema or backend behavior changed. 526 tests pass.
+
 ## 2026-07-12 — Production hardening: pagination, auto-migrate, reset, audit
 
 Deployment-readiness batch:

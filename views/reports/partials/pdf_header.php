@@ -32,7 +32,7 @@ $logoPath = dirname(__DIR__, 3) . '/public/assets/img/logo_print.png';
                         <td style="vertical-align: middle;"><img src="<?= $e($logoPath) ?>" width="40" height="40"></td>
                     <?php endif; ?>
                     <td style="vertical-align: middle; padding-left: 7pt;">
-                        <div style="font-size: 13pt; font-weight: bold; color: #1b5e20;"><?= $e($companyName) ?></div>
+                        <div style="font-size: 13pt; font-weight: bold; color: #C2410C;"><?= $e($companyName) ?></div>
                         <?php if ($addressVat !== ''): ?><div class="muted"><?= $e($addressVat) ?></div><?php endif; ?>
                         <?php if ($contact !== ''): ?><div class="muted"><?= $e($contact) ?></div><?php endif; ?>
                     </td>
@@ -45,4 +45,4 @@ $logoPath = dirname(__DIR__, 3) . '/public/assets/img/logo_print.png';
         </td>
     </tr>
 </table>
-<div style="border-bottom: 2px solid #2e7d32; margin: 6pt 0 8pt;"></div>
+<div style="border-bottom: 2px solid #F97316; margin: 6pt 0 8pt;"></div>

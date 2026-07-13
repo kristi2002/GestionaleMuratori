@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <rect width="256" height="256" rx="56" fill="#2e7d32"/>
+  <rect width="256" height="256" rx="56" fill="#F97316"/>
   <!-- House outline in white, right roof broken open where the arrow exits -->
   <g fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
     <path d="M 198 196 L 58 196 L 58 122 L 128 62 L 164 92"/>

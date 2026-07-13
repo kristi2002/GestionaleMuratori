@@ -19,8 +19,9 @@ $e = static fn (?string $v): string => View::e($v);
 
 // Theme is persisted in a cookie and rendered server-side so there is no flash
 // of the wrong theme on load (an inline <script> would be blocked by our CSP).
-$theme      = (($_COOKIE['gm_theme'] ?? 'light') === 'dark') ? 'dark' : 'light';
-$themeColor = $theme === 'dark' ? '#15351F' : '#2e7d32';
+// The Navy+Orange identity is a dark shell, so dark is the default look.
+$theme      = (($_COOKIE['gm_theme'] ?? 'dark') === 'light') ? 'light' : 'dark';
+$themeColor = '#080D1A';
 
 // Global sidebar menu, role-aware: [label, href|null, bootstrap-icon, children?].
 // A null href marks a section not available yet (muted placeholder). Children are
@@ -103,6 +104,54 @@ $subActive = static function (string $href) use ($reqPath): bool {
     }
     return true;
 };
+
+// --- Mobile bottom navigation (shown < lg) -------------------------------
+// A curated, role-aware subset of the menu for thumb reach, plus a raised
+// quick-create FAB for admins. The persistent sidebar takes over at lg+.
+$bottomNav = match ($user['role'] ?? '') {
+    'admin' => [
+        ['/admin',            Lang::get('nav.home'),              'bi-house-door'],
+        ['/admin/projects',   Lang::get('admin.projects.title'),  'bi-buildings'],
+        ['/admin/compliance', Lang::get('nav.safety'),            'bi-shield-check'],
+        ['/admin/warehouse',  Lang::get('admin.warehouse.title'), 'bi-box-seam'],
+    ],
+    'worker' => [
+        ['/worker',     Lang::get('nav.tasks'),      'bi-list-check'],
+        ['/attendance', Lang::get('attendance.nav'), 'bi-person-badge'],
+    ],
+    'client' => [
+        ['/client',        Lang::get('nav.projects'), 'bi-folder2-open'],
+        ['/client/quotes', Lang::get('nav.quotes'),   'bi-file-earmark-text'],
+    ],
+    default => [],
+};
+$hasBottomNav = $bottomNav !== [];
+$showFab      = ($user['role'] ?? '') === 'admin';
+
+// Active bottom item = longest href prefix of the current path. Section roots
+// (/admin, /client, /worker) match only exactly, so they aren't "active" on
+// every sub-page of the app.
+$bottomActive    = -1;
+$bottomActiveLen = -1;
+$roots           = ['/admin', '/client', '/worker'];
+foreach ($bottomNav as $bi => $bItem) {
+    $bh    = $bItem[0];
+    $match = ($reqPath === $bh)
+        || (!in_array($bh, $roots, true) && str_starts_with($reqPath, $bh . '/'));
+    if ($match && strlen($bh) > $bottomActiveLen) {
+        $bottomActive    = $bi;
+        $bottomActiveLen = strlen($bh);
+    }
+}
+
+// Quick-create links for the admin FAB action sheet.
+$fabActions = [
+    ['/admin/projects/create',      Lang::get('admin.projects.new'),      'bi-buildings'],
+    ['/admin/interventions/create', Lang::get('admin.interventions.new'), 'bi-calendar-plus'],
+    ['/admin/quotes/create',        Lang::get('admin.quotes.new'),        'bi-file-earmark-text'],
+    ['/admin/invoices/create',      Lang::get('admin.invoices.new'),      'bi-receipt'],
+    ['/admin/expenses/create',      Lang::get('admin.expenses.new'),      'bi-cash-coin'],
+];
 ?>
 <!DOCTYPE html>
 <html lang="it" data-bs-theme="<?= $e($theme) ?>">
@@ -123,7 +172,7 @@ $subActive = static function (string $href) use ($reqPath): bool {
     <?php // filemtime cache-buster: browsers drop stale copies whenever the file changes. ?>
     <link href="<?= $e($base) ?>/assets/css/app.css?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/css/app.css') ?>" rel="stylesheet">
 </head>
-<body data-base="<?= $e($base) ?>" data-role="<?= $e($user['role'] ?? '') ?>" data-shortcuts="<?= $e($shortcutMap) ?>">
+<body class="<?= $hasBottomNav ? 'app-has-bottom-nav' : '' ?>" data-base="<?= $e($base) ?>" data-role="<?= $e($user['role'] ?? '') ?>" data-shortcuts="<?= $e($shortcutMap) ?>">
 <nav class="navbar navbar-dark app-navbar sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center">
@@ -254,6 +303,51 @@ $subActive = static function (string $href) use ($reqPath): bool {
         </div>
     </main>
 </div>
+
+<?php if ($hasBottomNav): ?>
+    <nav class="app-bottom-nav" aria-label="<?= $e(Lang::get('nav.menu')) ?>">
+        <?php foreach ($bottomNav as $bi => [$bHref, $bLabel, $bIcon]): ?>
+            <?php
+            // Insert the raised create FAB in the middle of the admin bar.
+            if ($showFab && $bi === 2): ?>
+                <div class="app-fab-slot">
+                    <button type="button" class="app-fab" data-bs-toggle="offcanvas"
+                            data-bs-target="#appCreateSheet" aria-controls="appCreateSheet"
+                            aria-label="<?= $e(Lang::get('nav.quick_create')) ?>">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    </button>
+                    <span class="app-fab-label"><?= $e(Lang::get('nav.new')) ?></span>
+                </div>
+            <?php endif; ?>
+            <a class="app-bottom-link<?= $bi === $bottomActive ? ' active' : '' ?>"
+               href="<?= $e(Url::to($bHref)) ?>"<?= $bi === $bottomActive ? ' aria-current="page"' : '' ?>>
+                <i class="bi <?= $e($bIcon) ?>" aria-hidden="true"></i>
+                <span class="app-bottom-label"><?= $e($bLabel) ?></span>
+            </a>
+        <?php endforeach; ?>
+    </nav>
+
+    <?php if ($showFab): ?>
+        <div class="offcanvas offcanvas-bottom app-create-sheet" tabindex="-1" id="appCreateSheet"
+             aria-labelledby="appCreateSheetTitle">
+            <div class="offcanvas-header">
+                <h2 class="offcanvas-title h6 mb-0" id="appCreateSheetTitle"><?= $e(Lang::get('nav.quick_create')) ?></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                        aria-label="<?= $e(Lang::get('nav.close_menu')) ?>"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="app-create-grid">
+                    <?php foreach ($fabActions as [$aHref, $aLabel, $aIcon]): ?>
+                        <a class="app-create-action" href="<?= $e(Url::to($aHref)) ?>">
+                            <span class="app-create-ic"><i class="bi <?= $e($aIcon) ?>" aria-hidden="true"></i></span>
+                            <span class="app-create-txt"><?= $e($aLabel) ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
 
 <script src="<?= $e($base) ?>/assets/vendor/jquery.min.js"></script>
 <script src="<?= $e($base) ?>/assets/vendor/bootstrap.bundle.min.js"></script>

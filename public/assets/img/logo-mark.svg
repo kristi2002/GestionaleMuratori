@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="42 46 176 166" role="img" aria-label="ProntoCantiere">
   <!-- Transparent-background mark: for white/light surfaces (PDF headers, docs, print). -->
   <!-- House outline, right roof broken open where the arrow exits -->
-  <g fill="none" stroke="#2e7d32" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="#F97316" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
     <path d="M 198 196 L 58 196 L 58 122 L 128 62 L 164 92"/>
     <path d="M 198 132 L 198 196"/>
   </g>
   <!-- Small solid house inside -->
-  <path d="M 76 196 L 76 150 L 105 125 L 134 150 L 134 196 Z" fill="#2e7d32"/>
+  <path d="M 76 196 L 76 150 L 105 125 L 134 150 L 134 196 Z" fill="#F97316"/>
   <!-- Growth arrow bursting through the roof -->
   <path d="M 84 170 L 120 134 L 140 154 L 186 108" fill="none" stroke="#fb8c00" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M 208 84 L 199.5 112.3 L 179.7 92.5 Z" fill="#fb8c00"/>

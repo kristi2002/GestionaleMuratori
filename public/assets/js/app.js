@@ -1340,7 +1340,7 @@
     // Draws every <canvas data-spark="n,n,..." data-c="ok|bad|warn|steel|amber">.
     function drawSparks() {
         var list = document.querySelectorAll('canvas[data-spark]');
-        var palette = { ok: '#1F8A4C', bad: '#D33A2C', warn: '#E07C10', steel: '#2C6E9B', amber: '#2e7d32' };
+        var palette = { ok: '#10B981', bad: '#EF4444', warn: '#F59E0B', steel: '#3B82F6', amber: '#F97316' };
         for (var k = 0; k < list.length; k++) {
             var cv = list[k];
             var pts = (cv.getAttribute('data-spark') || '').split(',').map(Number)

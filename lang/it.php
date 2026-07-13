@@ -19,6 +19,13 @@ return [
         'my_tasks'       => 'I miei interventi',
         'my_projects'    => 'I miei cantieri',
         'notifications'  => 'Notifiche',
+        // Mobile bottom navigation bar + quick-create action sheet.
+        'home'           => 'Home',
+        'new'            => 'Nuovo',
+        'quick_create'   => 'Crea nuovo',
+        'safety'         => 'Sicurezza',
+        'tasks'          => 'Interventi',
+        'quotes'         => 'Preventivi',
         // Shared chrome for back buttons and breadcrumb trails (partials).
         'dashboard'      => 'Pannello',
         'projects'       => 'Progetti',
@@ -306,6 +313,10 @@ return [
             'reports_subtitle'    => 'Esportazione PDF ed Excel per progetto.',
             'open'                => 'Apri',
             'quick_actions'       => 'Azioni rapide',
+            'hero_greeting'       => 'Buongiorno,',
+            'hero_sites'          => 'Cantieri',
+            'hero_interventions'  => 'Interventi',
+            'hero_deadlines'      => 'Scadenze',
         ],
 
         'nav' => [

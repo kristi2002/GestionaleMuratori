@@ -18,8 +18,50 @@ $qty = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
 $todayTotal = array_sum($todayByStatus);
 $expiringDocs = $expiringDocs ?? [];
 ?>
-<h1 class="h4 mb-1"><?= $e($t('admin.dashboard.title')) ?></h1>
-<p class="text-muted mb-3"><?= $e($t('admin.dashboard.welcome')) ?> <?= $e($user['name'] ?? '') ?>.</p>
+<?php
+// Localised long date (e.g. "lunedì 13 luglio 2026"), falling back gracefully
+// if the intl extension is unavailable.
+$heroDate = $today;
+try {
+    $d = new DateTimeImmutable($today);
+    if (class_exists('IntlDateFormatter')) {
+        $fmt = new IntlDateFormatter('it_IT', IntlDateFormatter::FULL, IntlDateFormatter::NONE);
+        $heroDate = $fmt->format($d) ?: $today;
+    } else {
+        // Manual Italian long date when the intl extension is unavailable.
+        $days   = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'];
+        $months = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
+                   'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+        $heroDate = $days[(int) $d->format('N') - 1] . ' ' . (int) $d->format('j')
+            . ' ' . $months[(int) $d->format('n') - 1] . ' ' . $d->format('Y');
+    }
+} catch (\Exception $ex) {
+    $heroDate = $today;
+}
+$heroChips = [
+    ['/admin/projects?status=active', (string) $activeProjects, 'admin.dashboard.hero_sites', 'bi-buildings'],
+    ['/admin/interventions',          (string) $openInterventions, 'admin.dashboard.hero_interventions', 'bi-wrench'],
+    ['/admin/compliance?expiring=1',  (string) count($expiringDocs), 'admin.dashboard.hero_deadlines', 'bi-exclamation-triangle'],
+];
+?>
+<section class="app-hero mb-4">
+    <div class="app-hero-body">
+        <p class="app-hero-eyebrow"><?= $e($heroDate) ?></p>
+        <h1 class="app-hero-title">
+            <?= $e($t('admin.dashboard.hero_greeting')) ?> <?= $e($user['name'] ?? '') ?> <span aria-hidden="true">👷</span>
+        </h1>
+        <div class="app-hero-chips">
+            <?php foreach ($heroChips as [$href, $num, $labelKey, $icon]): ?>
+                <a class="app-hero-chip" href="<?= $e(Url::to($href)) ?>">
+                    <i class="bi <?= $e($icon) ?>" aria-hidden="true"></i>
+                    <span class="app-hero-chip-num"><?= $e($num) ?></span>
+                    <?= $e($t($labelKey)) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <i class="bi bi-buildings app-hero-glyph" aria-hidden="true"></i>
+</section>
 
 <?php
 $kpis = [

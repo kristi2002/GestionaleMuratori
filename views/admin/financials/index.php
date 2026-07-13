@@ -10,7 +10,7 @@ $money = static fn (float $v): string => '€ ' . number_format($v, 2, ',', '.')
 $pct = static fn (?float $v): string => $v === null ? '—' : number_format($v, 1, ',', '.') . '%';
 
 $healthText = ['ok' => 'text-success', 'warning' => 'text-warning', 'danger' => 'text-danger', 'none' => 'text-muted'];
-$healthBar  = ['ok' => 'var(--app-green)', 'warning' => '#e07c10', 'danger' => '#c0504d', 'none' => '#adb5bd'];
+$healthBar  = ['ok' => 'var(--app-success)', 'warning' => '#F59E0B', 'danger' => '#EF4444', 'none' => '#94A3B8'];
 
 $tot = $finance['totals'];
 ?>
