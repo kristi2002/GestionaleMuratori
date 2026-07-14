@@ -39,9 +39,12 @@ final class UserController
             $role = '';
         }
 
+        $model = new UserModel();
+
         Response::html(View::render('admin/users/index', [
             'title'          => Lang::get('admin.users.title'),
-            'users'          => (new UserModel())->all($search, $role),
+            'users'          => $model->all($search, $role),
+            'roleCounts'     => $model->countsByRole(),
             'clients'        => (new ClientModel())->all(),
             'subcontractors' => (new SubcontractorModel())->listActive(),
             'search'         => $search,

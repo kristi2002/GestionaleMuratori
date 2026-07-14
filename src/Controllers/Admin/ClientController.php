@@ -24,10 +24,12 @@ final class ClientController
         $paginator = Paginator::fromRequest($request, $model->count($search), 24);
 
         Response::html(View::render('admin/clients/index', [
-            'title'     => Lang::get('admin.clients.title'),
-            'clients'   => $model->all($search, $paginator->perPage, $paginator->offset),
-            'search'    => $search,
-            'paginator' => $paginator,
+            'title'          => Lang::get('admin.clients.title'),
+            'clients'        => $model->all($search, $paginator->perPage, $paginator->offset),
+            'search'         => $search,
+            'paginator'      => $paginator,
+            'projectsTotal'  => $model->totalProjects(),
+            'invoicedTotal'  => $model->totalInvoiced(),
         ], 'layout'));
     }
 

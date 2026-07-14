@@ -64,6 +64,49 @@ final class ExpenseModel
         return ['by_category' => $byCategory, 'total' => number_format($total, 2, '.', '')];
     }
 
+    /**
+     * Summed amount per expense category for the given filters (read-only
+     * aggregate feeding the KPI tiles and the category bar/donut charts).
+     * @return array<string,string> category => summed amount
+     */
+    public function sumByCategory(array $filters = []): array
+    {
+        [$where, $params] = $this->whereClause($filters);
+        $stmt = Database::pdo()->prepare(
+            'SELECT e.category, SUM(e.amount) AS total FROM expenses e'
+            . $where .
+            ' GROUP BY e.category'
+        );
+        $stmt->execute($params);
+
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['category']] = (string) $row['total'];
+        }
+        return $out;
+    }
+
+    /**
+     * Top projects by total spend for the given filters (read-only aggregate
+     * feeding the "Spese per cantiere" horizontal-bar chart). Unlinked
+     * expenses (project_id NULL) are excluded by the inner join.
+     * @return array<int,array{name:string,total:string}>
+     */
+    public function sumByProject(array $filters = [], int $limit = 8): array
+    {
+        [$where, $params] = $this->whereClause($filters);
+        $sql = 'SELECT p.name AS name, SUM(e.amount) AS total
+             FROM expenses e
+             JOIN projects p ON p.id = e.project_id'
+            . $where .
+            ' GROUP BY e.project_id, p.name
+             ORDER BY total DESC
+             LIMIT ' . max(1, (int) $limit);
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
     public function find(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM expenses WHERE id = ? LIMIT 1');

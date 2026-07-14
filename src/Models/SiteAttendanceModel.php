@@ -126,6 +126,29 @@ final class SiteAttendanceModel
         return $out;
     }
 
+    /**
+     * A single user's presence totals over a date window (their own KPI cards):
+     * distinct days clocked in and total worked hours (closed rows only; open rows
+     * contribute NULL and are ignored by SUM).
+     *
+     * @return array{days:int,hours:float}
+     */
+    public function monthlyStatsForUser(int $userId, string $from, string $to): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(DISTINCT DATE(entry_at)) AS days,
+                    COALESCE(SUM(TIMESTAMPDIFF(SECOND, entry_at, exit_at)), 0) AS secs
+             FROM site_attendance
+             WHERE user_id = ? AND DATE(entry_at) BETWEEN ? AND ?'
+        );
+        $stmt->execute([$userId, $from, $to]);
+        $row = $stmt->fetch() ?: ['days' => 0, 'secs' => 0];
+        return [
+            'days'  => (int) $row['days'],
+            'hours' => round((int) $row['secs'] / 3600, 1),
+        ];
+    }
+
     /** Distinct workers currently on site for a project (admin "who's here now"). */
     public function countPresent(int $projectId): int
     {

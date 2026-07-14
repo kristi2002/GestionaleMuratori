@@ -40,7 +40,8 @@ final class InterventionController
         }
         $first = new \DateTimeImmutable($month . '-01');
 
-        $items  = (new InterventionModel())->scheduledBetween($first->format('Y-m-d'), $first->format('Y-m-t'));
+        $model  = new InterventionModel();
+        $items  = $model->scheduledBetween($first->format('Y-m-d'), $first->format('Y-m-t'));
         $byDate = [];
         foreach ($items as $it) {
             $byDate[(string) $it['scheduled_date']][] = $it;
@@ -50,6 +51,7 @@ final class InterventionController
             'title'  => Lang::get('admin.interventions.calendar'),
             'month'  => $first,
             'byDate' => $byDate,
+            'kpis'   => $this->kpiCounts($model),
             'prev'   => $first->modify('-1 month')->format('Y-m'),
             'next'   => $first->modify('+1 month')->format('Y-m'),
         ], 'layout'));
@@ -117,6 +119,8 @@ final class InterventionController
         }
         unset($intervention);
 
+        $statusCounts = $model->countsByStatus($filters);
+
         Response::html(View::render('admin/interventions/index', [
             'title'         => Lang::get('admin.interventions.title'),
             'interventions' => $interventions,
@@ -125,9 +129,24 @@ final class InterventionController
             'warehouseItems' => (new WarehouseItemModel())->all(),
             'filters'       => $filters,
             'statuses'      => self::STATUSES,
+            'statusCounts'  => $statusCounts,
+            'totalCount'    => array_sum($statusCounts),
+            'kpis'          => $this->kpiCounts($model),
             'range'         => $range,
             'paginator'     => $paginator,
         ], 'layout'));
+    }
+
+    /** Header KPI counts shared by the list + calendar views (single query). */
+    private function kpiCounts(InterventionModel $model): array
+    {
+        return $model->summaryCounts(
+            (new \DateTimeImmutable('today'))->format('Y-m-d'),
+            (new \DateTimeImmutable('monday this week'))->format('Y-m-d'),
+            (new \DateTimeImmutable('sunday this week'))->format('Y-m-d'),
+            (new \DateTimeImmutable('first day of this month'))->format('Y-m-d'),
+            (new \DateTimeImmutable('last day of this month'))->format('Y-m-d'),
+        );
     }
 
     /** GET /admin/interventions/create — blank intervention form (with material editor). */

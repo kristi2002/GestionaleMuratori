@@ -4,6 +4,7 @@ use App\Support\Url;
 use App\Support\View;
 
 /** @var array<int,array<string,mixed>> $documents */
+/** @var array{expired:int,exp30:int,exp90:int,valid:int} $buckets */
 /** @var array<int,array<string,mixed>> $workers */
 /** @var array<int,array<string,mixed>> $subcontractors */
 /** @var array<int,array<string,mixed>> $projects */
@@ -15,7 +16,9 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 
-$soon = (new DateTimeImmutable($today))->modify('+30 days')->format('Y-m-d');
+$todayTs = strtotime($today);
+$soon    = (new DateTimeImmutable($today))->modify('+30 days')->format('Y-m-d');
+
 $expiryClass = static function (?string $expiry) use ($today, $soon): string {
     if ($expiry === null) {
         return '';
@@ -25,27 +28,60 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
     }
     return $expiry <= $soon ? 'text-warning fw-bold' : '';
 };
+
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/compliance/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.compliance.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.compliance.title'),
+    'subtitle' => $t('admin.compliance.subtitle'),
+    'actions'  => $actions,
+], null);
+
+$needsAction = $buckets['expired'] > 0 || $buckets['exp30'] > 0 || $buckets['exp90'] > 0;
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.compliance.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.compliance.subtitle')) ?></p>
+
+<?php if ($needsAction): ?>
+    <div class="app-banner-glow d-flex align-items-center gap-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning" aria-hidden="true"></i>
+        <span class="fw-semibold">
+            <?= $e(sprintf($t('admin.compliance.action_required'), $buckets['expired'], $buckets['exp30'], $buckets['exp90'])) ?>
+        </span>
     </div>
-    <a class="btn btn-success" href="<?= $e(Url::to('/admin/compliance/create')) ?>">
-        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.compliance.new')) ?>
-    </a>
+<?php endif; ?>
+
+<div class="row g-3 mb-3">
+    <?php
+    $kpis = [
+        ['alert',   'bi-exclamation-octagon', $t('admin.compliance.kpi_expired'),     $buckets['expired']],
+        ['warn',    'bi-clock-history',       $t('admin.compliance.kpi_expiring_30'), $buckets['exp30']],
+        ['is-info', 'bi-hourglass-split',     $t('admin.compliance.kpi_expiring_90'), $buckets['exp90']],
+        ['ok',      'bi-shield-check',        $t('admin.compliance.kpi_valid'),       $buckets['valid']],
+    ];
+    foreach ($kpis as [$variant, $icon, $label, $val]): ?>
+        <div class="col-6 col-lg-3">
+            <div class="card gm-kpi h-100 <?= $e($variant) ?>">
+                <div class="card-body">
+                    <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
+                    <div class="gm-kpi-val mt-2"><?= $e((string) $val) ?></div>
+                    <div class="gm-kpi-lab"><?= $e($label) ?></div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
 </div>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
         <form method="get" class="app-filter-grid app-filter-grid-selects">
-            <select class="form-select" name="subject_type" aria-label="<?= $e($t('admin.compliance.title')) ?>">
+            <select class="form-select" name="subject_type" aria-label="<?= $e($t('admin.compliance.subject')) ?>">
                 <option value=""><?= $e($t('common.all')) ?></option>
                 <?php foreach ($subjectTypes as $st): ?>
                     <option value="<?= $e($st) ?>" <?= $filters['subject_type'] === $st ? 'selected' : '' ?>><?= $e(Lang::label('compliance_subject', $st)) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select class="form-select" name="doc_type" aria-label="<?= $e($t('admin.compliance.title')) ?>">
+            <select class="form-select" name="doc_type" aria-label="<?= $e($t('admin.compliance.doc_type')) ?>">
                 <option value=""><?= $e($t('common.all')) ?></option>
                 <?php foreach ($docTypes as $dt): ?>
                     <option value="<?= $e($dt) ?>" <?= $filters['doc_type'] === $dt ? 'selected' : '' ?>><?= $e(Lang::label('compliance_doc', $dt)) ?></option>
@@ -76,18 +112,46 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                     <th><?= $e($t('admin.compliance.doc_type')) ?></th>
                     <th><?= $e($t('admin.compliance.reference')) ?></th>
                     <th><?= $e($t('admin.compliance.expiry')) ?></th>
+                    <th style="min-width:9rem"><?= $e($t('admin.compliance.days_left')) ?></th>
+                    <th><?= $e($t('admin.compliance.status')) ?></th>
                     <th><?= $e($t('admin.compliance.credits')) ?></th>
                     <th class="text-end"></th>
                 </tr>
             </thead>
             <tbody>
             <?php if ($documents === []): ?>
-                <tr><td colspan="6" class="text-center text-muted py-4"><?= $e($t('admin.compliance.empty')) ?></td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4"><?= $e($t('admin.compliance.empty')) ?></td></tr>
             <?php endif; ?>
             <?php foreach ($documents as $d): ?>
-                <?php $sev = '';
-                if ($d['expiry_date'] !== null) {
-                    $sev = $d['expiry_date'] < $today ? 'sev-bad' : ($d['expiry_date'] <= $soon ? 'sev-warn' : '');
+                <?php
+                $expiry   = $d['expiry_date'];
+                $daysLeft = $expiry !== null ? (int) floor((strtotime($expiry) - $todayTs) / 86400) : null;
+
+                // Severity + status: expired < today, expiring within 30 days, else valid.
+                $sev = '';
+                $statusKey = 'valid';
+                if ($expiry !== null) {
+                    if ($expiry < $today) {
+                        $sev = 'sev-bad';
+                        $statusKey = 'expired';
+                    } elseif ($expiry <= $soon) {
+                        $sev = 'sev-warn';
+                        $statusKey = 'expiring';
+                    }
+                }
+                $statusTone = ['expired' => 'danger', 'expiring' => 'warning', 'valid' => 'success'][$statusKey];
+
+                // Days-remaining meter: urgency over a 90-day window (fuller = sooner);
+                // overdue clamps to a full danger bar.
+                $meterPct   = 0;
+                $meterClass = '';
+                if ($daysLeft !== null) {
+                    $rem      = max(0, min(90, $daysLeft));
+                    $meterPct = (int) round((90 - $rem) / 90 * 100);
+                    if ($daysLeft < 0) {
+                        $meterPct   = 100;
+                        $meterClass = ' is-danger';
+                    }
                 }
                 ?>
                 <tr class="<?= $e($sev) ?>">
@@ -97,13 +161,23 @@ $expiryClass = static function (?string $expiry) use ($today, $soon): string {
                     </td>
                     <td><?= $e(Lang::label('compliance_doc', $d['doc_type'])) ?></td>
                     <td><?= $e($d['reference'] ?? '—') ?></td>
-                    <td class="mono tnum <?= $e($expiryClass($d['expiry_date'])) ?>">
-                        <?= $e($d['expiry_date'] ?? '—') ?>
-                        <?php if ($d['expiry_date'] !== null && $d['expiry_date'] < $today): ?>
-                            <span class="badge text-bg-danger"><?= $e($t('admin.compliance.expired')) ?></span>
-                        <?php elseif ($d['expiry_date'] !== null && $d['expiry_date'] <= $soon): ?>
-                            <span class="badge text-bg-warning"><?= $e($t('admin.compliance.expiring')) ?></span>
+                    <td class="mono tnum <?= $e($expiryClass($expiry)) ?>"><?= $e($expiry ?? '—') ?></td>
+                    <td>
+                        <?php if ($daysLeft !== null): ?>
+                            <div class="app-meter">
+                                <div class="app-meter-track">
+                                    <div class="app-meter-fill<?= $meterClass ?>" style="width:<?= $e((string) $meterPct) ?>%"></div>
+                                </div>
+                                <span class="app-meter-val"><?= $e((string) $daysLeft) ?></span>
+                            </div>
+                        <?php else: ?>
+                            <span class="text-muted">—</span>
                         <?php endif; ?>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill app-status app-status-<?= $e($statusTone) ?>">
+                            <?= $e($t('admin.compliance.' . $statusKey)) ?>
+                        </span>
                     </td>
                     <td class="mono tnum"><?= $e($d['credits'] !== null ? (string) $d['credits'] : '—') ?></td>
                     <td class="text-end">

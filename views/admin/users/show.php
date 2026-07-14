@@ -57,20 +57,17 @@ $docStatus = static function (?string $expiry) use ($today, $t): array {
     return ['app-status-success', $t('admin.users.doc_valid')];
 };
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-2 min-w-0">
-        <?= View::render('partials/back_button', ['href' => '/admin/users'], null) ?>
-        <div class="min-w-0">
-            <h1 class="h4 mb-0 text-truncate"><?= $e($record['name']) ?></h1>
-            <span class="small text-muted"><?= $e(Lang::label('roles', (string) $record['role'])) ?></span>
-        </div>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/users/' . $record['id'] . '/edit')) ?>">
-            <i class="bi bi-pencil" aria-hidden="true"></i> <?= $e($t('admin.users.edit_profile')) ?>
-        </a>
-    </div>
-</div>
+<?php
+$showActions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/users/' . $record['id'] . '/edit')) . '">'
+    . '<i class="bi bi-pencil" aria-hidden="true"></i> ' . $e($t('admin.users.edit_profile')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin/users'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => (string) $record['name'],
+    'subtitle' => Lang::label('roles', (string) $record['role']),
+    'actions'  => $showActions,
+], null);
+?>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],

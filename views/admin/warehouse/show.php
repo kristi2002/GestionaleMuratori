@@ -11,26 +11,44 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
+
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/warehouse/' . $item['id'] . '/edit')) . '">'
+    . '<i class="bi bi-pencil" aria-hidden="true"></i> ' . $e($t('common.edit')) . '</a>'
+    . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/warehouse')) . '">'
+    . '<i class="bi bi-arrow-left" aria-hidden="true"></i> ' . $e($t('admin.warehouse.back_to_list')) . '</a>';
+
+echo View::render('partials/page_head', [
+    'title'    => $item['name'],
+    'subtitle' => ($item['sku'] ?? '') !== '' ? $item['sku'] : $t('admin.warehouse.detail'),
+    'actions'  => $actions,
+], null);
 ?>
-<a href="<?= $e(Url::to('/admin/warehouse')) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('admin.warehouse.back_to_list')) ?></a>
 
 <div class="row g-3">
     <div class="col-12 col-lg-4">
         <div class="card">
             <div class="card-body">
-                <h1 class="h5 mb-3"><?= $e($item['name']) ?></h1>
-                <dl class="row mb-0 small">
-                    <dt class="col-6"><?= $e($t('admin.warehouse.sku')) ?></dt>
-                    <dd class="col-6"><?= $e($item['sku']) ?></dd>
-                    <dt class="col-6"><?= $e($t('admin.warehouse.unit')) ?></dt>
-                    <dd class="col-6"><?= $e(Lang::label('units', $item['unit'])) ?></dd>
-                    <dt class="col-6"><?= $e($t('admin.warehouse.qty_in_stock')) ?></dt>
-                    <dd class="col-6 fw-bold js-qty-in-stock"><?= $e((string) $item['qty_in_stock']) ?></dd>
-                    <dt class="col-6"><?= $e($t('admin.warehouse.reorder_level')) ?></dt>
-                    <dd class="col-6"><?= $e((string) $item['reorder_level']) ?></dd>
+                <h2 class="h6 mb-3"><?= $e($t('admin.warehouse.detail')) ?></h2>
+                <dl class="app-dl mb-0">
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('admin.warehouse.sku')) ?></dt>
+                        <dd><?= $e(($item['sku'] ?? '') !== '' ? $item['sku'] : '—') ?></dd>
+                    </div>
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('admin.warehouse.unit')) ?></dt>
+                        <dd><?= $e(Lang::label('units', $item['unit'])) ?></dd>
+                    </div>
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('admin.warehouse.qty_in_stock')) ?></dt>
+                        <dd class="js-qty-in-stock"><?= $e((string) $item['qty_in_stock']) ?></dd>
+                    </div>
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('admin.warehouse.reorder_level')) ?></dt>
+                        <dd><?= $e((string) $item['reorder_level']) ?></dd>
+                    </div>
                 </dl>
-                <div class="alert alert-info d-none mt-2 mb-2 js-reconcile-result" role="alert"></div>
-                <button type="button" class="btn btn-sm btn-outline-secondary w-100 js-reconcile-btn"
+                <div class="alert alert-info d-none mt-3 mb-2 js-reconcile-result" role="alert"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-3 js-reconcile-btn"
                         data-url="<?= $e(Url::to('/admin/warehouse/' . $item['id'] . '/reconcile')) ?>">
                     <?= $e($t('admin.warehouse.reconcile')) ?>
                 </button>
@@ -64,7 +82,7 @@ $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
         </div>
 
         <div class="card mt-3">
-            <div class="card-header bg-white"><?= $e($t('admin.warehouse.balances_by_location')) ?></div>
+            <div class="card-header"><?= $e($t('admin.warehouse.balances_by_location')) ?></div>
             <ul class="list-group list-group-flush">
                 <?php if ($balances === []): ?>
                     <li class="list-group-item small text-muted"><?= $e($t('admin.warehouse.no_balances')) ?></li>
@@ -110,7 +128,7 @@ $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
                         <label class="form-label"><?= $e($t('admin.warehouse.transfer.note')) ?></label>
                         <input type="text" class="form-control" name="note">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100"><?= $e($t('admin.warehouse.transfer.submit')) ?></button>
+                    <button type="submit" class="btn btn-success w-100"><?= $e($t('admin.warehouse.transfer.submit')) ?></button>
                 </form>
             </div>
         </div>
@@ -118,7 +136,7 @@ $num = static fn (string $v): string => rtrim(rtrim($v, '0'), '.');
 
     <div class="col-12 col-lg-8">
         <div class="card app-anchor" id="registro">
-            <div class="card-header bg-white"><?= $e($t('admin.warehouse.ledger')) ?></div>
+            <div class="card-header"><?= $e($t('admin.warehouse.ledger')) ?></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>

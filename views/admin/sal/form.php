@@ -9,14 +9,13 @@ use App\Support\View;
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.sal.new'),
+    'subtitle' => $t('admin.sal.subtitle'),
+    'actions'  => View::render('partials/back_button', ['href' => '/admin/sal'], null),
+], null);
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.sal.new')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.sal.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin/sal'], null) ?>
-</div>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],

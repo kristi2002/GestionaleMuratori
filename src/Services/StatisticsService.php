@@ -36,6 +36,9 @@ final class StatisticsService
     private function kpi(PDO $pdo): array
     {
         return [
+            'total_projects'      => (int) $pdo->query("SELECT COUNT(*) FROM projects")->fetchColumn(),
+            'total_interventions' => (int) $pdo->query("SELECT COUNT(*) FROM interventions")->fetchColumn(),
+            'total_workers'       => (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'worker' AND is_active = 1")->fetchColumn(),
             'active_projects'     => (int) $pdo->query("SELECT COUNT(*) FROM projects WHERE status='active'")->fetchColumn(),
             'interventions_month' => (int) $pdo->query(
                 "SELECT COUNT(*) FROM interventions

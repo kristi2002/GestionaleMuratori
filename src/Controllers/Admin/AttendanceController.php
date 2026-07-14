@@ -30,16 +30,18 @@ final class AttendanceController
         }
         $date = trim((string) $request->input('date', ''));
 
+        $attModel = new SiteAttendanceModel();
         $rows = $projectId > 0
-            ? (new SiteAttendanceModel())->forProject($projectId, $date !== '' ? $date : null)
+            ? $attModel->forProject($projectId, $date !== '' ? $date : null)
             : [];
 
         Response::html(View::render('admin/attendance/index', [
-            'title'      => Lang::get('admin.attendance.title'),
-            'projects'   => $projects,
-            'projectId'  => $projectId,
-            'date'       => $date,
-            'attendance' => $rows,
+            'title'        => Lang::get('admin.attendance.title'),
+            'projects'     => $projects,
+            'projectId'    => $projectId,
+            'date'         => $date,
+            'attendance'   => $rows,
+            'presentCount' => $projectId > 0 ? $attModel->countPresent($projectId) : 0,
         ], 'layout'));
     }
 }

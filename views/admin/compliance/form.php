@@ -28,13 +28,11 @@ $subjectSubtitle = $isEdit
     ? trim(Lang::label('compliance_subject', $currentSubjectType) . ' · ' . Lang::label('compliance_doc', $currentDocType))
     : $t('admin.compliance.subtitle');
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($pageTitle) ?></h1>
-        <p class="text-muted mb-0"><?= $e($subjectSubtitle) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin/compliance'], null) ?>
-</div>
+<?= View::render('partials/page_head', [
+    'title'    => $pageTitle,
+    'subtitle' => $subjectSubtitle,
+    'actions'  => View::render('partials/back_button', ['href' => '/admin/compliance'], null),
+], null) ?>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],

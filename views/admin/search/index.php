@@ -24,7 +24,12 @@ $groupIcon = [
     'warehouse'      => 'bi-box-seam',
 ];
 ?>
-<h1 class="h4 mb-3"><?= $e($t('admin.search.title')) ?></h1>
+<?php
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.search.title'),
+    'subtitle' => $t('admin.search.hint'),
+], null);
+?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
@@ -51,7 +56,7 @@ $groupIcon = [
         <?php foreach ($results as $group => $rows): ?>
             <div class="col-12 col-lg-6">
                 <div class="card h-100">
-                    <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
+                    <div class="card-header fw-semibold d-flex align-items-center justify-content-between">
                         <span><i class="bi <?= $e($groupIcon[$group] ?? 'bi-dot') ?> text-success" aria-hidden="true"></i> <?= $e($t($groupLabel[$group] ?? $group)) ?></span>
                         <span class="badge text-bg-light border"><?= $e((string) count($rows)) ?></span>
                     </div>

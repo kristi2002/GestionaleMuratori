@@ -39,6 +39,14 @@ final class StockMovementModel
         return $stmt->fetchAll();
     }
 
+    /** Ledger rows created today (warehouse index KPI — read-only). */
+    public function countToday(): int
+    {
+        return (int) Database::pdo()
+            ->query('SELECT COUNT(*) FROM stock_movements WHERE created_at >= CURDATE()')
+            ->fetchColumn();
+    }
+
     /**
      * Materials actually used across a project (§5 report — "from ledger out
      * movements, not planned"), grouped by item.

@@ -259,6 +259,73 @@ final class InterventionModel
     }
 
     /**
+     * Aggregate counts for the interventions list/calendar KPI row, all in one
+     * round-trip:
+     *  - today:            scheduled for $today (any status)
+     *  - week:             scheduled within [$weekFrom, $weekTo]
+     *  - overdue:          past-due & still open (scheduled_date < today, non-terminal)
+     *  - completed_month:  completed within [$monthFrom, $monthTo]
+     *
+     * @return array{today:int,week:int,overdue:int,completed_month:int}
+     */
+    public function summaryCounts(
+        string $today,
+        string $weekFrom,
+        string $weekTo,
+        string $monthFrom,
+        string $monthTo
+    ): array {
+        $stmt = Database::pdo()->prepare(
+            "SELECT
+                (SELECT COUNT(*) FROM interventions WHERE scheduled_date = :today) AS today,
+                (SELECT COUNT(*) FROM interventions WHERE scheduled_date BETWEEN :week_from AND :week_to) AS week,
+                (SELECT COUNT(*) FROM interventions
+                    WHERE scheduled_date < :overdue_before
+                      AND status IN ('pending','in_progress','on_hold')) AS overdue,
+                (SELECT COUNT(*) FROM interventions
+                    WHERE completed_at IS NOT NULL
+                      AND DATE(completed_at) BETWEEN :month_from AND :month_to) AS completed_month"
+        );
+        $stmt->execute([
+            ':today'          => $today,
+            ':week_from'      => $weekFrom,
+            ':week_to'        => $weekTo,
+            ':overdue_before' => $today,
+            ':month_from'     => $monthFrom,
+            ':month_to'       => $monthTo,
+        ]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'today'           => (int) ($row['today'] ?? 0),
+            'week'            => (int) ($row['week'] ?? 0),
+            'overdue'         => (int) ($row['overdue'] ?? 0),
+            'completed_month' => (int) ($row['completed_month'] ?? 0),
+        ];
+    }
+
+    /**
+     * Per-status counts honoring the current project/worker/date filters (but
+     * ignoring the status filter itself) — drives the pill filter badges.
+     *
+     * @param array<string,mixed> $filters
+     * @return array<string,int> status => count
+     */
+    public function countsByStatus(array $filters = []): array
+    {
+        unset($filters['status']);
+        [$where, $params] = $this->filterSql($filters);
+        $stmt = Database::pdo()->prepare(
+            'SELECT i.status, COUNT(*) AS n FROM interventions i' . $where . ' GROUP BY i.status'
+        );
+        $stmt->execute($params);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['status']] = (int) $row['n'];
+        }
+        return $out;
+    }
+
+    /**
      * Per-day intervention counts over a date window, for the dashboard trend
      * sparklines. $column is whitelisted to avoid injection: 'scheduled_date'
      * counts by planned day; 'completed_at' counts real completions per day.

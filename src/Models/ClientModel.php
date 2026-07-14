@@ -11,7 +11,14 @@ final class ClientModel
     public function all(string $search = '', ?int $limit = null, int $offset = 0): array
     {
         [$where, $params] = $this->filterSql($search);
-        $sql = 'SELECT * FROM clients' . $where . ' ORDER BY name';
+        // Per-client project count and total invoiced amount (real KPI data for
+        // the card grid). Correlated subqueries keep the single-statement shape.
+        $sql = 'SELECT clients.*,
+                (SELECT COUNT(*) FROM projects p WHERE p.client_id = clients.id) AS project_count,
+                (SELECT COALESCE(SUM(pi.amount), 0) FROM project_invoices pi
+                    JOIN projects p2 ON p2.id = pi.project_id
+                    WHERE p2.client_id = clients.id) AS invoiced_total
+            FROM clients' . $where . ' ORDER BY name';
         if ($limit !== null) {
             $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
         }
@@ -86,6 +93,22 @@ final class ClientModel
     {
         $stmt = Database::pdo()->prepare('DELETE FROM clients WHERE id = ?');
         return $stmt->execute([$id]);
+    }
+
+    /** Total number of projects across every client (KPI header). */
+    public function totalProjects(): int
+    {
+        $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM projects');
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** Sum of all invoiced amounts across every project (KPI header). */
+    public function totalInvoiced(): float
+    {
+        $stmt = Database::pdo()->prepare('SELECT COALESCE(SUM(amount), 0) FROM project_invoices');
+        $stmt->execute();
+        return (float) $stmt->fetchColumn();
     }
 
     /** Number of projects linked to this client — used to warn before a cascading delete. */

@@ -11,13 +11,14 @@ $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $isAdmin = ($user['role'] ?? '') === 'admin';
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('shortcuts.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('shortcuts.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => $isAdmin ? '/admin' : '/'], null) ?>
-</div>
+<?php
+echo View::render('partials/page_head', [
+    'title'    => $t('shortcuts.title'),
+    'subtitle' => $t('shortcuts.subtitle'),
+], null);
+// Back navigation is provided by the persistent sidebar / navbar (no-op partial kept for compatibility).
+echo View::render('partials/back_button', ['href' => $isAdmin ? '/admin' : '/'], null);
+?>
 
 <div class="row g-3">
     <div class="col-12 col-lg-7">

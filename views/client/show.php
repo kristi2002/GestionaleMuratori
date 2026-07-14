@@ -8,67 +8,97 @@ use App\Support\View;
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
+
+$actions = '<a class="btn btn-outline-secondary app-icon-btn" href="' . $e(Url::to('/client/projects/' . $project['id'] . '/report/pdf')) . '"'
+    . ' title="' . $e($t('report.pdf')) . '" aria-label="' . $e($t('report.pdf')) . '">'
+    . '<i class="bi bi-file-earmark-pdf" aria-hidden="true"></i></a>'
+    . '<a class="btn btn-outline-secondary app-icon-btn" href="' . $e(Url::to('/client/projects/' . $project['id'] . '/report/excel')) . '"'
+    . ' title="' . $e($t('report.excel')) . '" aria-label="' . $e($t('report.excel')) . '">'
+    . '<i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i></a>'
+    . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/client')) . '">'
+    . '<i class="bi bi-arrow-left" aria-hidden="true"></i> ' . $e($t('client.back_to_list')) . '</a>';
+
+echo View::render('partials/page_head', [
+    'title'    => (string) $project['name'],
+    'subtitle' => ($project['location'] ?? '') !== '' ? (string) $project['location'] : null,
+    'actions'  => $actions,
+], null);
 ?>
-<a href="<?= $e(Url::to('/client')) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('client.back_to_list')) ?></a>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-            <h1 class="h5 mb-1"><?= $e($project['name']) ?></h1>
-            <span class="badge text-bg-light border"><?= $e(Lang::label('project_status', $project['status'])) ?></span>
-        </div>
-        <?php if ($project['location']): ?>
-            <p class="small text-muted mb-2"><?= $e($t('client.location')) ?>: <?= $e($project['location']) ?></p>
-        <?php endif; ?>
-        <p class="small text-muted mb-0">
-            <?= $e($t('client.start_date')) ?>: <?= $e($project['start_date']) ?>
-            <?php if ($project['end_date']): ?>
-                — <?= $e($t('client.end_date')) ?>: <?= $e($project['end_date']) ?>
-            <?php endif; ?>
-        </p>
-        <div class="mt-3">
-            <a class="btn btn-sm btn-outline-success" href="<?= $e(Url::to('/client/projects/' . $project['id'] . '/report/pdf')) ?>"><?= $e($t('report.pdf')) ?></a>
-            <a class="btn btn-sm btn-outline-success" href="<?= $e(Url::to('/client/projects/' . $project['id'] . '/report/excel')) ?>"><?= $e($t('report.excel')) ?></a>
-        </div>
-    </div>
-</div>
+<div class="app-cols">
+    <div>
+        <h2 class="app-section-title"><?= $e($t('client.interventions')) ?></h2>
 
-<h2 class="h6 mb-2"><?= $e($t('client.interventions')) ?></h2>
-
-<?php if ($interventions === []): ?>
-    <div class="card">
-        <div class="card-body text-center text-muted py-4"><?= $e($t('client.no_interventions')) ?></div>
-    </div>
-<?php endif; ?>
-
-<div class="d-flex flex-column gap-3">
-    <?php foreach ($interventions as $iv): ?>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <h3 class="h6 mb-1"><?= $e($iv['title']) ?></h3>
-                    <span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $iv['status'])) ?></span>
+        <?php if ($interventions === []): ?>
+            <div class="card">
+                <div class="app-empty-state">
+                    <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                    <p class="mb-0 fw-semibold"><?= $e($t('client.no_interventions')) ?></p>
                 </div>
-                <p class="small text-muted mb-2">
-                    <?php if ($iv['scheduled_date']): ?>
-                        <?= $e($t('client.scheduled_date')) ?>: <?= $e($iv['scheduled_date']) ?> —
-                    <?php endif; ?>
-                    <?= $e($t('client.worker')) ?>: <?= $e($iv['worker_name'] ?? $t('client.unassigned')) ?>
-                </p>
+            </div>
+        <?php else: ?>
+            <div class="d-flex flex-column gap-3">
+                <?php foreach ($interventions as $iv): ?>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <h3 class="h6 mb-1"><?= $e($iv['title']) ?></h3>
+                                <?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $iv['status']], null) ?>
+                            </div>
+                            <p class="small text-muted mb-2">
+                                <?php if ($iv['scheduled_date']): ?>
+                                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                    <?= $e($iv['scheduled_date']) ?> ·
+                                <?php endif; ?>
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                <?= $e($iv['worker_name'] ?? $t('client.unassigned')) ?>
+                            </p>
 
-                <?php if ($iv['gallery'] === []): ?>
-                    <p class="small text-muted mb-0"><?= $e($t('client.no_photos')) ?></p>
-                <?php else: ?>
-                    <div class="d-flex flex-wrap gap-2">
-                        <?php foreach ($iv['gallery'] as $photo): ?>
-                            <a href="<?= $e(Url::to('/client/photos/' . $photo['id'])) ?>" target="_blank" rel="noopener">
-                                <img src="<?= $e(Url::to('/client/photos/' . $photo['id'] . '/thumb')) ?>" alt="<?= $e(Lang::label('photo_types', $photo['type'])) ?>"
-                                     class="rounded border" style="width:88px;height:88px;object-fit:cover;">
-                            </a>
-                        <?php endforeach; ?>
+                            <?php if ($iv['gallery'] === []): ?>
+                                <p class="small text-muted mb-0"><?= $e($t('client.no_photos')) ?></p>
+                            <?php else: ?>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <?php foreach ($iv['gallery'] as $photo): ?>
+                                        <a href="<?= $e(Url::to('/client/photos/' . $photo['id'])) ?>" target="_blank" rel="noopener">
+                                            <img src="<?= $e(Url::to('/client/photos/' . $photo['id'] . '/thumb')) ?>" alt="<?= $e(Lang::label('photo_types', $photo['type'])) ?>"
+                                                 class="rounded border" style="width:88px;height:88px;object-fit:cover;">
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="app-rail">
+        <div class="app-rail-card">
+            <h2 class="app-rail-title"><?= $e($t('client.details')) ?></h2>
+
+            <div class="mb-3">
+                <?= View::render('partials/status_badge', ['group' => 'project_status', 'value' => (string) $project['status']], null) ?>
+            </div>
+
+            <dl class="app-dl">
+                <?php if (($project['location'] ?? '') !== ''): ?>
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('client.location')) ?></dt>
+                        <dd><?= $e($project['location']) ?></dd>
                     </div>
                 <?php endif; ?>
-            </div>
+                <div class="app-dl-row">
+                    <dt><?= $e($t('client.start_date')) ?></dt>
+                    <dd><?= $e($project['start_date']) ?></dd>
+                </div>
+                <?php if ($project['end_date']): ?>
+                    <div class="app-dl-row">
+                        <dt><?= $e($t('client.end_date')) ?></dt>
+                        <dd><?= $e($project['end_date']) ?></dd>
+                    </div>
+                <?php endif; ?>
+            </dl>
         </div>
-    <?php endforeach; ?>
+    </div>
 </div>

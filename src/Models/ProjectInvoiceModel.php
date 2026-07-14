@@ -7,6 +7,14 @@ use App\Support\Database;
 
 final class ProjectInvoiceModel
 {
+    /**
+     * An unpaid (issued) invoice is treated as overdue once its issue_date is
+     * older than this many days — standard 30-day payment terms, since the
+     * schema has no explicit due_date column.
+     */
+    private const OVERDUE_DAYS = 30;
+
+
     /** @return array<int,array<string,mixed>> Invoices of a project, newest first. */
     public function forProject(int $projectId): array
     {
@@ -77,6 +85,56 @@ final class ProjectInvoiceModel
             $params[] = (int) $filters['project_id'];
         }
         return [$sql, $params];
+    }
+
+    /**
+     * Invoice counts grouped by status across the whole table — drives the
+     * pill-filter badges on the "Fatture" list page.
+     * @return array<string,int> e.g. ['draft'=>2,'issued'=>5,'paid'=>9]
+     */
+    public function statusCounts(): array
+    {
+        $stmt = Database::pdo()->query('SELECT status, COUNT(*) AS n FROM project_invoices GROUP BY status');
+        $out  = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['status']] = (int) $row['n'];
+        }
+        return $out;
+    }
+
+    /**
+     * Header KPI aggregates (all real data, whole table): amount issued this
+     * month, cashed-in (paid), still outstanding (issued) and overdue.
+     * @return array<string,string> Numeric strings (SUM/COUNT) keyed by metric.
+     */
+    public function summary(): array
+    {
+        $stmt = Database::pdo()->query(
+            "SELECT
+                COALESCE(SUM(CASE WHEN status IN ('issued','paid')
+                    AND YEAR(issue_date) = YEAR(CURDATE())
+                    AND MONTH(issue_date) = MONTH(CURDATE()) THEN amount END), 0) AS issued_month_total,
+                SUM(CASE WHEN status IN ('issued','paid')
+                    AND YEAR(issue_date) = YEAR(CURDATE())
+                    AND MONTH(issue_date) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS issued_month_count,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN amount END), 0) AS paid_total,
+                SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid_count,
+                COALESCE(SUM(CASE WHEN status = 'issued' THEN amount END), 0) AS outstanding_total,
+                SUM(CASE WHEN status = 'issued' THEN 1 ELSE 0 END) AS outstanding_count,
+                COALESCE(SUM(CASE WHEN status = 'issued'
+                    AND issue_date < (CURDATE() - INTERVAL " . self::OVERDUE_DAYS . " DAY) THEN amount END), 0) AS overdue_total,
+                SUM(CASE WHEN status = 'issued'
+                    AND issue_date < (CURDATE() - INTERVAL " . self::OVERDUE_DAYS . " DAY) THEN 1 ELSE 0 END) AS overdue_count
+             FROM project_invoices"
+        );
+        $row = $stmt->fetch();
+        return $row ? array_map(static fn ($v): string => (string) $v, $row) : [];
+    }
+
+    /** Days after issue_date an unpaid invoice is considered overdue (for the view). */
+    public function overdueDays(): int
+    {
+        return self::OVERDUE_DAYS;
     }
 
     public function find(int $id): ?array

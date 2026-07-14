@@ -2627,3 +2627,164 @@ tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
 [data-bs-theme="dark"] .border,[data-bs-theme="dark"] .border-top,[data-bs-theme="dark"] .border-bottom,
 [data-bs-theme="dark"] .border-start,[data-bs-theme="dark"] .border-end{border-color:#1E2A44!important;}
 [data-bs-theme="dark"] .badge.text-bg-light{background:#111C33!important;color:#CBD5E1!important;border-color:#1E2A44!important;}
+
+/* =======================================================================
+   4) MOCKUP COMPONENT KIT  (Navy + Orange — "muratori design" refresh)
+   Theme-flipping surface tokens drive every component below, so each one
+   renders correctly in both the dark shell (default) and the light theme.
+   ======================================================================= */
+:root{
+  --surface-1:#ffffff;   /* card / rail surface            */
+  --surface-2:#f4f6fb;   /* inset / track / hover surface  */
+  --surface-3:#eef1f6;   /* deepest inset                  */
+  --surface-line:#e6e9ef;/* hairline borders               */
+  --ink:#0F172A;         /* primary text                   */
+  --ink-soft:#64748B;    /* secondary text                 */
+  --ink-faint:#94A3B8;   /* tertiary text / axis           */
+  --elev-1:0 1px 2px rgba(15,23,42,.06);
+  --elev-2:0 6px 20px rgba(15,23,42,.10);
+}
+[data-bs-theme="dark"]{
+  --surface-1:#0D1426;
+  --surface-2:#0A1120;
+  --surface-3:#111C33;
+  --surface-line:#1E2A44;
+  --ink:#E2E8F0;
+  --ink-soft:#94A3B8;
+  --ink-faint:#64748B;
+  --elev-1:0 1px 2px rgba(0,0,0,.5);
+  --elev-2:0 12px 32px rgba(0,0,0,.45);
+}
+
+/* ---- Page header: big title + subtitle + actions --------------------- */
+.app-page-head{display:flex;justify-content:space-between;align-items:flex-start;
+  gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem;}
+.app-page-head-main{min-width:0;}
+.app-page-title{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;line-height:1.1;
+  margin:0;color:var(--ink);}
+.app-page-sub{margin:.35rem 0 0;color:var(--ink-soft);font-size:.95rem;}
+.app-page-actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+@media (max-width:575.98px){.app-page-title{font-size:1.45rem;}}
+
+/* ---- Pill filter tabs ------------------------------------------------- */
+.app-pills{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;}
+.app-pill{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .95rem;
+  border-radius:999px;font-size:.88rem;font-weight:600;line-height:1;cursor:pointer;
+  background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--surface-line);
+  text-decoration:none;transition:background .15s,color .15s,border-color .15s;white-space:nowrap;}
+.app-pill:hover{color:var(--ink);border-color:var(--app-green);}
+.app-pill.active{background:var(--app-green);color:#fff;border-color:var(--app-green);
+  box-shadow:0 2px 8px rgba(249,115,22,.35);}
+.app-pill .app-pill-count{font-variant-numeric:tabular-nums;opacity:.85;
+  background:rgba(0,0,0,.12);border-radius:999px;padding:.05rem .4rem;font-size:.72rem;}
+.app-pill.active .app-pill-count{background:rgba(255,255,255,.28);}
+.app-pill-dot{width:.5rem;height:.5rem;border-radius:50%;background:currentColor;}
+
+/* ---- KPI card extra accents (solid + trend) -------------------------- */
+.gm-kpi.is-info::before{background:var(--app-info);}
+.gm-kpi.is-info .gm-kpi-ic{color:var(--app-info);opacity:1;}
+.gm-kpi.is-purple::before{background:var(--app-purple);}
+.gm-kpi.is-purple .gm-kpi-ic{color:var(--app-purple);opacity:1;}
+.gm-kpi.is-danger::before{background:var(--app-danger);}
+.gm-kpi.is-danger .gm-kpi-ic{color:var(--app-danger);opacity:1;}
+/* "primary/selected" KPI: full orange ring (Clienti/Preventivi mockups). */
+.gm-kpi.is-primary{border-color:var(--app-green);box-shadow:0 0 0 1px var(--app-green) inset;}
+.gm-kpi.is-primary::before{width:0;}
+.gm-kpi-trend{display:inline-flex;align-items:center;gap:.2rem;font-size:.74rem;font-weight:700;
+  margin-top:.25rem;font-variant-numeric:tabular-nums;}
+.gm-kpi-trend.up{color:var(--app-success);}
+.gm-kpi-trend.down{color:var(--app-danger);}
+/* Solid, fully-coloured KPI tiles (Andamento Economico). */
+.gm-kpi-solid{border:none;color:#fff;border-radius:.85rem;padding:1.05rem 1.15rem;height:100%;
+  box-shadow:var(--elev-1);}
+.gm-kpi-solid::before{display:none;}
+.gm-kpi-solid .gm-kpi-lab{color:rgba(255,255,255,.82);font-weight:600;}
+.gm-kpi-solid .gm-kpi-val{color:#fff;}
+.gm-kpi-solid.is-success{background:linear-gradient(135deg,#12B981,#0F9C6E);}
+.gm-kpi-solid.is-warn{background:linear-gradient(135deg,#FB923C,#F97316);}
+.gm-kpi-solid.is-danger{background:linear-gradient(135deg,#F87171,#EF4444);}
+.gm-kpi-solid.is-info{background:linear-gradient(135deg,#60A5FA,#3B82F6);}
+.gm-kpi-solid.is-purple{background:linear-gradient(135deg,#A78BFA,#8B5CF6);}
+
+/* ---- Right detail rail ------------------------------------------------ */
+.app-rail{position:sticky;top:calc(var(--app-topbar-h) + 1rem);display:flex;flex-direction:column;gap:1rem;}
+.app-rail-card{background:var(--surface-1);border:1px solid var(--surface-line);border-radius:.85rem;
+  padding:1.1rem;box-shadow:var(--elev-1);}
+.app-rail-title{font-size:.95rem;font-weight:700;margin:0 0 .75rem;color:var(--ink);}
+.app-rail-empty{background:var(--surface-1);border:1px dashed var(--surface-line);border-radius:.85rem;
+  padding:2rem 1.1rem;text-align:center;color:var(--ink-soft);}
+/* label/value detail rows */
+.app-dl{display:flex;flex-direction:column;gap:.55rem;margin:0;}
+.app-dl-row{display:flex;justify-content:space-between;gap:1rem;font-size:.87rem;}
+.app-dl-row dt{color:var(--ink-soft);font-weight:500;margin:0;}
+.app-dl-row dd{color:var(--ink);font-weight:600;margin:0;text-align:right;}
+
+/* ---- Avatar stack ----------------------------------------------------- */
+.app-avatars{display:inline-flex;align-items:center;}
+.app-avatar{width:2rem;height:2rem;border-radius:50%;object-fit:cover;flex:none;
+  display:inline-grid;place-items:center;font-size:.72rem;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,#FB923C,#F97316);
+  border:2px solid var(--surface-1);box-shadow:0 1px 2px rgba(0,0,0,.25);}
+.app-avatars .app-avatar + .app-avatar{margin-left:-.6rem;}
+.app-avatar.is-more{background:var(--surface-3);color:var(--ink-soft);}
+.app-avatar-lg{width:3rem;height:3rem;font-size:1rem;}
+
+/* ---- Progress meter --------------------------------------------------- */
+.app-meter{display:flex;align-items:center;gap:.6rem;}
+.app-meter-track{flex:1;height:.5rem;border-radius:999px;background:var(--surface-3);overflow:hidden;}
+.app-meter-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#FB923C,#F97316);
+  transition:width .3s;}
+.app-meter-fill.is-success{background:linear-gradient(90deg,#34D399,#10B981);}
+.app-meter-fill.is-danger{background:linear-gradient(90deg,#F87171,#EF4444);}
+.app-meter-val{font-size:.82rem;font-weight:700;color:var(--app-green);font-variant-numeric:tabular-nums;flex:none;}
+
+/* ---- Card media header (gradient placeholder for project/record cards) - */
+.app-card-media{position:relative;height:120px;border-radius:.65rem;overflow:hidden;
+  background:linear-gradient(135deg,#1E2A44,#0A1120);display:grid;place-items:center;}
+.app-card-media.tint-2{background:linear-gradient(135deg,#233047,#111C33);}
+.app-card-media-glyph{font-size:2.4rem;color:rgba(255,255,255,.14);}
+.app-card-media .status-badge,.app-card-media .badge{position:absolute;top:.6rem;right:.6rem;}
+
+/* ---- Horizontal stepper (S.A.L.) ------------------------------------- */
+.app-stepper{display:flex;align-items:flex-start;justify-content:space-between;gap:.25rem;
+  position:relative;padding:.5rem 0;}
+.app-step{display:flex;flex-direction:column;align-items:center;gap:.5rem;flex:1;
+  position:relative;text-align:center;}
+.app-step::before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:2px;
+  background:var(--surface-line);z-index:0;}
+.app-step:first-child::before{display:none;}
+.app-step.done::before,.app-step.current::before{background:var(--app-green);}
+.app-step-dot{width:24px;height:24px;border-radius:50%;background:var(--surface-3);z-index:1;
+  border:2px solid var(--surface-line);display:grid;place-items:center;color:var(--ink-faint);font-size:.7rem;}
+.app-step.done .app-step-dot{background:var(--app-green);border-color:var(--app-green);color:#fff;}
+.app-step.current .app-step-dot{background:var(--surface-1);border-color:var(--app-green);
+  box-shadow:0 0 0 4px rgba(249,115,22,.2);color:var(--app-green);}
+.app-step-label{font-size:.78rem;color:var(--ink-soft);}
+.app-step.current .app-step-label,.app-step.done .app-step-label{color:var(--ink);font-weight:600;}
+
+/* ---- Filled alert banner --------------------------------------------- */
+.app-banner{display:flex;align-items:center;gap:.75rem;padding:.8rem 1.1rem;border-radius:.7rem;
+  font-weight:600;margin-bottom:1rem;}
+.app-banner .bi{font-size:1.2rem;flex:none;}
+.app-banner.is-warn{background:linear-gradient(135deg,#FB923C,#F97316);color:#fff;}
+.app-banner.is-danger{background:rgba(239,68,68,.12);color:var(--app-danger);
+  border:1px solid rgba(239,68,68,.35);}
+.app-banner.is-soft{background:var(--app-green-soft);color:var(--app-green-dark);
+  border:1px solid rgba(249,115,22,.3);}
+/* glowing outlined alert (Scadenzario hero) */
+.app-banner-glow{border:1.5px solid var(--app-green);border-radius:.85rem;padding:1rem 1.25rem;
+  box-shadow:0 0 0 4px rgba(249,115,22,.12),0 0 24px rgba(249,115,22,.18);
+  background:var(--surface-1);margin-bottom:1.25rem;}
+
+/* ---- Star rating ------------------------------------------------------ */
+.app-stars{display:inline-flex;gap:.1rem;color:var(--app-green);font-size:.9rem;letter-spacing:.05em;}
+.app-stars .bi-star{color:var(--surface-line);}
+
+/* ---- Two-column main + rail layout ----------------------------------- */
+@media (min-width:992px){
+  .app-cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1.25rem;align-items:start;}
+}
+
+/* ---- Section title (card-less block headings) ------------------------ */
+.app-section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin:1.5rem 0 .75rem;}
+

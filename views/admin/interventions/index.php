@@ -9,6 +9,9 @@ use App\Support\View;
 /** @var array<int,array<string,mixed>> $warehouseItems */
 /** @var array{project_id:int,worker_id:int,status:string} $filters */
 /** @var array<int,string> $statuses */
+/** @var array<string,int> $statusCounts */
+/** @var int $totalCount */
+/** @var array{today:int,week:int,overdue:int,completed_month:int} $kpis */
 /** @var string $range */
 
 $e = static fn (?string $v): string => View::e($v);
@@ -24,36 +27,98 @@ $rangeLink = static function (string $value) use ($filters): string {
     return Url::to('/admin/interventions') . ($query !== [] ? '?' . http_build_query($query) : '');
 };
 
+// Pill href: keeps project/worker/range while switching the status filter.
+$pillHref = static function (string $status) use ($filters, $range): string {
+    $query = array_filter([
+        'project_id' => $filters['project_id'] ?: null,
+        'worker_id'  => $filters['worker_id'] ?: null,
+        'status'     => $status ?: null,
+        'range'      => $range ?: null,
+    ]);
+    return '/admin/interventions' . ($query !== [] ? '?' . http_build_query($query) : '');
+};
+
 /** Status transitions an admin can trigger from the list (completed is worker-only, Phase 5). */
 $nextActions = [
     'pending'     => [['to' => 'in_progress', 'label' => $t('admin.interventions.start')], ['to' => 'cancelled', 'label' => $t('admin.interventions.cancel')]],
     'in_progress' => [['to' => 'on_hold', 'label' => $t('admin.interventions.hold')], ['to' => 'cancelled', 'label' => $t('admin.interventions.cancel')]],
     'on_hold'     => [['to' => 'in_progress', 'label' => $t('admin.interventions.resume')], ['to' => 'cancelled', 'label' => $t('admin.interventions.cancel')]],
 ];
+
+$exportQ = http_build_query(array_filter([
+    'project_id' => $filters['project_id'] ?: null,
+    'worker_id'  => $filters['worker_id'] ?: null,
+    'status'     => $filters['status'] ?: null,
+    'range'      => $range ?: null,
+]));
+
+$actions = '<a class="btn btn-outline-secondary app-icon-btn" href="' . $e(Url::to('/admin/interventions/calendar')) . '"'
+    . ' title="' . $e($t('admin.interventions.calendar_view')) . '" aria-label="' . $e($t('admin.interventions.calendar_view')) . '">'
+    . '<i class="bi bi-calendar3" aria-hidden="true"></i></a>'
+    . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/interventions/export' . ($exportQ !== '' ? '?' . $exportQ : ''))) . '">'
+    . '<i class="bi bi-download" aria-hidden="true"></i> ' . $e($t('common.export_csv')) . '</a>'
+    . '<a class="btn btn-success" href="' . $e(Url::to('/admin/interventions/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.interventions.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.interventions.title'),
+    'subtitle' => $t('admin.interventions.subtitle'),
+    'actions'  => $actions,
+], null);
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.interventions.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.interventions.subtitle')) ?></p>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-primary h-100">
+            <i class="bi bi-calendar-day gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['today']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_today')) ?></div>
+        </div>
     </div>
-    <?php $exportQ = http_build_query(array_filter([
-        'project_id' => $filters['project_id'] ?: null,
-        'worker_id'  => $filters['worker_id'] ?: null,
-        'status'     => $filters['status'] ?: null,
-        'range'      => $range ?: null,
-    ])); ?>
-    <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/calendar')) ?>">
-            <i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($t('admin.interventions.calendar_view')) ?>
-        </a>
-        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/export' . ($exportQ !== '' ? '?' . $exportQ : ''))) ?>">
-            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
-        </a>
-        <a class="btn btn-success" href="<?= $e(Url::to('/admin/interventions/create')) ?>">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.new')) ?>
-        </a>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-info h-100">
+            <i class="bi bi-calendar-week gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['week']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_week')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-danger h-100">
+            <i class="bi bi-exclamation-triangle gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['overdue']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_overdue')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi ok h-100">
+            <i class="bi bi-check2-circle gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['completed_month']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_completed_month')) ?></div>
+        </div>
     </div>
 </div>
+
+<?php
+// Status pill filters (Tutti + one per status, with real counts).
+$statusDots = ['pending' => 'secondary', 'in_progress' => 'info', 'on_hold' => 'warning', 'completed' => 'success', 'cancelled' => 'danger'];
+$pills = [[
+    'label'  => $t('common.all'),
+    'href'   => $pillHref(''),
+    'active' => ($filters['status'] ?? '') === '',
+    'count'  => $totalCount,
+]];
+foreach ($statuses as $s) {
+    $pills[] = [
+        'label'  => Lang::label('intervention_status', $s),
+        'href'   => $pillHref($s),
+        'active' => ($filters['status'] ?? '') === $s,
+        'count'  => $statusCounts[$s] ?? 0,
+        'dot'    => $statusDots[$s] ?? 'secondary',
+    ];
+}
+echo View::render('partials/filter_pills', ['pills' => $pills], null);
+?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
@@ -64,6 +129,9 @@ $nextActions = [
         </div>
         <form method="get" class="app-filter-grid app-filter-grid-selects">
             <input type="hidden" name="range" value="<?= $e($range) ?>">
+            <?php if (($filters['status'] ?? '') !== ''): ?>
+                <input type="hidden" name="status" value="<?= $e($filters['status']) ?>">
+            <?php endif; ?>
             <select class="form-select" name="project_id" aria-label="<?= $e($t('admin.interventions.project')) ?>">
                 <option value=""><?= $e($t('admin.interventions.project')) ?> — <?= $e($t('common.all')) ?></option>
                 <?php foreach ($projects as $p): ?>
@@ -76,18 +144,12 @@ $nextActions = [
                     <option value="<?= $e((string) $w['id']) ?>" <?= ((int) $filters['worker_id'] === (int) $w['id']) ? 'selected' : '' ?>><?= $e($w['name']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select class="form-select" name="status" aria-label="<?= $e($t('admin.interventions.status')) ?>">
-                <option value=""><?= $e($t('admin.interventions.status')) ?> — <?= $e($t('common.all')) ?></option>
-                <?php foreach ($statuses as $s): ?>
-                    <option value="<?= $e($s) ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>><?= $e(Lang::label('intervention_status', $s)) ?></option>
-                <?php endforeach; ?>
-            </select>
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
             <?= View::render('partials/filter_clear', [
-                'active' => $filters['project_id'] > 0 || $filters['worker_id'] > 0 || $filters['status'] !== '',
-                'href'   => '/admin/interventions' . ($range !== '' ? '?range=' . $range : ''),
+                'active' => $filters['project_id'] > 0 || $filters['worker_id'] > 0,
+                'href'   => $filters['status'] !== '' ? $pillHref($filters['status']) : ('/admin/interventions' . ($range !== '' ? '?range=' . $range : '')),
                 'inline' => true,
             ], null) ?>
         </form>
@@ -133,7 +195,7 @@ $nextActions = [
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </td>
-                    <td><span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $iv['status'])) ?></span></td>
+                    <td><?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $iv['status']], null) ?></td>
                     <td class="text-end app-row-actions">
                         <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
                             <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/' . $iv['id'] . '/edit')) ?>">

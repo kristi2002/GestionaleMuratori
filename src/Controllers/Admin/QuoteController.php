@@ -37,13 +37,20 @@ final class QuoteController
         $model     = new QuoteModel();
         $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
 
+        // Real per-status counts feed the pill filter badges; array_sum gives the
+        // "Tutti" (all quotes) count, which also matches the summary total.
+        $statusCounts = $model->statusCounts();
+
         Response::html(View::render('admin/quotes/index', [
-            'title'     => Lang::get('admin.quotes.title'),
-            'quotes'    => $model->all($filters, $paginator->perPage, $paginator->offset),
-            'clients'   => (new ClientModel())->all(),
-            'filters'   => $filters,
-            'statuses'  => self::STATUSES,
-            'paginator' => $paginator,
+            'title'        => Lang::get('admin.quotes.title'),
+            'quotes'       => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'clients'      => (new ClientModel())->all(),
+            'filters'      => $filters,
+            'statuses'     => self::STATUSES,
+            'statusCounts' => $statusCounts,
+            'totalCount'   => array_sum($statusCounts),
+            'summary'      => $model->summary(),
+            'paginator'    => $paginator,
         ], 'layout'));
     }
 

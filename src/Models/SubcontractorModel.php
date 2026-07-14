@@ -52,6 +52,24 @@ final class SubcontractorModel
         return $row ?: null;
     }
 
+    /**
+     * List-page KPI aggregates: total companies, how many are active, and how many
+     * are actually assigned to at least one project (working on a site).
+     *
+     * @return array{total:int,active:int,on_sites:int}
+     */
+    public function stats(): array
+    {
+        $pdo = Database::pdo();
+        $total  = (int) $pdo->query('SELECT COUNT(*) FROM subcontractors')->fetchColumn();
+        $active = (int) $pdo->query('SELECT COUNT(*) FROM subcontractors WHERE is_active = 1')->fetchColumn();
+        $onSites = (int) $pdo->query(
+            'SELECT COUNT(DISTINCT subcontractor_id) FROM project_subcontractors'
+        )->fetchColumn();
+
+        return ['total' => $total, 'active' => $active, 'on_sites' => $onSites];
+    }
+
     /** Active subcontractors — for assignment dropdowns and the user link field. */
     public function listActive(): array
     {

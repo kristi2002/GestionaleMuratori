@@ -6,6 +6,7 @@ use App\Support\View;
 /** @var array<int,array<string,mixed>> $subcontractors  each with a 'project_ids' int[] */
 /** @var array<int,array<string,mixed>> $projects */
 /** @var array<int,string> $compliance  subcontractor_id => 'expired'|'expiring'|'ok' */
+/** @var array{total:int,active:int,on_sites:int} $stats */
 /** @var string $search */
 
 $e = static fn (?string $v): string => View::e($v);
@@ -23,25 +24,58 @@ $complianceBadge = static function (?string $status) use ($e, $t): string {
         return '<span class="text-muted">—</span>';
     }
     [$cls, $icon, $key] = $map[$status];
-    return '<span class="app-status ' . $cls . '"><i class="bi ' . $icon . '" aria-hidden="true"></i> '
+    return '<span class="badge rounded-pill app-status ' . $cls . '"><i class="bi ' . $icon . '" aria-hidden="true"></i> '
         . $e($t($key)) . '</span>';
 };
-$blockedCount = count(array_filter($compliance, static fn (string $s): bool => $s === 'expired'));
+$blockedCount  = count(array_filter($compliance, static fn (string $s): bool => $s === 'expired'));
+$expiringCount = count(array_filter($compliance, static fn (string $s): bool => $s === 'expiring'));
+// Attention KPI accent: red if any DURC is expired, amber if only expiring.
+$docKpiClass = $blockedCount > 0 ? ' alert' : ($expiringCount > 0 ? ' warn' : '');
+
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/subcontractors/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.subcontractors.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.subcontractors.title'),
+    'subtitle' => $t('admin.subcontractors.subtitle'),
+    'actions'  => $actions,
+], null);
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.subcontractors.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.subcontractors.subtitle')) ?></p>
+
+<div class="app-kpi-grid mb-4">
+    <div class="card gm-kpi is-info">
+        <i class="bi bi-people gm-kpi-ic" aria-hidden="true"></i>
+        <div class="gm-kpi-val mt-2"><?= $e((string) $stats['total']) ?></div>
+        <div class="gm-kpi-lab"><?= $e($t('admin.subcontractors.kpi_total')) ?></div>
     </div>
-    <a class="btn btn-success" href="<?= $e(Url::to('/admin/subcontractors/create')) ?>">
-        <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.subcontractors.new')) ?>
-    </a>
+    <div class="card gm-kpi ok">
+        <i class="bi bi-check2-circle gm-kpi-ic" aria-hidden="true"></i>
+        <div class="gm-kpi-val mt-2"><?= $e((string) $stats['active']) ?></div>
+        <div class="gm-kpi-lab"><?= $e($t('admin.subcontractors.kpi_active')) ?></div>
+    </div>
+    <div class="card gm-kpi is-primary">
+        <i class="bi bi-building-check gm-kpi-ic" aria-hidden="true"></i>
+        <div class="gm-kpi-val mt-2"><?= $e((string) $stats['on_sites']) ?></div>
+        <div class="gm-kpi-lab"><?= $e($t('admin.subcontractors.kpi_on_sites')) ?></div>
+    </div>
+    <div class="card gm-kpi<?= $docKpiClass ?>">
+        <i class="bi bi-file-earmark-medical gm-kpi-ic" aria-hidden="true"></i>
+        <div class="gm-kpi-val mt-2"><?= $e((string) ($blockedCount + $expiringCount)) ?></div>
+        <div class="gm-kpi-lab"><?= $e($t('admin.subcontractors.kpi_docs')) ?></div>
+    </div>
 </div>
 
 <?php if ($blockedCount > 0): ?>
-    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+    <div class="app-banner is-danger mb-3" role="alert">
         <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
         <span><?= $e(sprintf($t('admin.subcontractors.blocked_warning'), $blockedCount)) ?></span>
+    </div>
+<?php endif; ?>
+<?php if ($expiringCount > 0): ?>
+    <div class="app-banner is-warn mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <span><?= $e(sprintf($t('admin.subcontractors.expiring_warning'), $expiringCount)) ?></span>
     </div>
 <?php endif; ?>
 
@@ -81,7 +115,12 @@ $blockedCount = count(array_filter($compliance, static fn (string $s): bool => $
             <?php endif; ?>
             <?php foreach ($subcontractors as $s): ?>
                 <tr class="<?= ((int) $s['is_active']) === 1 ? '' : 'table-secondary text-muted' ?>">
-                    <td><?= $e($s['name']) ?></td>
+                    <td>
+                        <span class="d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-building" aria-hidden="true"></i>
+                            <span class="fw-semibold"><?= $e($s['name']) ?></span>
+                        </span>
+                    </td>
                     <td><?= $e($s['vat_or_tax_id']) ?></td>
                     <td><?= $e($s['email']) ?></td>
                     <td><span class="badge text-bg-light border"><?= $e((string) count($s['project_ids'])) ?></span></td>

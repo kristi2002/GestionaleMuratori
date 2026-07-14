@@ -26,6 +26,18 @@ $tones = [
         'issued' => 'info',
         'paid'   => 'success',
     ],
+    'sal_status' => [
+        'draft'  => 'neutral',
+        'issued' => 'info',
+        'signed' => 'success',
+    ],
+    'quote_status' => [
+        'draft'    => 'neutral',
+        'sent'     => 'info',
+        'accepted' => 'success',
+        'rejected' => 'danger',
+        'expired'  => 'warning',
+    ],
 ];
 $tone = $tones[$group][$value] ?? 'neutral';
 ?>

@@ -109,6 +109,27 @@ final class WarehouseItemModel
     }
 
     /**
+     * Read-only catalogue aggregates for the warehouse index KPI row:
+     * total item count and inventory value (Σ qty_in_stock × unit_cost, ignoring
+     * items with no unit_cost). No stock is written — presentation only.
+     *
+     * @return array{total:int,inventory_value:float}
+     */
+    public function summary(): array
+    {
+        $row = Database::pdo()->query(
+            'SELECT COUNT(*) AS total,
+                    COALESCE(SUM(qty_in_stock * unit_cost), 0) AS inventory_value
+             FROM warehouse_items'
+        )->fetch();
+
+        return [
+            'total'           => (int) $row['total'],
+            'inventory_value' => (float) $row['inventory_value'],
+        ];
+    }
+
+    /**
      * Active items at or below their reorder level (dashboard low-stock alert).
      * Items with reorder_level = 0 are excluded: no threshold configured.
      *

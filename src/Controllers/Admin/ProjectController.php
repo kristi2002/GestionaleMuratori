@@ -62,13 +62,21 @@ final class ProjectController
         $model     = new ProjectModel();
         $paginator = Paginator::fromRequest($request, $model->count($filters), 24);
 
+        // Real per-status counts drive the header subtitle and the pill filter badges.
+        $statusCounts = [];
+        foreach (self::STATUSES as $s) {
+            $statusCounts[$s] = $model->countByStatus($s);
+        }
+
         Response::html(View::render('admin/projects/index', [
-            'title'     => Lang::get('admin.projects.title'),
-            'projects'  => $model->all($filters, $paginator->perPage, $paginator->offset),
-            'clients'   => (new ClientModel())->all(),
-            'filters'   => $filters,
-            'statuses'  => self::STATUSES,
-            'paginator' => $paginator,
+            'title'        => Lang::get('admin.projects.title'),
+            'projects'     => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'clients'      => (new ClientModel())->all(),
+            'filters'      => $filters,
+            'statuses'     => self::STATUSES,
+            'statusCounts' => $statusCounts,
+            'totalCount'   => array_sum($statusCounts),
+            'paginator'    => $paginator,
         ], 'layout'));
     }
 

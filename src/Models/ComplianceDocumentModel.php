@@ -101,6 +101,38 @@ final class ComplianceDocumentModel
         return $out;
     }
 
+    /**
+     * Global bucket counts for the compliance overview KPIs / action banner.
+     * Buckets are mutually exclusive so they sum to the full document count:
+     *   expired  — past its expiry_date
+     *   exp30    — expiring within 30 days (not yet expired)
+     *   exp90    — expiring in 31..90 days
+     *   valid    — expiring beyond 90 days, or with no expiry date (never lapses)
+     *
+     * @return array{expired:int,exp30:int,exp90:int,valid:int}
+     */
+    public function bucketCounts(): array
+    {
+        $stmt = Database::pdo()->query(
+            'SELECT
+                SUM(expiry_date IS NOT NULL AND expiry_date < CURDATE()) AS expired,
+                SUM(expiry_date IS NOT NULL AND expiry_date >= CURDATE()
+                    AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)) AS exp30,
+                SUM(expiry_date IS NOT NULL AND expiry_date > DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                    AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL 90 DAY)) AS exp90,
+                SUM(expiry_date IS NULL OR expiry_date > DATE_ADD(CURDATE(), INTERVAL 90 DAY)) AS valid
+             FROM compliance_documents'
+        );
+        $row = $stmt->fetch() ?: [];
+
+        return [
+            'expired' => (int) ($row['expired'] ?? 0),
+            'exp30'   => (int) ($row['exp30'] ?? 0),
+            'exp90'   => (int) ($row['exp90'] ?? 0),
+            'valid'   => (int) ($row['valid'] ?? 0),
+        ];
+    }
+
     public function expiringSoon(int $days = 30): array
     {
         $stmt = Database::pdo()->prepare(

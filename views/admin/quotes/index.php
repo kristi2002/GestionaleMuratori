@@ -7,50 +7,112 @@ use App\Support\View;
 /** @var array<int,array<string,mixed>> $clients */
 /** @var array{search:string,status:string,client_id:int} $filters */
 /** @var array<int,string> $statuses */
+/** @var array<string,int> $statusCounts */
+/** @var int $totalCount */
+/** @var array<string,string> $summary */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => '€ ' . number_format((float) $v, 2, ',', '.');
 $date  = static fn (?string $v): string => $v ? date('d/m/Y', (int) strtotime($v)) : '—';
-$badge = [
-    'draft'    => 'text-bg-secondary',
-    'sent'     => 'text-bg-primary',
-    'accepted' => 'text-bg-success',
-    'rejected' => 'text-bg-danger',
-    'expired'  => 'text-bg-warning',
-];
+
+// Keep the active search/client filter while switching the status pill.
+$pillHref = static function (string $status) use ($filters): string {
+    $q = array_filter([
+        'q'         => $filters['search'] ?? '',
+        'client_id' => ($filters['client_id'] ?? 0) ?: null,
+        'status'    => $status,
+    ], static fn ($v): bool => $v !== '' && $v !== null);
+    return '/admin/quotes' . ($q !== [] ? '?' . http_build_query($q) : '');
+};
+
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/quotes/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.quotes.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.quotes.title'),
+    'subtitle' => $t('admin.quotes.subtitle'),
+    'actions'  => $actions,
+], null);
+
+// KPI cards — all values come from QuoteModel::summary() (real data, whole table).
+$sm         = static fn (string $k): string => (string) ($summary[$k] ?? '0');
+$totalQ     = (int) $sm('total_count');
+$acceptedQ  = (int) $sm('accepted_count');
+$acceptRate = $totalQ > 0 ? (int) round($acceptedQ / $totalQ * 100) : 0;
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.quotes.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.quotes.subtitle')) ?></p>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card gm-kpi h-100">
+            <div class="card-body">
+                <i class="bi bi-file-earmark-text gm-kpi-ic" aria-hidden="true"></i>
+                <div class="gm-kpi-val mt-2"><?= $e((string) $totalQ) ?></div>
+                <div class="gm-kpi-lab"><?= $e($t('admin.quotes.kpi_total')) ?></div>
+            </div>
+        </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-success" href="<?= $e(Url::to('/admin/quotes/create')) ?>">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.quotes.new')) ?>
-        </a>
-        <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+    <div class="col-6 col-lg-3">
+        <div class="card gm-kpi h-100 is-primary">
+            <div class="card-body">
+                <i class="bi bi-graph-up-arrow gm-kpi-ic" aria-hidden="true"></i>
+                <div class="gm-kpi-val mt-2"><?= $e($acceptRate . '%') ?></div>
+                <div class="gm-kpi-lab"><?= $e($t('admin.quotes.kpi_acceptance')) ?></div>
+                <div class="gm-kpi-sub"><?= $e($acceptedQ . ' / ' . $totalQ) ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card gm-kpi h-100 ok">
+            <div class="card-body">
+                <i class="bi bi-cash-stack gm-kpi-ic" aria-hidden="true"></i>
+                <div class="gm-kpi-val mt-2"><?= $e($money($sm('total_value'))) ?></div>
+                <div class="gm-kpi-lab"><?= $e($t('admin.quotes.kpi_value')) ?></div>
+                <div class="gm-kpi-sub"><?= $e($t('admin.quotes.kpi_value_sub')) ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card gm-kpi h-100 warn">
+            <div class="card-body">
+                <i class="bi bi-hourglass-split gm-kpi-ic" aria-hidden="true"></i>
+                <div class="gm-kpi-val mt-2"><?= $e($sm('pending_count')) ?></div>
+                <div class="gm-kpi-lab"><?= $e($t('admin.quotes.kpi_pending')) ?></div>
+                <div class="gm-kpi-sub"><?= $e(Lang::label('quote_status', 'sent')) ?></div>
+            </div>
+        </div>
     </div>
 </div>
 
-<?= View::render('partials/breadcrumb', ['items' => [
-    [$t('nav.dashboard'), '/admin'],
-    [$t('admin.quotes.title'), null],
-]], null) ?>
+<?php
+// Status pill filters (Tutti + one per quote_status, each with its real count).
+$statusDots = ['draft' => 'secondary', 'sent' => 'info', 'accepted' => 'success', 'rejected' => 'danger', 'expired' => 'warning'];
+$pills = [[
+    'label'  => $t('common.all'),
+    'href'   => $pillHref(''),
+    'active' => ($filters['status'] ?? '') === '',
+    'count'  => $totalCount,
+]];
+foreach ($statuses as $st) {
+    $pills[] = [
+        'label'  => Lang::label('quote_status', $st),
+        'href'   => $pillHref($st),
+        'active' => ($filters['status'] ?? '') === $st,
+        'count'  => $statusCounts[$st] ?? 0,
+        'dot'    => $statusDots[$st] ?? 'secondary',
+    ];
+}
+echo View::render('partials/filter_pills', ['pills' => $pills], null);
+?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
-        <form method="get" class="app-filter-grid app-filter-grid-4">
+        <form method="get" class="app-filter-grid app-filter-grid-3">
+            <?php if (($filters['status'] ?? '') !== ''): ?>
+                <input type="hidden" name="status" value="<?= $e($filters['status']) ?>">
+            <?php endif; ?>
             <input type="text" class="form-control" name="q" value="<?= $e($filters['search']) ?>"
                    placeholder="<?= $e($t('admin.quotes.search_placeholder')) ?>" aria-label="<?= $e($t('common.search')) ?>">
-            <select class="form-select" name="status" aria-label="<?= $e($t('admin.quotes.status')) ?>">
-                <option value=""><?= $e($t('common.all')) ?> — <?= $e($t('admin.quotes.status')) ?></option>
-                <?php foreach ($statuses as $s): ?>
-                    <option value="<?= $e($s) ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>>
-                        <?= $e(Lang::label('quote_status', $s)) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
             <select class="form-select" name="client_id" aria-label="<?= $e($t('admin.clients.title')) ?>">
                 <option value=""><?= $e($t('common.all')) ?> — <?= $e($t('admin.clients.title')) ?></option>
                 <?php foreach ($clients as $c): ?>
@@ -63,8 +125,8 @@ $badge = [
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
             <?= View::render('partials/filter_clear', [
-                'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['client_id'] > 0,
-                'href'   => '/admin/quotes',
+                'active' => $filters['search'] !== '' || $filters['client_id'] > 0,
+                'href'   => $filters['status'] !== '' ? $pillHref($filters['status']) : '/admin/quotes',
                 'inline' => true,
             ], null) ?>
         </form>
@@ -116,9 +178,7 @@ $badge = [
                     <td><?= $e($date($q['valid_until'])) ?></td>
                     <td class="text-end"><?= $e($money($total)) ?></td>
                     <td>
-                        <span class="badge <?= $e($badge[$q['status']] ?? 'text-bg-secondary') ?>">
-                            <?= $e(Lang::label('quote_status', $q['status'])) ?>
-                        </span>
+                        <?= View::render('partials/status_badge', ['group' => 'quote_status', 'value' => (string) $q['status']], null) ?>
                     </td>
                     <td class="text-end text-nowrap">
                         <?php if ($q['status'] === 'accepted' && $q['project_name']): ?>

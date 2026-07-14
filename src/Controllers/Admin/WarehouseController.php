@@ -36,11 +36,14 @@ final class WarehouseController
         $paginator = Paginator::fromRequest($request, $model->count($search), 25);
 
         Response::html(View::render('admin/warehouse/index', [
-            'title'     => Lang::get('admin.warehouse.title'),
-            'items'     => $model->all($search, $paginator->perPage, $paginator->offset),
-            'search'    => $search,
-            'units'     => self::UNITS,
-            'paginator' => $paginator,
+            'title'          => Lang::get('admin.warehouse.title'),
+            'items'          => $model->all($search, $paginator->perPage, $paginator->offset),
+            'search'         => $search,
+            'units'          => self::UNITS,
+            'paginator'      => $paginator,
+            'summary'        => $model->summary(),
+            'lowStockCount'  => count($model->lowStock()),
+            'movementsToday' => (new StockMovementModel())->countToday(),
         ], 'layout'));
     }
 

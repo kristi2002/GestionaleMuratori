@@ -7,48 +7,100 @@ use App\Support\View;
 /** @var array<int,array<string,mixed>> $projects */
 /** @var array{search:string,status:string,project_id:int} $filters */
 /** @var array<int,string> $statuses */
+/** @var array<string,int> $statusCounts */
+/** @var int $totalCount */
+/** @var array<string,string> $summary */
+/** @var int $overdueDays */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => $v === null ? '—' : '€ ' . number_format((float) $v, 2, ',', '.');
 $date  = static fn (?string $v): string => $v ? date('d/m/Y', (int) strtotime($v)) : '—';
-$badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' => 'text-bg-success'];
+
+// A row is "scaduta" (overdue) once an issued invoice is older than $overdueDays.
+$overdueBefore = date('Y-m-d', strtotime('-' . (int) $overdueDays . ' days'));
+$isOverdue = static function (array $inv) use ($overdueBefore): bool {
+    return ($inv['status'] ?? '') === 'issued'
+        && ($inv['issue_date'] ?? '') !== ''
+        && (string) $inv['issue_date'] < $overdueBefore;
+};
+
+// Keep the active search/project filter while switching the status pill.
+$pillHref = static function (string $status) use ($filters): string {
+    $q = array_filter([
+        'q'          => $filters['search'] ?? '',
+        'project_id' => ($filters['project_id'] ?? 0) ?: null,
+        'status'     => $status,
+    ], static fn ($v): bool => $v !== '' && $v !== null);
+    return '/admin/invoices' . ($q !== [] ? '?' . http_build_query($q) : '');
+};
+
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/invoices/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.invoices.new')) . '</a>'
+    . '<button type="button" class="btn btn-outline-secondary" disabled title="' . $e($t('nav.coming_soon')) . '">'
+    . '<i class="bi bi-lightning-charge" aria-hidden="true"></i> ' . $e($t('admin.invoices.einvoice_soon')) . '</button>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.invoices.title'),
+    'subtitle' => $t('admin.invoices.subtitle'),
+    'actions'  => $actions,
+], null);
+
+// KPI cards — all values come from ProjectInvoiceModel::summary() (real data).
+$s = static fn (string $k): string => (string) ($summary[$k] ?? '0');
+$countSub = static fn (string $k) => $s($k) . ' ' . $t('admin.invoices.kpi_count');
+$kpis = [
+    ['', 'bi-receipt', 'kpi_emesse_month', 'issued_month_total', 'issued_month_count'],
+    ['ok', 'bi-check2-circle', 'kpi_incassate', 'paid_total', 'paid_count'],
+    ['warn', 'bi-hourglass-split', 'kpi_da_incassare', 'outstanding_total', 'outstanding_count'],
+    ['is-danger', 'bi-exclamation-triangle', 'kpi_scadute', 'overdue_total', 'overdue_count'],
+];
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.invoices.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.invoices.subtitle')) ?></p>
-    </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a class="btn btn-success" href="<?= $e(Url::to('/admin/invoices/create')) ?>">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.invoices.new')) ?>
-        </a>
-        <button type="button" class="btn btn-outline-secondary" disabled
-                title="<?= $e($t('nav.coming_soon')) ?>">
-            <i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= $e($t('admin.invoices.einvoice_soon')) ?>
-        </button>
-        <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
-    </div>
+<div class="row g-3 mb-3">
+    <?php foreach ($kpis as [$variant, $icon, $labelKey, $valKey, $countKey]): ?>
+        <div class="col-6 col-lg-3">
+            <div class="card gm-kpi h-100<?= $variant !== '' ? ' ' . $variant : '' ?>">
+                <div class="card-body">
+                    <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
+                    <div class="gm-kpi-val mt-2"><?= $e($money($s($valKey))) ?></div>
+                    <div class="gm-kpi-lab"><?= $e($t('admin.invoices.' . $labelKey)) ?></div>
+                    <div class="gm-kpi-sub"><?= $e($countSub($countKey)) ?></div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
 </div>
 
-<?= View::render('partials/breadcrumb', ['items' => [
-    [$t('nav.dashboard'), '/admin'],
-    [$t('admin.invoices.title'), null],
-]], null) ?>
+<?php
+// Status pill filters (Tutti + one per invoice_status, each with its real count).
+$statusDots = ['draft' => 'secondary', 'issued' => 'info', 'paid' => 'success'];
+$pills = [[
+    'label'  => $t('common.all'),
+    'href'   => $pillHref(''),
+    'active' => ($filters['status'] ?? '') === '',
+    'count'  => $totalCount,
+]];
+foreach ($statuses as $st) {
+    $pills[] = [
+        'label'  => Lang::label('invoice_status', $st),
+        'href'   => $pillHref($st),
+        'active' => ($filters['status'] ?? '') === $st,
+        'count'  => $statusCounts[$st] ?? 0,
+        'dot'    => $statusDots[$st] ?? 'secondary',
+    ];
+}
+echo View::render('partials/filter_pills', ['pills' => $pills], null);
+?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
-        <form method="get" class="app-filter-grid app-filter-grid-4">
+        <form method="get" class="app-filter-grid app-filter-grid-3">
+            <?php if (($filters['status'] ?? '') !== ''): ?>
+                <input type="hidden" name="status" value="<?= $e($filters['status']) ?>">
+            <?php endif; ?>
             <input type="text" class="form-control" name="q" value="<?= $e($filters['search']) ?>"
                    placeholder="<?= $e($t('admin.invoices.search_placeholder')) ?>" aria-label="<?= $e($t('common.search')) ?>">
-            <select class="form-select" name="status" aria-label="<?= $e($t('admin.projects.invoice_status')) ?>">
-                <option value=""><?= $e($t('common.all')) ?> — <?= $e($t('admin.projects.invoice_status')) ?></option>
-                <?php foreach ($statuses as $s): ?>
-                    <option value="<?= $e($s) ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>>
-                        <?= $e(Lang::label('invoice_status', $s)) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
             <select class="form-select" name="project_id" aria-label="<?= $e($t('admin.projects.title')) ?>">
                 <option value=""><?= $e($t('common.all')) ?> — <?= $e($t('admin.projects.title')) ?></option>
                 <?php foreach ($projects as $p): ?>
@@ -61,8 +113,8 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
                 <i class="bi bi-search" aria-hidden="true"></i> <?= $e($t('common.search')) ?>
             </button>
             <?= View::render('partials/filter_clear', [
-                'active' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['project_id'] > 0,
-                'href'   => '/admin/invoices',
+                'active' => $filters['search'] !== '' || $filters['project_id'] > 0,
+                'href'   => $filters['status'] !== '' ? $pillHref($filters['status']) : '/admin/invoices',
                 'inline' => true,
             ], null) ?>
         </form>
@@ -99,16 +151,23 @@ $badge = ['draft' => 'text-bg-secondary', 'issued' => 'text-bg-primary', 'paid' 
                 </tr>
             <?php endif; ?>
             <?php foreach ($invoices as $inv): ?>
-                <tr>
+                <?php $overdue = $isOverdue($inv); ?>
+                <tr<?= $overdue ? ' class="sev-bad"' : '' ?>>
                     <td class="fw-semibold"><?= $e($inv['number']) ?></td>
-                    <td><?= $e($date($inv['issue_date'])) ?></td>
+                    <td>
+                        <?= $e($date($inv['issue_date'])) ?>
+                        <?php if ($overdue): ?>
+                            <span class="badge rounded-pill app-status app-status-danger ms-1"
+                                  title="<?= $e(strtr($t('admin.invoices.overdue_note'), [':days' => (string) $overdueDays])) ?>">
+                                <?= $e($t('admin.invoices.kpi_scadute')) ?>
+                            </span>
+                        <?php endif; ?>
+                    </td>
                     <td><?= $e($inv['client_name']) ?></td>
                     <td><?= $e($inv['project_name']) ?></td>
                     <td class="text-end"><?= $e($money($inv['amount'])) ?></td>
                     <td>
-                        <span class="badge <?= $e($badge[$inv['status']] ?? 'text-bg-secondary') ?>">
-                            <?= $e(Lang::label('invoice_status', $inv['status'])) ?>
-                        </span>
+                        <?= View::render('partials/status_badge', ['group' => 'invoice_status', 'value' => (string) $inv['status']], null) ?>
                     </td>
                     <td class="text-end text-nowrap">
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/print')) ?>">

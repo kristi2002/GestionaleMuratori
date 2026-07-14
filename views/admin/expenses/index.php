@@ -5,6 +5,9 @@ use App\Support\View;
 
 /** @var array<int,array<string,mixed>> $expenses */
 /** @var array{by_category: array<string,string>, total: string} $totals */
+/** @var array<string,string> $monthByCategory current-month spend per category */
+/** @var array<string,string> $byCategory chart aggregate: spend per category */
+/** @var array<int,array{name:string,total:string}> $byProject chart aggregate: spend per project */
 /** @var array<int,array<string,mixed>> $workers */
 /** @var array<int,array<string,mixed>> $projects */
 /** @var array{search:string,category:string,worker_id:int,project_id:int,date_from:string,date_to:string} $filters */
@@ -29,63 +32,157 @@ $catBadges = [
     'clothing' => 'text-bg-secondary',
     'other'    => 'text-bg-dark',
 ];
+// Distinct hues per category, shared by the category bar chart and the donut.
+$catColors = [
+    'meals'    => '#3B82F6',
+    'fuel'     => '#F59E0B',
+    'vehicle'  => '#8B5CF6',
+    'clothing' => '#14B8A6',
+    'other'    => '#EF4444',
+];
+// Pill status dots reuse the same visual family as the table badges.
+$catDots = [
+    'meals'    => 'info',
+    'fuel'     => 'warning',
+    'vehicle'  => 'primary',
+    'clothing' => 'secondary',
+    'other'    => 'dark',
+];
+
+// Keep the current search/worker/project/date filters while switching category pill.
+$pillHref = static function (string $category) use ($filters): string {
+    $q = array_filter([
+        'q'          => $filters['search'] ?? '',
+        'worker_id'  => ($filters['worker_id'] ?? 0) ?: null,
+        'project_id' => ($filters['project_id'] ?? 0) ?: null,
+        'date_from'  => $filters['date_from'] ?? '',
+        'date_to'    => $filters['date_to'] ?? '',
+        'category'   => $category,
+    ], static fn ($v): bool => $v !== '' && $v !== null);
+    return '/admin/expenses' . ($q !== [] ? '?' . http_build_query($q) : '');
+};
+
+$expExportQ = http_build_query(array_filter([
+    'q'          => $filters['search'] ?? '',
+    'category'   => $filters['category'] ?? '',
+    'worker_id'  => ($filters['worker_id'] ?? 0) ?: null,
+    'project_id' => ($filters['project_id'] ?? 0) ?: null,
+    'date_from'  => $filters['date_from'] ?? '',
+    'date_to'    => $filters['date_to'] ?? '',
+], static fn ($v): bool => $v !== '' && $v !== null));
+
+$actions = '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/expenses/export' . ($expExportQ !== '' ? '?' . $expExportQ : ''))) . '">'
+    . '<i class="bi bi-download" aria-hidden="true"></i> ' . $e($t('common.export_csv')) . '</a>'
+    . '<a class="btn btn-success" href="' . $e(Url::to('/admin/expenses/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.expenses.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.expenses.title'),
+    'subtitle' => $t('admin.expenses.subtitle'),
+    'actions'  => $actions,
+], null);
+
+// Category pill filters (Tutti + one per category), wired to ?category=.
+$pills = [[
+    'label'  => $t('common.all'),
+    'href'   => $pillHref(''),
+    'active' => ($filters['category'] ?? '') === '',
+]];
+foreach ($categories as $cat) {
+    $pills[] = [
+        'label'  => Lang::label('expense_categories', $cat),
+        'href'   => $pillHref($cat),
+        'active' => ($filters['category'] ?? '') === $cat,
+        'dot'    => $catDots[$cat] ?? 'secondary',
+    ];
+}
+echo View::render('partials/filter_pills', ['pills' => $pills], null);
+
+// KPI row: current-month spend, overall then per category.
+$monthTotal = 0.0;
+foreach ($monthByCategory as $v) { $monthTotal += (float) $v; }
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.expenses.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.expenses.subtitle')) ?></p>
-    </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <?php $expExportQ = http_build_query(array_filter([
-            'q'          => $filters['search'] ?? '',
-            'category'   => $filters['category'] ?? '',
-            'worker_id'  => ($filters['worker_id'] ?? 0) ?: null,
-            'project_id' => ($filters['project_id'] ?? 0) ?: null,
-            'date_from'  => $filters['date_from'] ?? '',
-            'date_to'    => $filters['date_to'] ?? '',
-        ], static fn ($v): bool => $v !== '' && $v !== null)); ?>
-        <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/admin/expenses/export' . ($expExportQ !== '' ? '?' . $expExportQ : ''))) ?>">
-            <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('common.export_csv')) ?>
-        </a>
-        <a class="btn btn-success" href="<?= $e(Url::to('/admin/expenses/create')) ?>">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.expenses.new')) ?>
-        </a>
-        <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
-    </div>
-</div>
 
-<?= View::render('partials/breadcrumb', ['items' => [
-    [$t('nav.dashboard'), '/admin'],
-    [$t('admin.expenses.title'), null],
-]], null) ?>
-
-<?php // Totals of the current filter: one tile per category plus the grand total. ?>
-<div class="row g-2 mb-3">
+<div class="app-kpi-grid mb-4">
+    <div class="card gm-kpi is-primary h-100">
+        <i class="bi bi-cash-stack gm-kpi-ic" aria-hidden="true"></i>
+        <div class="gm-kpi-val mt-2"><?= $e($money($monthTotal)) ?></div>
+        <div class="gm-kpi-lab"><?= $e($t('admin.expenses.kpi_month_total')) ?></div>
+    </div>
     <?php foreach ($categories as $cat): ?>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="card h-100">
-                <div class="card-body py-2 px-3">
-                    <div class="small text-muted text-truncate">
-                        <i class="bi <?= $e($catIcons[$cat]) ?>" aria-hidden="true"></i>
-                        <?= $e(Lang::label('expense_categories', $cat)) ?>
-                    </div>
-                    <div class="fw-semibold"><?= $e($money($totals['by_category'][$cat] ?? 0)) ?></div>
-                </div>
-            </div>
+        <div class="card gm-kpi h-100">
+            <i class="bi <?= $e($catIcons[$cat]) ?> gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e($money($monthByCategory[$cat] ?? 0)) ?></div>
+            <div class="gm-kpi-lab"><?= $e(Lang::label('expense_categories', $cat)) ?></div>
         </div>
     <?php endforeach; ?>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="card h-100 border-success">
-            <div class="card-body py-2 px-3">
-                <div class="small text-muted text-truncate">
-                    <i class="bi bi-cash-stack" aria-hidden="true"></i>
-                    <?= $e($t('admin.expenses.total')) ?>
-                </div>
-                <div class="fw-bold text-success"><?= $e($money($totals['total'])) ?></div>
+</div>
+
+<?php
+// Chart data: per-category (bars + donut) and per-project (bars), from real aggregates.
+$catData = [];
+foreach ($categories as $cat) {
+    $v = (float) ($byCategory[$cat] ?? 0);
+    if ($v <= 0) { continue; }
+    $catData[] = [
+        'label'   => Lang::label('expense_categories', $cat),
+        'value'   => $v,
+        'display' => $money($v),
+        'color'   => $catColors[$cat] ?? '#94A3B8',
+    ];
+}
+$catTotal = 0.0;
+foreach ($catData as $d) { $catTotal += (float) $d['value']; }
+
+$projItems = [];
+foreach ($byProject as $row) {
+    $projItems[] = [
+        'label'   => (string) $row['name'],
+        'value'   => (float) $row['total'],
+        'display' => $money($row['total']),
+        'color'   => '#F97316',
+    ];
+}
+?>
+<?php if ($catData !== [] || $projItems !== []): ?>
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><?= $e($t('admin.expenses.chart_by_category')) ?></div>
+            <div class="card-body">
+                <?= View::render('partials/chart_hbars', [
+                    'items' => $catData,
+                    'empty' => $t('admin.expenses.no_data'),
+                ], null) ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><?= $e($t('admin.expenses.chart_distribution')) ?></div>
+            <div class="card-body">
+                <?= View::render('partials/chart_donut', [
+                    'segments'  => $catData,
+                    'centerNum' => $money($catTotal),
+                    'empty'     => $t('admin.expenses.no_data'),
+                ], null) ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><?= $e($t('admin.expenses.chart_by_project')) ?></div>
+            <div class="card-body">
+                <?= View::render('partials/chart_hbars', [
+                    'items' => $projItems,
+                    'empty' => $t('admin.expenses.no_data'),
+                ], null) ?>
             </div>
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">

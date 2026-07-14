@@ -34,13 +34,20 @@ final class InvoiceController
         $model     = new ProjectInvoiceModel();
         $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
 
+        // Real per-status counts drive the pill badges; summary() feeds the KPI cards.
+        $statusCounts = $model->statusCounts();
+
         Response::html(View::render('admin/invoices/index', [
-            'title'     => Lang::get('admin.invoices.title'),
-            'invoices'  => $model->all($filters, $paginator->perPage, $paginator->offset),
-            'projects'  => (new ProjectModel())->all(),
-            'filters'   => $filters,
-            'statuses'  => self::STATUSES,
-            'paginator' => $paginator,
+            'title'        => Lang::get('admin.invoices.title'),
+            'invoices'     => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'projects'     => (new ProjectModel())->all(),
+            'filters'      => $filters,
+            'statuses'     => self::STATUSES,
+            'statusCounts' => $statusCounts,
+            'totalCount'   => array_sum($statusCounts),
+            'summary'      => $model->summary(),
+            'overdueDays'  => $model->overdueDays(),
+            'paginator'    => $paginator,
         ], 'layout'));
     }
 

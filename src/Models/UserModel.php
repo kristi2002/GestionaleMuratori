@@ -70,6 +70,24 @@ final class UserModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * User counts grouped by role, plus a '_total' key. Feeds the admin
+     * users KPI row and the role pill filters. Roles with no users are absent
+     * (callers default to 0); '_total' is the sum across every role.
+     *
+     * @return array<string,int> e.g. ['_total' => 150, 'admin' => 3, 'worker' => 98]
+     */
+    public function countsByRole(): array
+    {
+        $stmt = Database::pdo()->query('SELECT role, COUNT(*) AS n FROM users GROUP BY role');
+        $out  = ['_total' => 0];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['role']] = (int) $row['n'];
+            $out['_total'] += (int) $row['n'];
+        }
+        return $out;
+    }
+
     public function emailExists(string $email, ?int $excludeId = null): bool
     {
         $sql    = 'SELECT COUNT(*) FROM users WHERE email = ?';

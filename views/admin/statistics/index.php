@@ -40,44 +40,34 @@ $donut = static function (array $segments, string $centerNum) use ($t): void {
 };
 
 $kpi = $stats['kpi'];
-?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.statistics.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.statistics.subtitle')) ?></p>
-    </div>
-</div>
 
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.statistics.title'),
+    'subtitle' => $t('admin.statistics.subtitle'),
+], null);
+
+// KPI row — every value is a real aggregate from StatisticsService (no fabricated
+// trends: the controller computes no prior-period delta, so the trend line is omitted).
+$kpiCards = [
+    ['is-info',   'bi-buildings',       $t('admin.statistics.kpi_total_projects'),      (string) (int) $kpi['total_projects']],
+    ['ok',        'bi-cash-stack',      $t('admin.statistics.kpi_revenue'),             $money((float) $kpi['revenue_paid'])],
+    ['is-purple', 'bi-people',          $t('admin.statistics.kpi_workers'),             (string) (int) $kpi['total_workers']],
+    ['warn',      'bi-clipboard-check', $t('admin.statistics.kpi_interventions_total'), (string) (int) $kpi['total_interventions']],
+];
+?>
 <!-- KPI row -->
-<div class="app-kpi-grid mb-3">
-    <div class="app-stat-tile app-kpi-tile">
-        <span class="app-stat-chip is-sites"><i class="bi bi-buildings" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-            <div class="app-stat-label"><?= $e($t('admin.statistics.kpi_active_projects')) ?></div>
-            <div class="app-stat-value"><?= $e((string) (int) $kpi['active_projects']) ?></div>
+<div class="row g-3 mb-3">
+    <?php foreach ($kpiCards as [$variant, $icon, $label, $val]): ?>
+        <div class="col-6 col-lg-3">
+            <div class="card gm-kpi h-100 <?= $e($variant) ?>">
+                <div class="card-body">
+                    <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
+                    <div class="gm-kpi-val mt-2"><?= $e($val) ?></div>
+                    <div class="gm-kpi-lab"><?= $e($label) ?></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="app-stat-tile app-kpi-tile">
-        <span class="app-stat-chip is-pending"><i class="bi bi-calendar-week" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-            <div class="app-stat-label"><?= $e($t('admin.statistics.kpi_interventions_month')) ?></div>
-            <div class="app-stat-value"><?= $e((string) (int) $kpi['interventions_month']) ?></div>
-        </div>
-    </div>
-    <div class="app-stat-tile app-kpi-tile">
-        <span class="app-stat-chip <?= $kpi['low_stock'] > 0 ? 'is-stock-alert' : 'is-stock' ?>"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-            <div class="app-stat-label"><?= $e($t('admin.statistics.kpi_low_stock')) ?></div>
-            <div class="app-stat-value <?= $kpi['low_stock'] > 0 ? 'is-alert' : '' ?>"><?= $e((string) (int) $kpi['low_stock']) ?></div>
-        </div>
-    </div>
-    <div class="app-stat-tile app-kpi-tile">
-        <span class="app-stat-chip is-crew"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-            <div class="app-stat-label"><?= $e($t('admin.statistics.kpi_revenue')) ?></div>
-            <div class="app-stat-value"><?= $e($money((float) $kpi['revenue_paid'])) ?></div>
-        </div>
-    </div>
+    <?php endforeach; ?>
 </div>
 
 <div class="row g-3">

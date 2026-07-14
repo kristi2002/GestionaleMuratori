@@ -42,6 +42,44 @@ final class QuoteModel
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * Real per-status counts over every quote (drives the pill filter badges).
+     * @return array<string,int>
+     */
+    public function statusCounts(): array
+    {
+        $stmt = Database::pdo()->query('SELECT status, COUNT(*) AS n FROM quotes GROUP BY status');
+        $out  = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(string) $row['status']] = (int) $row['n'];
+        }
+        return $out;
+    }
+
+    /**
+     * Header KPI aggregates over the whole quotes table (all real data): total
+     * number of quotes, how many are accepted, how many still await a client
+     * reply ('sent'), and the VAT-included value of every quote.
+     * @return array<string,string> Numeric strings (SUM/COUNT) keyed by metric.
+     */
+    public function summary(): array
+    {
+        $stmt = Database::pdo()->query(
+            "SELECT
+                COUNT(*) AS total_count,
+                SUM(CASE WHEN q.status = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
+                SUM(CASE WHEN q.status = 'sent' THEN 1 ELSE 0 END) AS pending_count,
+                COALESCE(SUM(l.subtotal * (1 + q.vat_rate / 100)), 0) AS total_value
+             FROM quotes q
+             LEFT JOIN (
+                SELECT quote_id, SUM(qty * unit_price) AS subtotal
+                FROM quote_lines GROUP BY quote_id
+             ) l ON l.quote_id = q.id"
+        );
+        $row = $stmt->fetch();
+        return $row ? array_map(static fn ($v): string => (string) $v, $row) : [];
+    }
+
     /** @return array{0:string,1:array<int,mixed>} Shared WHERE builder for all()/count(). */
     private function filterSql(array $filters): array
     {

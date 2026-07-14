@@ -5,6 +5,7 @@ use App\Support\View;
 
 /** @var \DateTimeImmutable $month */
 /** @var array<string,array<int,array<string,mixed>>> $byDate  date => interventions */
+/** @var array{today:int,week:int,overdue:int,completed_month:int} $kpis */
 /** @var string $prev */
 /** @var string $next */
 
@@ -29,18 +30,48 @@ for ($k = 0; $k <= 18; $k++) {
     $cursor = $cursor->modify('+1 month');
 }
 ?>
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.interventions.calendar')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.interventions.subtitle')) ?></p>
+<?php
+$actions = '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/interventions')) . '">'
+    . '<i class="bi bi-list-ul" aria-hidden="true"></i> ' . $e($t('admin.interventions.list_view')) . '</a>'
+    . '<a class="btn btn-success" href="' . $e(Url::to('/admin/interventions/create')) . '">'
+    . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.interventions.new')) . '</a>'
+    . View::render('partials/back_button', ['href' => '/admin'], null);
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.interventions.calendar'),
+    'subtitle' => $t('admin.interventions.subtitle'),
+    'actions'  => $actions,
+], null);
+?>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-primary h-100">
+            <i class="bi bi-calendar-day gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['today']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_today')) ?></div>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="<?= $e(Url::to('/admin/interventions')) ?>">
-            <i class="bi bi-list-ul" aria-hidden="true"></i> <?= $e($t('admin.interventions.list_view')) ?>
-        </a>
-        <a class="btn btn-success btn-sm" href="<?= $e(Url::to('/admin/interventions/create')) ?>">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.new')) ?>
-        </a>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-info h-100">
+            <i class="bi bi-calendar-week gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['week']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_week')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi is-danger h-100">
+            <i class="bi bi-exclamation-triangle gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['overdue']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_overdue')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card gm-kpi ok h-100">
+            <i class="bi bi-check2-circle gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $kpis['completed_month']) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.interventions.kpi_completed_month')) ?></div>
+        </div>
     </div>
 </div>
 

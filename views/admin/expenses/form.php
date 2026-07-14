@@ -15,13 +15,13 @@ $isEdit    = $expense !== null;
 $pageTitle = $isEdit ? $t('admin.expenses.edit') : $t('admin.expenses.new');
 $value     = static fn (string $key): string => (string) ($expense[$key] ?? '');
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($pageTitle) ?></h1>
-        <p class="text-muted mb-0"><?= $e($isEdit ? $expense['description'] : $t('admin.expenses.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin/expenses', 'label' => $t('admin.expenses.back_to_list')], null) ?>
-</div>
+<?php
+echo View::render('partials/page_head', [
+    'title'    => $pageTitle,
+    'subtitle' => $isEdit ? (string) $expense['description'] : $t('admin.expenses.subtitle'),
+    'actions'  => View::render('partials/back_button', ['href' => '/admin/expenses', 'label' => $t('admin.expenses.back_to_list')], null),
+], null);
+?>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],

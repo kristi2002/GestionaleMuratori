@@ -46,15 +46,31 @@ final class ExpenseController
         $model     = new ExpenseModel();
         $paginator = Paginator::fromRequest($request, $model->count($filters), 25);
 
+        // Current-month per-category spend feeds the KPI tiles.
+        $monthByCategory = $model->sumByCategory([
+            'date_from' => date('Y-m-01'),
+            'date_to'   => date('Y-m-t'),
+        ]);
+
+        // Chart aggregates honour the date/worker filters but not the category
+        // (nor project, for the per-cantiere chart), so every slice stays visible.
+        $chartFilters             = $filters;
+        $chartFilters['category'] = '';
+        $projectFilters               = $chartFilters;
+        $projectFilters['project_id'] = 0;
+
         Response::html(View::render('admin/expenses/index', [
-            'title'      => Lang::get('admin.expenses.title'),
-            'expenses'   => $model->all($filters, $paginator->perPage, $paginator->offset),
-            'totals'     => $model->totals($filters),
-            'workers'    => (new UserModel())->listByRole('worker', false),
-            'projects'   => (new ProjectModel())->all(),
-            'filters'    => $filters,
-            'categories' => self::CATEGORIES,
-            'paginator'  => $paginator,
+            'title'           => Lang::get('admin.expenses.title'),
+            'expenses'        => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'totals'          => $model->totals($filters),
+            'monthByCategory' => $monthByCategory,
+            'byCategory'      => $model->sumByCategory($chartFilters),
+            'byProject'       => $model->sumByProject($projectFilters, 8),
+            'workers'         => (new UserModel())->listByRole('worker', false),
+            'projects'        => (new ProjectModel())->all(),
+            'filters'         => $filters,
+            'categories'      => self::CATEGORIES,
+            'paginator'       => $paginator,
         ], 'layout'));
     }
 

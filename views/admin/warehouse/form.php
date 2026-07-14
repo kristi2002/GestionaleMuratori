@@ -13,13 +13,12 @@ $isEdit    = $item !== null;
 $pageTitle = $isEdit ? $t('admin.warehouse.edit') : $t('admin.warehouse.new');
 $value     = static fn (string $key): string => (string) ($item[$key] ?? '');
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($pageTitle) ?></h1>
-        <p class="text-muted mb-0"><?= $e($isEdit ? (string) $item['name'] : $t('admin.warehouse.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin/warehouse'], null) ?>
-</div>
+<?= View::render('partials/page_head', [
+    'title'    => $pageTitle,
+    'subtitle' => $isEdit ? (string) $item['name'] : $t('admin.warehouse.subtitle'),
+    'actions'  => '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/warehouse')) . '">'
+        . '<i class="bi bi-arrow-left" aria-hidden="true"></i> ' . $e($t('common.cancel')) . '</a>',
+], null) ?>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],

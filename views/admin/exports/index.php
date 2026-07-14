@@ -9,86 +9,93 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $projects = $projects ?? [];
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.exports.title'),
+    'subtitle' => $t('admin.exports.subtitle'),
+    'actions'  => View::render('partials/back_button', ['href' => '/admin'], null),
+], null);
+
+// One-click CSV exports — each links to a real, already-registered export route.
+$csvCards = [
+    ['icon' => 'bi-buildings',           'name' => 'admin.exports.projects_csv',      'help' => 'admin.exports.projects_csv_help',      'href' => '/admin/projects/export'],
+    ['icon' => 'bi-people',              'name' => 'admin.exports.clients_csv',       'help' => 'admin.exports.clients_csv_help',       'href' => '/admin/clients/export'],
+    ['icon' => 'bi-clipboard-check',     'name' => 'admin.exports.interventions_csv', 'help' => 'admin.exports.interventions_csv_help', 'href' => '/admin/interventions/export'],
+    ['icon' => 'bi-cash-coin',           'name' => 'admin.exports.expenses_csv',      'help' => 'admin.exports.expenses_csv_help',      'href' => '/admin/expenses/export'],
+];
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.exports.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.exports.subtitle')) ?></p>
+
+<h2 class="app-section-title"><?= $e($t('admin.exports.quick_title')) ?></h2>
+
+<div class="row g-3">
+    <?php // Monthly accountant workbook (.xlsx) — needs a month, so an inline form. ?>
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card h-100 app-quick-action text-center">
+            <div class="card-body d-flex flex-column align-items-center">
+                <span class="badge text-bg-success align-self-end"><?= $e($t('admin.exports.format_excel')) ?></span>
+                <i class="bi bi-file-earmark-spreadsheet fs-1 text-success mb-2" aria-hidden="true"></i>
+                <h3 class="h6 mb-1"><?= $e($t('admin.exports.accountant')) ?></h3>
+                <p class="small text-muted mb-3"><?= $e($t('admin.exports.accountant_help')) ?></p>
+                <form method="get" action="<?= $e(Url::to('/admin/exports/accountant')) ?>"
+                      class="mt-auto w-100 d-flex flex-column align-items-center gap-2">
+                    <label class="visually-hidden" for="exp-month"><?= $e($t('admin.exports.month')) ?></label>
+                    <input type="month" id="exp-month" class="form-control" name="month"
+                           value="<?= $e($currentMonth) ?>" required>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('admin.exports.download')) ?>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-    <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
+
+    <?php foreach ($csvCards as $c): ?>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100 app-quick-action text-center">
+                <div class="card-body d-flex flex-column align-items-center">
+                    <span class="badge text-bg-secondary align-self-end"><?= $e($t('admin.exports.format_csv')) ?></span>
+                    <i class="bi <?= $e($c['icon']) ?> fs-1 text-success mb-2" aria-hidden="true"></i>
+                    <h3 class="h6 mb-1"><?= $e($t($c['name'])) ?></h3>
+                    <p class="small text-muted mb-3"><?= $e($t($c['help'])) ?></p>
+                    <a class="btn btn-success w-100 mt-auto" href="<?= $e(Url::to($c['href'])) ?>">
+                        <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('admin.exports.export_action')) ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
 </div>
 
-<?= View::render('partials/breadcrumb', ['items' => [
-    [$t('nav.dashboard'), '/admin'],
-    [$t('admin.exports.title'), null],
-]], null) ?>
+<h2 class="app-section-title"><?= $e($t('admin.exports.custom_title')) ?></h2>
 
 <div class="card">
-    <div class="card-header"><?= $e($t('admin.exports.available')) ?></div>
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead>
-                <tr>
-                    <th><?= $e($t('admin.exports.export_col')) ?></th>
-                    <th><?= $e($t('admin.exports.description_col')) ?></th>
-                    <th style="min-width: 260px;"><?= $e($t('admin.exports.options_col')) ?></th>
-                    <th class="text-end"><?= $e($t('admin.exports.action_col')) ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php // 1) Monthly accountant workbook (Prima Nota). ?>
-                <tr>
-                    <td class="fw-semibold">
-                        <i class="bi bi-file-earmark-spreadsheet text-success" aria-hidden="true"></i>
-                        <?= $e($t('admin.exports.accountant')) ?>
-                    </td>
-                    <td class="small text-muted"><?= $e($t('admin.exports.accountant_help')) ?></td>
-                    <td colspan="2">
-                        <form method="get" action="<?= $e(Url::to('/admin/exports/accountant')) ?>"
-                              class="d-flex flex-wrap justify-content-end align-items-center gap-2">
-                            <label class="visually-hidden" for="exp-month"><?= $e($t('admin.exports.month')) ?></label>
-                            <input type="month" id="exp-month" class="form-control w-auto" name="month"
-                                   value="<?= $e($currentMonth) ?>" required>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-download" aria-hidden="true"></i> <?= $e($t('admin.exports.download')) ?>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-
-                <?php // 2) Per-project report (reuses the existing project report endpoints). ?>
-                <tr>
-                    <td class="fw-semibold">
-                        <i class="bi bi-buildings text-success" aria-hidden="true"></i>
-                        <?= $e($t('admin.exports.project_report')) ?>
-                    </td>
-                    <td class="small text-muted"><?= $e($t('admin.exports.project_report_help')) ?></td>
-                    <?php if ($projects === []): ?>
-                        <td colspan="2" class="text-muted small"><?= $e($t('admin.exports.no_projects')) ?></td>
-                    <?php else: ?>
-                        <td colspan="2">
-                            <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 js-export-project-row"
-                                 data-base="<?= $e(Url::to('/admin/projects')) ?>">
-                                <label class="visually-hidden" for="exp-project"><?= $e($t('admin.exports.select_project')) ?></label>
-                                <select id="exp-project" class="form-select w-auto js-export-project">
-                                    <option value=""><?= $e($t('admin.exports.select_project')) ?></option>
-                                    <?php foreach ($projects as $p): ?>
-                                        <option value="<?= $e((string) $p['id']) ?>"><?= $e($p['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-outline-secondary js-export-project-btn" data-format="pdf">
-                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= $e($t('admin.exports.format_pdf')) ?>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary js-export-project-btn" data-format="excel">
-                                        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= $e($t('admin.exports.format_excel')) ?>
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                    <?php endif; ?>
-                </tr>
-            </tbody>
-        </table>
+    <div class="card-body">
+        <h3 class="h6 mb-1">
+            <i class="bi bi-buildings text-success" aria-hidden="true"></i>
+            <?= $e($t('admin.exports.project_report')) ?>
+        </h3>
+        <p class="small text-muted mb-3"><?= $e($t('admin.exports.project_report_help')) ?></p>
+        <?php if ($projects === []): ?>
+            <p class="text-muted small mb-0"><?= $e($t('admin.exports.no_projects')) ?></p>
+        <?php else: ?>
+            <div class="d-flex flex-wrap align-items-center gap-2 js-export-project-row"
+                 data-base="<?= $e(Url::to('/admin/projects')) ?>">
+                <label class="visually-hidden" for="exp-project"><?= $e($t('admin.exports.select_project')) ?></label>
+                <select id="exp-project" class="form-select w-auto js-export-project">
+                    <option value=""><?= $e($t('admin.exports.select_project')) ?></option>
+                    <?php foreach ($projects as $p): ?>
+                        <option value="<?= $e((string) $p['id']) ?>"><?= $e($p['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary js-export-project-btn" data-format="pdf">
+                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= $e($t('admin.exports.format_pdf')) ?>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary js-export-project-btn" data-format="excel">
+                        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= $e($t('admin.exports.format_excel')) ?>
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>

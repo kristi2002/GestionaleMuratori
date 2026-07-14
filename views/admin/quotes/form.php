@@ -18,13 +18,11 @@ $pageTitle = $isEdit ? $t('admin.quotes.edit') : $t('admin.quotes.new');
 $value     = static fn (string $key): string => (string) ($quote[$key] ?? '');
 $num       = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($pageTitle) ?></h1>
-        <p class="text-muted mb-0"><?= $e($isEdit ? $quote['number'] . ' — ' . $quote['title'] : $t('admin.quotes.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin/quotes', 'label' => $t('admin.quotes.back_to_list')], null) ?>
-</div>
+<?= View::render('partials/page_head', [
+    'title'    => $pageTitle,
+    'subtitle' => $isEdit ? $quote['number'] . ' — ' . $quote['title'] : $t('admin.quotes.subtitle'),
+    'actions'  => View::render('partials/back_button', ['href' => '/admin/quotes', 'label' => $t('admin.quotes.back_to_list')], null),
+], null) ?>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],
@@ -188,10 +186,26 @@ $num       = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
                     <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= $e($t('admin.quotes.line_add')) ?>
                 </button>
 
-                <div class="d-flex flex-column align-items-end gap-1 mt-3">
-                    <div><?= $e($t('admin.quotes.subtotal')) ?>: <span class="fw-semibold js-quote-subtotal">—</span></div>
-                    <div><?= $e($t('admin.quotes.vat_amount')) ?>: <span class="fw-semibold js-quote-vat-amount">—</span></div>
-                    <div class="fs-5"><?= $e($t('admin.quotes.total')) ?>: <span class="fw-bold js-quote-total">—</span></div>
+                <div class="row justify-content-end mt-3">
+                    <div class="col-12 col-md-5 col-lg-4">
+                        <div class="app-rail-card">
+                            <div class="app-rail-title"><?= $e($t('admin.quotes.summary_title')) ?></div>
+                            <dl class="app-dl">
+                                <div class="app-dl-row">
+                                    <dt><?= $e($t('admin.quotes.subtotal')) ?></dt>
+                                    <dd class="js-quote-subtotal">—</dd>
+                                </div>
+                                <div class="app-dl-row">
+                                    <dt><?= $e($t('admin.quotes.vat_amount')) ?></dt>
+                                    <dd class="js-quote-vat-amount">—</dd>
+                                </div>
+                                <div class="app-dl-row">
+                                    <dt class="fs-6"><?= $e($t('admin.quotes.total')) ?></dt>
+                                    <dd class="fs-5 js-quote-total">—</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
                 </div>
             </div>
 

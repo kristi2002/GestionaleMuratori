@@ -42,6 +42,7 @@ final class SubcontractorController
             'subcontractors' => $subcontractors,
             'projects'       => (new ProjectModel())->all(),
             'compliance'     => (new ComplianceDocumentModel())->statusForSubjects('subcontractor'),
+            'stats'          => $model->stats(),
             'search'         => $search,
             'paginator'      => $paginator,
         ], 'layout'));

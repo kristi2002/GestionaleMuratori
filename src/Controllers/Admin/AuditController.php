@@ -18,12 +18,25 @@ final class AuditController
     {
         AuthGuard::require($request, ['admin']);
 
-        $paginator = Paginator::fromRequest($request, AuditLog::count(), 40);
+        // Optional action-type filter for the pills; whitelist against the known
+        // audit action enum so the SQL only ever sees a valid value.
+        $known  = ['created', 'updated', 'deleted', 'activated', 'deactivated', 'reset'];
+        $action = (string) $request->input('action', '');
+        if (!in_array($action, $known, true)) {
+            $action = '';
+        }
+        $filter = $action !== '' ? $action : null;
+
+        $paginator = Paginator::fromRequest($request, AuditLog::count($filter), 40);
 
         Response::html(View::render('admin/audit/index', [
-            'title'     => Lang::get('admin.audit.title'),
-            'entries'   => AuditLog::recent($paginator->perPage, $paginator->offset),
-            'paginator' => $paginator,
+            'title'        => Lang::get('admin.audit.title'),
+            'entries'      => AuditLog::recent($paginator->perPage, $paginator->offset, $filter),
+            'paginator'    => $paginator,
+            'actionFilter' => $action,
+            'actionOrder'  => $known,
+            'actionCounts' => AuditLog::actionCounts(),
+            'stats'        => AuditLog::stats(),
         ], 'layout'));
     }
 }

@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-07-14 — Full "muratori design" refresh across every page
+
+App-wide restyle to match the `muratori design/` mockups, extending the Navy +
+Orange dark shell. **Design intent only — no fabricated data:** every KPI, chart,
+badge, and progress bar is backed by a real DB aggregate; mockup elements with no
+schema/route backing (QR badge generator, permissions matrix, fake ratings, export
+history, budget-vs-actual, etc.) were deliberately omitted rather than faked.
+
+- **Shared component kit** (`public/assets/css/app.css`) — added theme-flipping
+  `--surface-*`/`--ink-*` tokens plus reusable components: page header
+  (`.app-page-title`), pill filter tabs (`.app-pill`), right detail rail
+  (`.app-rail`/`.app-dl`), avatar stacks (`.app-avatars`), progress meters
+  (`.app-meter`), card media headers (`.app-card-media`), horizontal stepper
+  (`.app-stepper`), filled/glowing alert banners (`.app-banner*`), star ratings
+  (`.app-stars`), and colored/solid KPI variants (`.gm-kpi.is-*`,
+  `.gm-kpi-solid.is-*`). New partials: `page_head`, `filter_pills`. See
+  `docs/DESIGN_SYSTEM.md`.
+- **Admin pages** — Projects, Clients, Interventions, Warehouse, Invoices, Quotes,
+  Expenses, Subcontractors, Statistics, Financials, Users, Daily Logs, S.A.L.,
+  Compliance, Exports, Audit all rebuilt with `page_head` + real-data KPI rows +
+  pill filters + status badges; detail pages use the main+rail layout, and the
+  S.A.L. detail shows the real document-lifecycle stepper. New read-only aggregate
+  methods were added to the relevant models/services to back the KPIs and charts.
+- **Portals & utility pages** — Worker (tasks/attendance = "Badge di Cantiere",
+  adapted to real clock-in data), Client (projects + quotes), Subcontractor,
+  Notifications, Search, Shortcuts, and 403/404/500 error pages restyled to the
+  same system.
+- **Service worker** bumped `gm-shell-v21 → v22` (CSS changed).
+- Full test suite green (526 passed); every page verified to render without PHP
+  errors under its role.
+
 ## 2026-07-14 — Redesigned login + financials, new operaio profile
 
 Second design pass over three mockup-driven pages:

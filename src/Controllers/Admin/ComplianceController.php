@@ -35,9 +35,12 @@ final class ComplianceController
             'expiring'     => (string) $request->input('expiring', '') === '1',
         ];
 
+        $model = new ComplianceDocumentModel();
+
         Response::html(View::render('admin/compliance/index', [
             'title'          => Lang::get('admin.compliance.title'),
-            'documents'      => (new ComplianceDocumentModel())->all($filters),
+            'documents'      => $model->all($filters),
+            'buckets'        => $model->bucketCounts(),
             'workers'        => (new UserModel())->listByRole('worker'),
             'subcontractors' => (new SubcontractorModel())->listActive(),
             'projects'       => (new ProjectModel())->all(),

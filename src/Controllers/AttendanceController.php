@@ -30,11 +30,14 @@ final class AttendanceController
         AuthGuard::require($request, self::ROLES);
 
         $model = new SiteAttendanceModel();
+        $monthStart = (new \DateTimeImmutable('first day of this month'))->format('Y-m-d');
+        $monthEnd   = (new \DateTimeImmutable('last day of this month'))->format('Y-m-d');
         Response::html(View::render('attendance/index', [
             'title'    => Lang::get('attendance.title'),
             'open'     => $model->openForUser((int) Auth::id()),
             'projects' => $this->allowedProjects(),
             'recent'   => $model->recentForUser((int) Auth::id()),
+            'stats'    => $model->monthlyStatsForUser((int) Auth::id(), $monthStart, $monthEnd),
         ], 'layout'));
     }
 

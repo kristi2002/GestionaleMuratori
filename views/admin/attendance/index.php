@@ -7,31 +7,64 @@ use App\Support\View;
 /** @var int $projectId */
 /** @var string $date */
 /** @var array<int,array<string,mixed>> $attendance */
+/** @var int $presentCount */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $hm = static fn (?string $dt): string => $dt ? substr((string) $dt, 0, 16) : '';
+$num = static fn (float $n): string => rtrim(rtrim(number_format($n, 1, ',', '.'), '0'), ',');
 $coord = static function ($lat, $lng) use ($e): string {
     if ($lat === null || $lng === null) {
         return '';
     }
-    $q = rawurlencode($lat . ',' . $lng);
     return '<a href="https://www.openstreetmap.org/?mlat=' . $e((string) $lat) . '&mlon=' . $e((string) $lng)
-        . '" target="_blank" rel="noopener" title="' . $e($lat . ', ' . $lng) . '">📍</a>';
+        . '" target="_blank" rel="noopener" title="' . $e($lat . ', ' . $lng) . '">'
+        . '<i class="bi bi-geo-alt-fill" aria-hidden="true"></i></a>';
 };
+
+// Total worked hours across the currently-filtered (real) rows: closed entries only.
+$totalHours = 0.0;
+foreach ($attendance as $a) {
+    if ($a['exit_at'] !== null) {
+        $totalHours += (strtotime((string) $a['exit_at']) - strtotime((string) $a['entry_at'])) / 3600;
+    }
+}
+
+echo View::render('partials/page_head', [
+    'title'    => $t('admin.attendance.title'),
+    'subtitle' => $t('admin.attendance.subtitle'),
+    'actions'  => View::render('partials/back_button', ['href' => '/admin'], null),
+], null);
 ?>
-<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div>
-        <h1 class="h4 mb-1"><?= $e($t('admin.attendance.title')) ?></h1>
-        <p class="text-muted mb-0"><?= $e($t('admin.attendance.subtitle')) ?></p>
-    </div>
-    <?= View::render('partials/back_button', ['href' => '/admin'], null) ?>
-</div>
 
 <?= View::render('partials/breadcrumb', ['items' => [
     [$t('nav.dashboard'), '/admin'],
     [$t('admin.attendance.title'), null],
 ]], null) ?>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-4">
+        <div class="card gm-kpi ok h-100">
+            <i class="bi bi-person-check gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) $presentCount) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.attendance.kpi_present')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-4">
+        <div class="card gm-kpi is-info h-100">
+            <i class="bi bi-list-check gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e((string) count($attendance)) ?></div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.attendance.kpi_records')) ?></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-4">
+        <div class="card gm-kpi is-purple h-100">
+            <i class="bi bi-clock-history gm-kpi-ic" aria-hidden="true"></i>
+            <div class="gm-kpi-val mt-2"><?= $e($num($totalHours)) ?> h</div>
+            <div class="gm-kpi-lab"><?= $e($t('admin.attendance.kpi_hours')) ?></div>
+        </div>
+    </div>
+</div>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">
@@ -57,6 +90,7 @@ $coord = static function ($lat, $lng) use ($e): string {
     </div>
 </div>
 
+<h2 class="app-section-title"><?= $e($t('admin.attendance.roster')) ?></h2>
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -78,7 +112,9 @@ $coord = static function ($lat, $lng) use ($e): string {
                     <td class="fw-medium"><?= $e($a['person_name']) ?></td>
                     <td><?= $e($a['subcontractor_name'] ?? $t('admin.attendance.internal')) ?></td>
                     <td class="mono tnum"><?= $e($hm($a['entry_at'])) ?></td>
-                    <td class="mono tnum"><?= $a['exit_at'] !== null ? $e($hm($a['exit_at'])) : '<span class="badge text-bg-success">' . $e($t('attendance.on_site')) . '</span>' ?></td>
+                    <td><?= $a['exit_at'] !== null
+                        ? '<span class="mono tnum">' . $e($hm($a['exit_at'])) . '</span>'
+                        : '<span class="badge rounded-pill app-status app-status-success">' . $e($t('attendance.on_site')) . '</span>' ?></td>
                     <td>
                         <?= $coord($a['entry_lat'], $a['entry_lng']) ?>
                         <?= $coord($a['exit_lat'], $a['exit_lng']) ?>

@@ -19,35 +19,62 @@ $nextActions = [
     'in_progress' => [['to' => 'on_hold', 'label' => $t('worker.hold')]],
     'on_hold'     => [['to' => 'in_progress', 'label' => $t('worker.resume')]],
 ];
+
+$schedule = null;
+if ($intervention['scheduled_date']) {
+    $schedule = $intervention['scheduled_date']
+        . ($intervention['scheduled_start_time'] ? ' ' . substr((string) $intervention['scheduled_start_time'], 0, 5) : '');
+}
+
+echo View::render('partials/page_head', [
+    'title'    => (string) $intervention['title'],
+    'subtitle' => $intervention['project_name'] . ' — ' . $intervention['client_name'],
+    'actions'  => View::render('partials/back_button', ['href' => '/worker'], null),
+], null);
 ?>
-<a href="<?= $e(Url::to('/worker')) ?>" class="d-inline-block mb-3 small">&larr; <?= $e($t('worker.back_to_list')) ?></a>
 
 <div class="alert alert-warning d-none js-offline-queue-banner" role="status"></div>
 
-<div class="card mb-3">
+<div class="card app-record-card mb-3">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-            <h1 class="h5 mb-1"><?= $e($intervention['title']) ?></h1>
-            <span class="badge text-bg-light border"><?= $e(Lang::label('intervention_status', $status)) ?></span>
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+            <h2 class="h6 mb-0"><?= $e($t('worker.status')) ?></h2>
+            <?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $status], null) ?>
         </div>
-        <p class="small text-muted mb-2"><?= $e($intervention['project_name']) ?> — <?= $e($intervention['client_name']) ?></p>
-        <?php if ($intervention['description']): ?>
-            <p class="mb-2"><?= $e($intervention['description']) ?></p>
-        <?php endif; ?>
-        <?php if ($intervention['scheduled_date']): ?>
-            <p class="small text-muted mb-3">
-                <?= $e($intervention['scheduled_date']) ?>
-                <?= $intervention['scheduled_start_time'] ? ' ' . $e(substr((string) $intervention['scheduled_start_time'], 0, 5)) : '' ?>
-            </p>
-        <?php endif; ?>
+        <dl class="app-dl mb-0">
+            <?php if ($intervention['description']): ?>
+                <div class="app-dl-row">
+                    <dt><?= $e($t('worker.description')) ?></dt>
+                    <dd><?= $e($intervention['description']) ?></dd>
+                </div>
+            <?php endif; ?>
+            <div class="app-dl-row">
+                <dt><?= $e($t('worker.project')) ?></dt>
+                <dd><?= $e($intervention['project_name']) ?></dd>
+            </div>
+            <div class="app-dl-row">
+                <dt><?= $e($t('worker.client')) ?></dt>
+                <dd><?= $e($intervention['client_name']) ?></dd>
+            </div>
+            <?php if ($schedule !== null): ?>
+                <div class="app-dl-row">
+                    <dt><?= $e($t('worker.scheduled_time')) ?></dt>
+                    <dd><i class="bi bi-calendar-event me-1" aria-hidden="true"></i><?= $e($schedule) ?></dd>
+                </div>
+            <?php endif; ?>
+        </dl>
 
-        <?php foreach ($nextActions[$status] ?? [] as $action): ?>
-            <button type="button" class="btn btn-success js-intervention-status"
-                    data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/status')) ?>"
-                    data-to-status="<?= $e($action['to']) ?>">
-                <?= $e($action['label']) ?>
-            </button>
-        <?php endforeach; ?>
+        <?php if (($nextActions[$status] ?? []) !== []): ?>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <?php foreach ($nextActions[$status] as $action): ?>
+                    <button type="button" class="btn btn-success js-intervention-status"
+                            data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/status')) ?>"
+                            data-to-status="<?= $e($action['to']) ?>">
+                        <?= $e($action['label']) ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -55,7 +82,7 @@ $nextActions = [
     <!-- no materials, nothing to show -->
 <?php else: ?>
 <div class="card mb-3">
-    <div class="card-header bg-white"><?= $e($t('worker.materials')) ?></div>
+    <div class="card-header"><?= $e($t('worker.materials')) ?></div>
     <div class="card-body">
         <?php if ($materials === []): ?>
             <p class="text-muted mb-0"><?= $e($t('worker.no_materials')) ?></p>
@@ -82,7 +109,7 @@ $nextActions = [
 
 <?php foreach (['before', 'during', 'after'] as $type): ?>
     <div class="card mb-3">
-        <div class="card-header bg-white"><?= $e($t('worker.photos')) ?> — <?= $e(Lang::label('photo_types', $type)) ?></div>
+        <div class="card-header"><?= $e($t('worker.photos')) ?> — <?= $e(Lang::label('photo_types', $type)) ?></div>
         <div class="card-body">
             <?php if ($photosByType[$type] === []): ?>
                 <p class="text-muted small"><?= $e($t('worker.no_photos')) ?></p>
@@ -111,7 +138,7 @@ $nextActions = [
 
 <?php if ($canComplete): ?>
 <div class="card mb-3">
-    <div class="card-header bg-white"><?= $e($t('worker.signature')) ?></div>
+    <div class="card-header"><?= $e($t('worker.signature')) ?></div>
     <div class="card-body">
         <?php if ($intervention['client_signature_path']): ?>
             <p class="small text-success mb-2"><?= $e($t('worker.signature_saved')) ?></p>
@@ -131,7 +158,7 @@ $nextActions = [
 </div>
 
 <div class="card mb-3">
-    <div class="card-header bg-white"><?= $e($t('worker.complete')) ?></div>
+    <div class="card-header"><?= $e($t('worker.complete')) ?></div>
     <div class="card-body">
         <form id="complete-form" class="js-crud-form" data-base-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/complete')) ?>" data-confirm="<?= $e($t('worker.complete_confirm')) ?>">
             <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
