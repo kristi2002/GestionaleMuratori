@@ -30,6 +30,15 @@ history, budget-vs-actual, etc.) were deliberately omitted rather than faked.
 - **Service worker** bumped `gm-shell-v21 → v22` (CSS changed).
 - Full test suite green (526 passed); every page verified to render without PHP
   errors under its role.
+- **New page — Client profile** (`GET /admin/clients/{id}`, from the *Profilo
+  Cliente* mockup): identity card (contacts, note, "cliente da N anni"),
+  real financial stat cards (invoiced / paid / outstanding), quick stats
+  (active projects, next deadline, last payment), a 12-month invoiced line
+  chart, the client's projects with real intervention-completion progress bars,
+  their invoices table, and an activity timeline (invoices/quotes/projects).
+  All from new read-only `ClientModel` aggregates. The Clienti list "Vedi
+  profilo"/card links now open this profile (edit is reached via its Modifica
+  button). Mockup's rating stars, "referente", and VIP/tags omitted (no schema).
 
 ## 2026-07-14 — Redesigned login + financials, new operaio profile
 

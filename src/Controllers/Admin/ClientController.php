@@ -63,6 +63,29 @@ final class ClientController
         ], 'layout'));
     }
 
+    /** GET /admin/clients/{id} — client profile: contacts, financials, projects, activity. */
+    public function show(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model  = new ClientModel();
+        $client = $model->find((int) $id);
+        if ($client === null) {
+            Response::html(View::render('errors/404', ['title' => Lang::get('admin.clients.not_found')], 'layout'), 404);
+            return;
+        }
+
+        Response::html(View::render('admin/clients/show', [
+            'title'     => (string) $client['name'],
+            'client'    => $client,
+            'stats'     => $model->profileStats((int) $id),
+            'projects'  => $model->projectsForProfile((int) $id),
+            'invoices'  => $model->invoicesForProfile((int) $id),
+            'monthly'   => $model->monthlyInvoiced((int) $id),
+            'timeline'  => $model->activityTimeline((int) $id),
+        ], 'layout'));
+    }
+
     /** GET /admin/clients/{id}/edit — populated client form page. */
     public function edit(Request $request, string $id): void
     {

@@ -138,6 +138,7 @@ $router->get('/admin/clients',              [ClientController::class, 'index']);
 $router->get('/admin/clients/export',       [ClientController::class, 'exportCsv']);
 $router->get('/admin/clients/create',       [ClientController::class, 'create']);
 $router->get('/admin/clients/{id}/edit',    [ClientController::class, 'edit']);
+$router->get('/admin/clients/{id}',         [ClientController::class, 'show']);
 $router->post('/admin/clients',             [ClientController::class, 'store']);
 $router->post('/admin/clients/{id}',        [ClientController::class, 'update']);
 $router->post('/admin/clients/{id}/delete', [ClientController::class, 'destroy']);

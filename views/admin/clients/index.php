@@ -89,7 +89,7 @@ echo View::render('partials/page_head', [
     <div class="row g-3">
         <?php foreach ($clients as $c): ?>
             <?php
-            $editUrl   = Url::to('/admin/clients/' . $c['id'] . '/edit');
+            $profileUrl = Url::to('/admin/clients/' . $c['id']);
             $mediaTint = ((int) $c['id'] % 2 === 0) ? ' tint-2' : '';
             $projCount = (int) ($c['project_count'] ?? 0);
             $invoiced  = (float) ($c['invoiced_total'] ?? 0);
@@ -97,11 +97,11 @@ echo View::render('partials/page_head', [
             <div class="col-12 col-md-6 col-xl-4">
                 <div class="card h-100 app-record-card">
                     <div class="card-body d-flex flex-column">
-                        <a href="<?= $e($editUrl) ?>" class="app-card-media<?= $mediaTint ?> mb-3 text-decoration-none">
+                        <a href="<?= $e($profileUrl) ?>" class="app-card-media<?= $mediaTint ?> mb-3 text-decoration-none">
                             <span class="app-avatar app-avatar-lg"><?= $e($initials((string) $c['name'])) ?></span>
                         </a>
                         <h2 class="h6 mb-1 text-truncate">
-                            <a class="app-card-title-link" href="<?= $e($editUrl) ?>">
+                            <a class="app-card-title-link" href="<?= $e($profileUrl) ?>">
                                 <?= $e($c['name']) ?>
                             </a>
                         </h2>
@@ -136,7 +136,7 @@ echo View::render('partials/page_head', [
                             <?php endif; ?>
                         </div>
                         <div class="d-flex align-items-center gap-2 mt-auto pt-3 border-top">
-                            <a class="btn btn-sm btn-success" href="<?= $e($editUrl) ?>">
+                            <a class="btn btn-sm btn-success" href="<?= $e($profileUrl) ?>">
                                 <i class="bi bi-person-lines-fill" aria-hidden="true"></i> <?= $e($t('admin.clients.view_profile')) ?>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-danger app-icon-btn ms-auto js-crud-delete"
