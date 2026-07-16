@@ -16,6 +16,9 @@ Each ADR is immutable once **Accepted**: to change a decision, add a new ADR tha
 | [0004](0004-identity-sso-mfa-and-platform-admin.md) | Identity: SSO, MFA, provisioning, and platform admin | Proposed |
 | [0005](0005-async-queue-and-worker-topology.md) | Async processing: queue technology and worker topology | Proposed |
 | [0006](0006-future-field-and-ai-platform-direction-parked.md) | Future field & AI platform direction (parked for later) | Accepted (defer) |
+| [0007](0007-evolve-existing-stack-earn-from-one-client-first.md) | Evolve the existing PHP stack; earn from one client first | Accepted |
+| [0008](0008-transactional-email-service.md) | Transactional email as a config-gated, best-effort service | Accepted |
+| [0009](0009-invoicing-automation-scope.md) | Invoicing automation scope: S.A.L.→draft invoice; defer FatturaPA & recurring | Accepted |
 
 ## Statuses
 

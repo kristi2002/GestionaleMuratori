@@ -49,8 +49,9 @@ a scratch uploads dir (`tests/.uploads`, git-ignored). Override the test DB via
 | `tests/cases/04_multisite_stock.php` | **v2** multi-site inventory: auto site location per project; warehouse→cantiere transfer moves qty on both sides; qty_in_stock tracks the warehouse balance; total conserved and `Σ location balances == full-ledger recompute`; negative-stock / same-location / invalid-qty guards; reserve→complete keeps caches == ledger; and the **`complete()` non-inflation regression** (a never-reserved `is_reserved=0` material emits no phantom `release`). Uses fresh items to stay isolated from other cases. |
 | `tests/cases/11_concurrency.php` | §9 race criterion: two workers complete interventions on the **same warehouse item at the same instant** (`curl_multi`); asserts no lost update and cache == ledger afterwards. **v2:** two concurrent warehouse→site **transfers** on the same item (no lost update, balances == ledger). Verifies the report PDF actually embeds photo images. |
 
-**541 assertions** at the time of writing (grown across v1, v2, the
-2026-07-10 automation/hardening pass, and the suppliers/purchase-orders work).
+**589 assertions** at the time of writing (grown across v1, v2, the
+2026-07-10 automation/hardening pass, the suppliers/purchase-orders work, and the
+2026-07-16 platform pass — live email, client self-service, invoicing, dispatch).
 
 New cases in the 2026-07-10 pass:
 

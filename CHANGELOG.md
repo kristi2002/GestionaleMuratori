@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phases 6 & 7: simulation + final docs
+
+Closing phases of the platform pass — no new features, no schema change: prove the
+whole thing works end-to-end, then bring the documentation fully back in sync.
+
+- **Full test & simulation (Phase 6)** — the suite runs **589 passed, 0 failed** on a
+  fresh Docker MySQL 8. Every new flow was also driven end-to-end in a real browser
+  against a freshly migrated + seeded DB (`gm_sim`, all migrations 001–023 applied
+  clean): login + i18n + Navy/Orange design intact; the dispatch board renders and its
+  **double-booking flags recompute on reassign** (reassigning a job moved the "Più
+  interventi nello stesso giorno" flag and the load counts to the new worker, confirmed
+  in the DB); the admin test-email button and the client/admin notification surfaces
+  render; no console errors. The stock invariant (cache == ledger) and the RBAC/ownership
+  matrix (403/404 on cross-role access) remain intact.
+- **Final documentation pass (Phase 7)** — refreshed the stale **541 → 589** assertion
+  count across `README.md`, `docs/TESTING.md`, and `docs/ROADMAP.md`; added the
+  **2026-07-16 platform pass** section to `docs/ROADMAP.md` (per-phase, with the
+  deferred-work list); documented the previously-undocumented **S.A.L. module** and the
+  platform-pass routes in `docs/API.md`; and recorded three decisions as ADRs —
+  [0007](docs/adr/0007-evolve-existing-stack-earn-from-one-client-first.md) (evolve the
+  existing stack; earn from one client first; defer multi-tenancy to Phase 8),
+  [0008](docs/adr/0008-transactional-email-service.md) (config-gated, best-effort,
+  after-commit transactional email), and
+  [0009](docs/adr/0009-invoicing-automation-scope.md) (S.A.L.→draft invoice; defer
+  FatturaPA & recurring).
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 5: scheduling & dispatch
 
 Turn the flat intervention list into a workload command-centre. No schema change.

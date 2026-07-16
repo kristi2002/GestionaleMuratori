@@ -210,7 +210,7 @@ Still genuinely out of scope: S3 storage, multi-tenancy, e-mail notifications
 
 # Post-v2 — 2026-07-10 hardening & automation pass ✅
 
-Delivered (all test-gated, full suite green — 541 assertions today; see [CHANGELOG.md](../CHANGELOG.md)
+Delivered (all test-gated, full suite green at 541 assertions after this pass; see [CHANGELOG.md](../CHANGELOG.md)
 and [GAP_ANALYSIS.md](GAP_ANALYSIS.md) §7):
 
 1. **Regression fixes** from the "juli" redesign — restored GPS clock-in/out (+offline
@@ -224,5 +224,57 @@ and [GAP_ANALYSIS.md](GAP_ANALYSIS.md) §7):
 6. **i18n** of report PDFs + error pages + a JS i18n bridge; new `company.*`/`mail.*`/
    `scheduler.*` config ([CONFIGURATION.md](CONFIGURATION.md)).
 
-Next candidates (client decision): FatturaPA/SDI e-invoicing, pagination on the
-remaining lists, push/SMS alerts.
+---
+
+# Post-v2 — 2026-07-16 platform pass ✅
+
+The "full-fledged platform" pass: deployment hardening plus four focused automation
+batches, delivered slowly and precisely on the existing PHP stack (no rewrite — see
+[ADR-0007](adr/0007-evolve-existing-stack-earn-from-one-client-first.md) for why).
+All test-gated; full suite green — **589 assertions** today (541 → 589). Migrations
+now run **001–023**. See [CHANGELOG.md](../CHANGELOG.md) and the per-phase notes below.
+
+**Phase 0 — Documentation refresh + hygiene.** Brought README / ARCHITECTURE / TESTING /
+DEPLOYMENT_COOLIFY / API back in sync with reality (migrations, test count, all shipped
+modules); Navy+Orange PWA manifest colours + `sw.js` cache bump; removed committed
+`.bak`/`.desktop-orig` files. No behaviour change.
+
+**Phase 1 — Coolify/Hetzner deploy hardening.** Runbook for first-run migrate + admin
+creation, scheduler as a Coolify Scheduled Task, backup + off-site + tested restore, the
+single-replica constraint (file sessions + local uploads), and `/health` monitoring.
+Migration 023 documents the `compliance_documents` polymorphic-subject cleanup path
+(transactional delete in `ProjectController::destroy`, no orphan rows).
+
+**Phase 2 — Email/notifications live.** `MailService` (transactional, localized, gated on
+`Mailer::isEnabled()`, sent best-effort after commit) fires on quote-sent and invoice-issued;
+an admin "test email" action reports mail-disabled cleanly (422, never a crash). See
+[ADR-0008](adr/0008-transactional-email-service.md).
+
+**Phase 3 — Invoicing automation (scoped).** One-click **draft** invoice from an issued/signed
+S.A.L. (`SalController::toInvoice`, amount + next-number suggestion from the S.A.L.), draft-only
+and editable. FatturaPA/SDI and recurring invoices were deliberately **deferred** (the
+commercialista/SDI handle e-invoicing; construction billing is milestone/S.A.L.-based) —
+[ADR-0009](adr/0009-invoicing-automation-scope.md).
+
+**Phase 4 — Client self-service.** Per-user notification scope (`notifications.user_id`,
+migration 023) so clients get their own in-app bell; invoice-issued events fan out to the
+client's users; the client project page shows non-draft invoices (drafts stay hidden).
+
+**Phase 5 — Scheduling & dispatch.** A dispatch board (**Piano di lavoro**, 7-day window
+grouped by worker) with per-day load counts + double-booking flags, and inline
+quick-reassign (role-checked; `worker_id 0` unassigns).
+
+**Phase 6 — Full test & simulation.** Suite driven to **589 green, 0 failed**; every new flow
+exercised end-to-end in the browser on a fresh seeded DB (login/i18n/design, dispatch board
++ double-booking recompute on reassign, admin/client notification surfaces) with no console
+errors and the stock invariant (cache == ledger) intact.
+
+**Phase 7 — Final documentation pass.** This section, the ADRs (0007–0009), and the doc
+count/route/migration sync.
+
+**Deferred to a dedicated later phase (Phase 8, not started):** shared-schema multi-tenancy /
+SaaS onboarding. Bridge for the first paying customers is instance-per-tenant (separate
+Coolify stack + DB). See [ADR-0007](adr/0007-evolve-existing-stack-earn-from-one-client-first.md).
+
+Next candidates (client decision): FatturaPA/SDI e-invoicing, recurring invoices, e-signature
+on quote acceptance, worker day/workload calendar view, push/SMS alerts.

@@ -185,3 +185,37 @@ Admin routes (all `AuthGuard::require(..., ['admin'])`, JSON `{ok,data?,error?}`
 `POST .../{id}/receive` accepts `received[lineId]=qty`; only lines with a warehouse
 `item_id` can be received. A cancelled order, an empty submission, or a line id from
 another order is 422; over-receipt succeeds with a `warning`.
+
+## Addendum — S.A.L. (Stato Avanzamento Lavori / progress billing)
+
+Admin routes (all `AuthGuard::require(..., ['admin'])`, JSON `{ok,data?,error?}` on writes):
+
+- `GET /admin/sal` — list of S.A.L. documents.
+- `GET /admin/sal/create`, `POST /admin/sal` — create a new S.A.L. for a project.
+- `GET /admin/sal/{id}` — detail with line items and the issue/sign/invoice actions.
+- `POST /admin/sal/{id}` — update header fields.
+- `POST /admin/sal/{id}/lines`, `POST /admin/sal/{id}/lines/{lineId}/delete` — add/remove
+  progress lines.
+- `POST /admin/sal/{id}/issue` — move a draft S.A.L. to *issued*.
+- `POST /admin/sal/{id}/sign` — record the client signature on an issued S.A.L.
+- `POST /admin/sal/{id}/invoice` — **one-click draft invoice** from an issued/signed
+  S.A.L.: creates a *draft* `project_invoices` row with the amount from the S.A.L. and a
+  suggested next number, then redirects to the invoice edit page →
+  `{ok,data:{redirect}}`. A still-draft S.A.L. is 422 (must be issued first). Draft-only
+  and editable — see [ADR-0009](adr/0009-invoicing-automation-scope.md). (Phase 3, 2026-07-16.)
+- `GET /admin/sal/{id}/pdf` — render the S.A.L. as a PDF (permission-checked stream).
+
+## Addendum — 2026-07-16 platform pass (email, client self-service, dispatch)
+
+Cross-references for the routes added across the platform pass, all documented above in
+their module sections:
+
+- **Live email:** `POST /admin/notifications/test-email` (SMTP check); transactional mail
+  on quote-sent and invoice-issued is fired server-side after commit, best-effort — no new
+  route (see [ADR-0008](adr/0008-transactional-email-service.md)).
+- **Client self-service:** `GET /client/notifications`, `POST /client/notifications/read-all`,
+  `POST /client/notifications/{id}/read` (user-scoped feed); non-draft invoices now render
+  read-only on `GET /client/projects/{id}`. Issuing an invoice fans out an in-app
+  notification to the client's users (migration 023, `notifications.user_id`).
+- **Scheduling & dispatch:** `GET /admin/interventions/dispatch` (7-day board) and
+  `POST /admin/interventions/{id}/reassign` (`worker_id`, `0` = unassign).
