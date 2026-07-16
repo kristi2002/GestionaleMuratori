@@ -5,7 +5,9 @@ namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
 use App\Models\NotificationModel;
+use App\Services\MailService;
 use App\Support\Lang;
+use App\Support\Mailer;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\View;
@@ -46,5 +48,26 @@ final class NotificationController
     {
         AuthGuard::require($request, ['admin']);
         Response::ok(['count' => (new NotificationModel())->markAllRead()]);
+    }
+
+    /**
+     * POST /admin/notifications/test-email — send a test message to the logged-in
+     * admin so the SMTP configuration can be verified from the UI. Reports whether
+     * mail is enabled, sent, or failed.
+     */
+    public function testEmail(Request $request): void
+    {
+        $user = AuthGuard::require($request, ['admin']);
+
+        if (!Mailer::isEnabled()) {
+            Response::fail(Lang::get('mail.test_disabled'), 422);
+            return;
+        }
+        $to = (string) ($user['email'] ?? '');
+        if (MailService::test($to)) {
+            Response::ok(['message' => sprintf(Lang::get('mail.test_sent'), $to)]);
+            return;
+        }
+        Response::fail(Lang::get('mail.test_failed'), 502);
     }
 }

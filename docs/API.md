@@ -146,6 +146,9 @@ Admin (role `admin`):
 - `GET /admin/notifications` (`?filter=unread`) — alert feed (list).
 - `POST /admin/notifications/{id}/read` — mark one read → `{ok}`.
 - `POST /admin/notifications/read-all` — mark all read → `{ok,data:{count}}`.
+- `POST /admin/notifications/test-email` — send a test e-mail to the logged-in admin to
+  verify SMTP. `{ok,data:{message}}` on send; `{ok:false}` 422 when mail is disabled
+  (`MAIL_ENABLED=false`), 502 on transport failure. (Phase 2, 2026-07-16.)
 
 Client self-service (role `client`; every query scoped by `client_id`, drafts hidden):
 - `GET /client/quotes` — the client's non-draft quotes.

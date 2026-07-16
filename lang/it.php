@@ -74,6 +74,7 @@ return [
         'all'            => 'Tutte',
         'mark_read'      => 'Segna come letta',
         'mark_all_read'  => 'Segna tutte come lette',
+        'test_email'     => 'Invia email di prova',
         'view_all'       => 'Vedi tutte le notifiche',
         'none_unread'    => 'Nessuna notifica non letta.',
         // Scheduler-generated messages (%s placeholders filled server-side).
@@ -274,11 +275,31 @@ return [
     'js' => [
         'ok'                   => 'OK',
         'error'                => 'Errore',
+        'notice'               => 'Avviso',
         'confirm'              => 'Conferma',
         'confirm_generic'      => 'Confermi?',
         'remove'               => 'Rimuovi',
         'login_progress'       => 'Accesso…',
         'photo_offline_queued' => 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.',
+    ],
+
+    // Transactional e-mails (App\Services\MailService). Sent only when MAIL_ENABLED=true.
+    'mail' => [
+        'quote_sent_subject'     => 'Nuovo preventivo N. %s',
+        'quote_sent_heading'     => 'Nuovo preventivo disponibile',
+        'quote_sent_body'        => 'Il preventivo N. %s "%s" è disponibile. Accedi al portale per visualizzarlo, accettarlo o rifiutarlo.',
+        'quote_sent_cta'         => 'Vai ai tuoi preventivi',
+        'invoice_issued_subject' => 'Fattura N. %s emessa',
+        'invoice_issued_heading' => 'Nuova fattura emessa',
+        'invoice_issued_body'    => 'È stata emessa la fattura N. %s del %s.',
+        'invoice_issued_amount'  => 'Importo: € %s.',
+        'invoice_issued_cta'     => 'Vai al portale',
+        'test_subject'           => 'Email di prova — Gestionale Muratori',
+        'test_heading'           => 'Configurazione email funzionante',
+        'test_body'              => 'Se ricevi questo messaggio, la configurazione SMTP del gestionale è corretta e le notifiche via email verranno recapitate.',
+        'test_sent'              => 'Email di prova inviata a %s.',
+        'test_disabled'          => 'Invio email disattivato: configura le variabili MAIL_* per abilitarlo.',
+        'test_failed'            => 'Invio non riuscito. Controlla la configurazione SMTP (MAIL_*).',
     ],
 
     'auth' => [

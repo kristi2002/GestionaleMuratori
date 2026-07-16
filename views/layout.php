@@ -366,6 +366,7 @@ $gmI18n = [
     'attendance.offline_queued' => Lang::get('attendance.offline_queued'),
     'js.ok'                    => Lang::get('js.ok'),
     'js.error'                 => Lang::get('js.error'),
+    'js.notice'                => Lang::get('js.notice'),
     'js.confirm'               => Lang::get('js.confirm'),
     'js.confirm_generic'       => Lang::get('js.confirm_generic'),
     'js.remove'                => Lang::get('js.remove'),

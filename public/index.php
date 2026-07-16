@@ -249,6 +249,7 @@ $router->post('/admin/users/{id}/toggle',   [UserController::class, 'toggleActiv
 
 $router->get('/admin/notifications',                 [NotificationController::class, 'index']);
 $router->post('/admin/notifications/read-all',       [NotificationController::class, 'readAll']);
+$router->post('/admin/notifications/test-email',     [NotificationController::class, 'testEmail']);
 $router->post('/admin/notifications/{id}/read',      [NotificationController::class, 'read']);
 
 $router->get('/admin/attendance',                    [AdminAttendanceController::class, 'index']);

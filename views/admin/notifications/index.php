@@ -21,11 +21,17 @@ $icons = [
 ];
 $sevText  = ['danger' => 'text-danger', 'warning' => 'text-warning', 'info' => 'text-secondary'];
 
-$actions = $unreadCount > 0
+$testEmailBtn = '<button type="button" class="btn btn-outline-secondary js-test-email" data-url="'
+    . $e(Url::to('/admin/notifications/test-email')) . '">'
+    . '<i class="bi bi-envelope-check" aria-hidden="true"></i> ' . $e($t('notifications.test_email')) . '</button>';
+
+$readAllBtn = $unreadCount > 0
     ? '<button type="button" class="btn btn-outline-secondary js-post-action" data-url="'
         . $e(Url::to('/admin/notifications/read-all')) . '">'
         . '<i class="bi bi-check2-all" aria-hidden="true"></i> ' . $e($t('notifications.mark_all_read')) . '</button>'
-    : null;
+    : '';
+
+$actions = $readAllBtn . $testEmailBtn;
 
 echo View::render('partials/page_head', [
     'title'    => $t('notifications.title'),

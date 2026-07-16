@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 2: transactional e-mail live
+
+The `Mailer` (SMTP/`mail`, built earlier) was only wired to the daily alert digest;
+the password-reset link already used it too. This phase makes e-mail an event-driven
+channel for the client-facing document flow. Still off until `MAIL_ENABLED=true` + the
+`MAIL_*` vars are set — everything degrades to a silent no-op. Suite **560 green**.
+
+- **`App\Services\MailService`** — transactional (event-driven) e-mail, distinct from
+  the scheduler digest. Pure, unit-tested `build*()` methods (branded HTML shell,
+  localized via `lang/it.php` `mail.*`) + thin send wrappers that gate on
+  `Mailer::isEnabled()` and a valid recipient. Messages: **quote sent to client**,
+  **invoice issued to client**, and an **admin test e-mail**.
+- **Wiring (best-effort, after commit)** — `QuoteController` e-mails the client on the
+  draft→`sent` transition (create or update), `InvoiceController` on the →`issued`
+  transition; each only fires on the actual transition, never on later edits, and is
+  wrapped so a mail failure can never break the request (`Logger::exception` on error).
+  Recipient is the row's own `client_email` (already joined by `QuoteModel::find` /
+  `ProjectInvoiceModel::findWithDetails`).
+- **Admin test e-mail** — `POST /admin/notifications/test-email` sends a test to the
+  logged-in admin so SMTP can be verified from the UI; a button on the notifications
+  page reports the outcome inline (mail-disabled → clean 422, never a 500). `Dialog.alert`
+  gained an optional title arg for the success notice; new `js.notice` i18n key.
+- **Tests** — `tests/cases/21_mail_service.php` (message building + disabled-gate,
+  offline) and a `test-email` RBAC/behaviour section in case 19. Also fixed a **latent
+  test bug**: case 19 logged in as `worker1`, whose password case 10 changes and never
+  restores, so the "worker blocked" check ran against an *anonymous* client — switched to
+  `worker2` (like cases 12–18) and strengthened the assertion to a real 403.
+- **Scope note** — a client/worker in-app notification feed (user-scoped notifications)
+  moves to Phase 4 (client self-service, where its UI lives); per-user e-mail
+  preferences deferred (client-facing mail targets the client-company address, not a
+  user row, so a per-user toggle maps poorly — revisit with multi-tenancy).
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 1: deploy hardening
 
 - **Compliance orphan fix** — `compliance_documents` uses a polymorphic

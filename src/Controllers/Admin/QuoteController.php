@@ -8,6 +8,7 @@ use App\Models\ClientModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Models\QuoteModel;
+use App\Services\MailService;
 use App\Services\Report\QuotePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
@@ -103,6 +104,10 @@ final class QuoteController
         $data['created_by'] = Auth::id();
 
         $id = (new QuoteModel())->create($data, $lines);
+        // A quote created straight as "sent" notifies the client immediately.
+        if (($data['status'] ?? '') === 'sent') {
+            $this->notifyQuoteSent($id);
+        }
         Response::ok(['id' => $id]);
     }
 
@@ -110,8 +115,9 @@ final class QuoteController
     {
         AuthGuard::require($request, ['admin']);
 
-        $model = new QuoteModel();
-        if ($model->find((int) $id) === null) {
+        $model    = new QuoteModel();
+        $existing = $model->find((int) $id);
+        if ($existing === null) {
             Response::fail(Lang::get('admin.quotes.not_found'), 404);
             return;
         }
@@ -123,7 +129,25 @@ final class QuoteController
         [$data, $lines] = $validated;
 
         $model->update((int) $id, $data, $lines);
+        // E-mail the client only on the draft/other -> sent transition, not on
+        // every later edit of an already-sent quote.
+        if (($existing['status'] ?? '') !== 'sent' && ($data['status'] ?? '') === 'sent') {
+            $this->notifyQuoteSent((int) $id);
+        }
         Response::ok();
+    }
+
+    /** Best-effort client e-mail when a quote becomes "sent"; never breaks the request. */
+    private function notifyQuoteSent(int $quoteId): void
+    {
+        try {
+            $quote = (new QuoteModel())->find($quoteId);
+            if ($quote !== null) {
+                MailService::quoteSent($quote);
+            }
+        } catch (\Throwable $e) {
+            \App\Support\Logger::exception($e, ['context' => 'notifyQuoteSent', 'quote_id' => $quoteId]);
+        }
     }
 
     public function destroy(Request $request, string $id): void

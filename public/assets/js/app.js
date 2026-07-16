@@ -122,7 +122,7 @@
         }
 
         return {
-            alert: function (message, done) {
+            alert: function (message, done, title) {
                 if (!ensure()) {
                     window.alert(message);
                     if (done) {
@@ -130,7 +130,7 @@
                     }
                     return;
                 }
-                open({ title: GM.t('js.error', 'Errore'), message: message, cancel: false, onConfirm: done, onCancel: done });
+                open({ title: title || GM.t('js.error', 'Errore'), message: message, cancel: false, onConfirm: done, onCancel: done });
             },
             // opts: { title, okLabel, okClass, onConfirm, onCancel }
             confirm: function (message, opts) {
@@ -389,6 +389,24 @@
             } else {
                 run();
             }
+        });
+
+        // Admin "send test e-mail": posts and reports the outcome inline (no reload),
+        // so the SMTP config can be verified from the notifications page.
+        $(document).on('click', '.js-test-email', function () {
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            Api.post($btn.data('url'), {}).done(function (res) {
+                Dialog.alert(
+                    (res && res.data && res.data.message) || GM.t('js.ok', 'OK'),
+                    null,
+                    GM.t('js.notice', 'Avviso')
+                );
+            }).fail(function (xhr) {
+                Dialog.alert(failMessage(xhr));
+            }).always(function () {
+                $btn.prop('disabled', false);
+            });
         });
 
         $(document).on('click', '.js-toggle-active', function () {

@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 use App\Http\Middleware\AuthGuard;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
+use App\Services\MailService;
 use App\Services\Report\InvoicePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
@@ -94,6 +95,9 @@ final class InvoiceController
         $data['created_by'] = Auth::id();
 
         $id = (new ProjectInvoiceModel())->create($data);
+        if (($data['status'] ?? '') === 'issued') {
+            $this->notifyInvoiceIssued($id);
+        }
         Response::ok(['id' => $id]);
     }
 
@@ -101,8 +105,9 @@ final class InvoiceController
     {
         AuthGuard::require($request, ['admin']);
 
-        $model = new ProjectInvoiceModel();
-        if ($model->find((int) $id) === null) {
+        $model    = new ProjectInvoiceModel();
+        $existing = $model->find((int) $id);
+        if ($existing === null) {
             Response::fail(Lang::get('admin.invoices.not_found'), 404);
             return;
         }
@@ -113,7 +118,24 @@ final class InvoiceController
         }
 
         $model->update((int) $id, $data);
+        // Notify only on the transition into "issued", not on later edits/paid.
+        if (($existing['status'] ?? '') !== 'issued' && ($data['status'] ?? '') === 'issued') {
+            $this->notifyInvoiceIssued((int) $id);
+        }
         Response::ok();
+    }
+
+    /** Best-effort client e-mail when an invoice is issued; never breaks the request. */
+    private function notifyInvoiceIssued(int $invoiceId): void
+    {
+        try {
+            $invoice = (new ProjectInvoiceModel())->findWithDetails($invoiceId);
+            if ($invoice !== null) {
+                MailService::invoiceIssued($invoice);
+            }
+        } catch (\Throwable $e) {
+            \App\Support\Logger::exception($e, ['context' => 'notifyInvoiceIssued', 'invoice_id' => $invoiceId]);
+        }
     }
 
     public function destroy(Request $request, string $id): void

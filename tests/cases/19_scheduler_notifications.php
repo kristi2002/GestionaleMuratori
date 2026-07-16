@@ -44,10 +44,12 @@ $page = $admin->get('/admin/notifications', ['json' => false]);
 T::equals(200, $page['status'], 'admin can open the notifications page');
 T::ok(str_contains($page['body'], 'Notifiche'), 'notifications page renders its title');
 
+// worker2 (worker1's password is changed and not restored by case 10, so a
+// worker1 login here would be silently anonymous — use worker2 like cases 12–18).
 $worker = new HttpClient($baseUrl);
-$worker->login('worker1@gestionale.local', 'password');
+$worker->login('worker2@gestionale.local', 'password');
 $blocked = $worker->get('/admin/notifications');
-T::ok($blocked['status'] !== 200, 'worker is blocked from admin notifications');
+T::equals(403, $blocked['status'], 'authenticated worker is blocked from admin notifications (403)');
 
 // --- Pagination: model count + limit/offset ----------------------------------
 T::section('Pagination: interventions count + window');
@@ -96,3 +98,12 @@ T::equals('accepted', (string) $pdo->query("SELECT status FROM quotes WHERE id =
 // A second decision is rejected (no longer 'sent').
 $again = $c1->post('/client/quotes/' . $quoteId . '/reject');
 T::equals(422, $again['status'], 'cannot change an already-decided quote');
+
+// --- Test-email route (Phase 2) ----------------------------------------------
+T::section('Notifications: test-email route');
+$workerTest = $worker->post('/admin/notifications/test-email');
+T::equals(403, $workerTest['status'], 'worker is blocked from the test-email endpoint');
+// Mail is disabled in the test env, so the admin gets a clean 422, never a 500.
+$adminTest = $admin->post('/admin/notifications/test-email');
+T::equals(422, $adminTest['status'], 'admin test-email reports mail-disabled (422, not a crash)');
+T::ok(($adminTest['json']['ok'] ?? true) === false, 'test-email response is ok:false when mail is disabled');
