@@ -352,6 +352,28 @@ $fabActions = [
     <?php endif; ?>
 <?php endif; ?>
 
+<?php
+// i18n bridge for app.js: dotted key => Italian string. GM.t(key, fallback) reads
+// this so no user-facing Italian is hardcoded in the JS (project rule). Values come
+// straight from lang/it.php; JSON_HEX_TAG keeps the payload safe inside <script>.
+$gmI18n = [
+    'common.unexpected_error' => Lang::get('common.unexpected_error'),
+    'common.connection_error' => Lang::get('common.connection_error'),
+    'common.delete'           => Lang::get('common.delete'),
+    'common.cancel'           => Lang::get('common.cancel'),
+    'auth.login_submit'       => Lang::get('auth.login_submit'),
+    'auth.password_changed'   => Lang::get('auth.password_changed'),
+    'attendance.offline_queued' => Lang::get('attendance.offline_queued'),
+    'js.ok'                    => Lang::get('js.ok'),
+    'js.error'                 => Lang::get('js.error'),
+    'js.confirm'               => Lang::get('js.confirm'),
+    'js.confirm_generic'       => Lang::get('js.confirm_generic'),
+    'js.remove'                => Lang::get('js.remove'),
+    'js.login_progress'        => Lang::get('js.login_progress'),
+    'js.photo_offline_queued'  => Lang::get('js.photo_offline_queued'),
+];
+?>
+<script type="application/json" id="gm-i18n"><?= json_encode($gmI18n, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
 <script src="<?= $e($base) ?>/assets/vendor/jquery.min.js"></script>
 <script src="<?= $e($base) ?>/assets/vendor/bootstrap.bundle.min.js"></script>
 <script src="<?= $e($base) ?>/assets/js/app.js?v=<?= (int) @filemtime(dirname(__DIR__) . '/public/assets/js/app.js') ?>"></script>

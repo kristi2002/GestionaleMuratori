@@ -117,7 +117,7 @@
             $el.find('.js-dialog-cancel').toggleClass('d-none', !opts.cancel);
             $el.find('.js-dialog-ok')
                 .attr('class', 'btn js-dialog-ok ' + (opts.okClass || 'btn-success'))
-                .text(opts.okLabel || 'OK');
+                .text(opts.okLabel || GM.t('js.ok', 'OK'));
             modal.show();
         }
 
@@ -130,7 +130,7 @@
                     }
                     return;
                 }
-                open({ title: 'Errore', message: message, cancel: false, onConfirm: done, onCancel: done });
+                open({ title: GM.t('js.error', 'Errore'), message: message, cancel: false, onConfirm: done, onCancel: done });
             },
             // opts: { title, okLabel, okClass, onConfirm, onCancel }
             confirm: function (message, opts) {
@@ -146,10 +146,10 @@
                     return;
                 }
                 open({
-                    title: opts.title || 'Conferma',
+                    title: opts.title || GM.t('js.confirm', 'Conferma'),
                     message: message,
                     cancel: true,
-                    okLabel: opts.okLabel || 'Conferma',
+                    okLabel: opts.okLabel || GM.t('js.confirm', 'Conferma'),
                     okClass: opts.okClass,
                     onConfirm: opts.onConfirm,
                     onCancel: opts.onCancel
@@ -171,7 +171,7 @@
         $form.on('submit', function (e) {
             e.preventDefault();
             $error.addClass('d-none').text('');
-            $submit.prop('disabled', true).text('Accesso…');
+            $submit.prop('disabled', true).text(GM.t('js.login_progress', 'Accesso…'));
 
             Api.post('/login', {
                 email: $('#email').val(),
@@ -180,10 +180,10 @@
                 if (res && res.ok && res.data && res.data.redirect) {
                     window.location.href = res.data.redirect;
                 } else {
-                    showError((res && res.error) || 'Errore imprevisto.');
+                    showError((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
-                var msg = 'Errore di connessione.';
+                var msg = GM.t('common.connection_error', 'Errore di connessione.');
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     msg = xhr.responseJSON.error;
                 }
@@ -193,7 +193,7 @@
 
         function showError(msg) {
             $error.removeClass('d-none').text(msg);
-            $submit.prop('disabled', false).text('Accedi');
+            $submit.prop('disabled', false).text(GM.t('auth.login_submit', 'Accedi'));
         }
     });
 
@@ -266,7 +266,7 @@
     // shared across all three admin resource pages so each view stays plain HTML.
     $(function () {
         function failMessage(xhr) {
-            return (xhr.responseJSON && xhr.responseJSON.error) || 'Errore di connessione.';
+            return (xhr.responseJSON && xhr.responseJSON.error) || GM.t('common.connection_error', 'Errore di connessione.');
         }
 
         $(document).on('submit', '.js-crud-form', function (e) {
@@ -300,7 +300,7 @@
                         window.location.reload();
                     }
                 } else {
-                    $error.removeClass('d-none').text((res && res.error) || 'Errore imprevisto.');
+                    $error.removeClass('d-none').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                     buttonReset($submit);
                 }
             }).fail(function (xhr) {
@@ -337,8 +337,8 @@
 
         $(document).on('click', '.js-crud-delete', function () {
             var $btn = $(this);
-            Dialog.confirm($btn.data('confirm') || 'Confermi?', {
-                okLabel: 'Elimina',
+            Dialog.confirm($btn.data('confirm') || GM.t('js.confirm_generic', 'Confermi?'), {
+                okLabel: GM.t('common.delete', 'Elimina'),
                 okClass: 'btn-danger',
                 onConfirm: function () {
                     Api.post($btn.data('url'), {}).done(function (res) {
@@ -350,7 +350,7 @@
                                 window.location.reload();
                             }
                         } else {
-                            Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                            Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                         }
                     }).fail(function (xhr) {
                         Dialog.alert(failMessage(xhr));
@@ -373,7 +373,7 @@
                             window.location.reload();
                         }
                     } else {
-                        Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                        Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                     }
                 }).fail(function (xhr) {
                     Dialog.alert(failMessage(xhr));
@@ -382,7 +382,7 @@
             var message = $btn.data('confirm');
             if (message) {
                 Dialog.confirm(message, {
-                    okLabel: $btn.data('ok-label') || 'Conferma',
+                    okLabel: $btn.data('ok-label') || GM.t('js.confirm', 'Conferma'),
                     okClass: 'btn-success',
                     onConfirm: run
                 });
@@ -396,7 +396,7 @@
                 if (res && res.ok) {
                     window.location.reload();
                 } else {
-                    Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
                 Dialog.alert(failMessage(xhr));
@@ -420,7 +420,7 @@
                 if (res && res.ok && res.data) {
                     $cell.toggleClass('st-absent', res.data.status === 'absent');
                 } else {
-                    Dialog.alert((res && res.error) || $cell.closest('[data-att-error]').data('att-error') || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || $cell.closest('[data-att-error]').data('att-error') || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
                 Dialog.alert(failMessage(xhr));
@@ -543,7 +543,7 @@
                     }
                     $select.val('');
                 } else {
-                    Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
                 buttonReset($submit);
@@ -554,8 +554,8 @@
         $(document).on('click', '.js-att-remove', function (e) {
             e.stopPropagation(); // do not also select the worker card being removed
             var $btn = $(this);
-            Dialog.confirm($btn.data('confirm') || 'Confermi?', {
-                okLabel: 'Rimuovi',
+            Dialog.confirm($btn.data('confirm') || GM.t('js.confirm_generic', 'Confermi?'), {
+                okLabel: GM.t('js.remove', 'Rimuovi'),
                 okClass: 'btn-danger',
                 onConfirm: function () { removeAttWorker($btn); }
             });
@@ -588,7 +588,7 @@
                         attSelectWorker($remaining.first());
                     }
                 } else {
-                    Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                     $btn.prop('disabled', false);
                 }
             }).fail(function (xhr) {
@@ -621,7 +621,7 @@
                 if (res && res.ok) {
                     window.location.reload();
                 } else {
-                    $error.removeClass('d-none').text((res && res.error) || 'Errore imprevisto.');
+                    $error.removeClass('d-none').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                     buttonReset($submit);
                 }
             }).fail(function (xhr) {
@@ -654,7 +654,7 @@
                         $('.js-qty-in-stock').text(res.data.after);
                     }
                 } else {
-                    $result.removeClass('d-none alert-info').addClass('alert-danger').text((res && res.error) || 'Errore imprevisto.');
+                    $result.removeClass('d-none alert-info').addClass('alert-danger').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
                 $btn.prop('disabled', false);
@@ -698,7 +698,7 @@
                 if (res && res.ok) {
                     window.location.reload();
                 } else {
-                    Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                     $sel.val(previous).prop('disabled', false);
                 }
             }).fail(function (xhr) {
@@ -723,7 +723,7 @@
                 if (res && res.ok) {
                     window.location.reload();
                 } else {
-                    Dialog.alert((res && res.error) || 'Errore imprevisto.');
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
                 Dialog.alert(failMessage(xhr));
@@ -866,7 +866,7 @@
                     if (res && res.ok) {
                         window.location.reload();
                     } else {
-                        showPhotoMessage($error, (res && res.error) || 'Errore imprevisto.', false);
+                        showPhotoMessage($error, (res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'), false);
                         $submit.prop('disabled', false);
                     }
                 }).fail(function (xhr) {
@@ -877,7 +877,7 @@
                         return;
                     }
                     queuePhotoForRetry(url, type, dataUrl);
-                    showPhotoMessage($error, 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.', true);
+                    showPhotoMessage($error, GM.t('js.photo_offline_queued', 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.'), true);
                     $submit.prop('disabled', false);
                     $form[0].reset();
                 });
@@ -964,7 +964,7 @@
                     if (res && res.ok) {
                         window.location.reload();
                     } else {
-                        $error.removeClass('d-none').text((res && res.error) || 'Errore imprevisto.');
+                        $error.removeClass('d-none').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                         $btn.prop('disabled', false);
                     }
                 }).fail(function (xhr) {
@@ -1293,7 +1293,7 @@
                 $submit.prop('disabled', false);
                 if (res && res.ok) {
                     $form[0].reset();
-                    $success.removeClass('d-none').text(GM.t('auth.password_updated', 'Password aggiornata correttamente.'));
+                    $success.removeClass('d-none').text(GM.t('auth.password_changed', 'Password aggiornata correttamente.'));
                 } else {
                     $error.removeClass('d-none').text((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
@@ -1545,7 +1545,7 @@
                 data: JSON.stringify({ shortcuts: payload })
             }).done(function (res) {
                 if (res && res.ok) {
-                    $msg.addClass('text-success').text($form.data('saved') || 'OK');
+                    $msg.addClass('text-success').text($form.data('saved') || GM.t('js.ok', 'OK'));
                 } else {
                     $msg.addClass('text-danger').text((res && res.error) || '');
                 }

@@ -25,6 +25,10 @@ Conventions:
 | GET | `/login` | Login page. |
 | POST | `/login` | Body: `email`, `password`. → `{ok, data:{redirect}}`; 401 bad credentials, 422 empty fields, **429 after 5 failures/15 min per email (20 per IP)** — attempts audited in `login_attempts`. |
 | POST | `/logout` | Clears the session. → `{ok, data:{redirect}}` (or 302 for non-AJAX). *(GET /logout was removed.)* |
+| GET | `/forgot-password` | "Forgot password" request page. |
+| POST | `/forgot-password` | Body: `email`. Issues a reset token (always responds success so accounts aren't enumerable). |
+| GET | `/reset-password` | Reset-password form (reached from the tokened link; `?token=`). |
+| POST | `/reset-password` | Body: `token`, `new_password`, `new_password_confirm` (min 8). Sets the new password when the token is valid; re-renders the form with an error on invalid/expired token or short/mismatched password. |
 | GET | `/password` | Change-password page (any authenticated role). |
 | POST | `/password` | Body: `current_password`, `new_password`, `new_password_confirm` (min 8). 422 on wrong current / short / mismatch. |
 | GET | `/health` | Readiness probe — checks DB connectivity. `{ok:true,data:{status:"ok"}}` or 500. |
@@ -37,6 +41,7 @@ Conventions:
 | GET | `/admin` | Operations dashboard: active projects, open interventions, today's interventions by status, low-stock alert table, section links. |
 | GET | `/admin/statistics` | Read-only analytics: KPI row + status donuts, monthly interventions trend, expenses-by-category and top-clients bars (pure SVG/CSS). |
 | GET | `/admin/financials` | Read-only per-cantiere cash-in (invoiced/collected) vs cash-out (materials at unit_cost + expenses) and margin, with a portfolio KPI row. |
+| GET | `/admin/audit` | Read-only audit log: security- and data-relevant actions recorded in `audit_log`. |
 | GET | `/shortcuts` | Keyboard-shortcut guide; for admins, an editor for the "G-then-key" nav shortcuts. Any authenticated user. |
 | POST | `/shortcuts` | `shortcuts[<action>]=<key>` map. Admin only. Validates (single letter, unique, "G" reserved), persists overrides → `{ok,data:{shortcuts}}` or `{ok:false,error}` (422). |
 

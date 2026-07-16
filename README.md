@@ -147,7 +147,7 @@ items and 6 sample interventions. Password for every account: `password`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/start-test-db.ps1   # throwaway MySQL 8 in Docker
-C:\xampp\php\php.exe tests\run.php                                  # 451 assertions
+C:\xampp\php\php.exe tests\run.php                                  # 541 assertions
 ```
 
 The suite runs on its own database and covers the ledger math, the state
@@ -185,9 +185,13 @@ and the **accountant Excel export** — deployed via Coolify on Hetzner. The
 compliance docs, overdue interventions, auto-expiring quotes and low stock; optional
 e-mail digests via a config-gated SMTP mailer), **list pagination**, **client quote
 self-service** (accept/reject in the portal), query **indexes**, and full report/PDF
-i18n. See [docs/DOMAIN_IT.md](docs/DOMAIN_IT.md), [docs/ROADMAP.md](docs/ROADMAP.md),
+i18n. Later increments added **supplier management (Fornitori)** and **purchase
+orders (Buoni d'Ordine)** with **DDT goods receipt** into the stock ledger, an
+**audit log**, a **password-reset flow**, extended **user profile fields/avatars**,
+**project notes (Promemoria)**, and per-user **keyboard shortcuts**. See
+[docs/DOMAIN_IT.md](docs/DOMAIN_IT.md), [docs/ROADMAP.md](docs/ROADMAP.md),
 [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and
-[docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md). A 451-assertion automated
+[docs/DEPLOYMENT_COOLIFY.md](docs/DEPLOYMENT_COOLIFY.md). A 541-assertion automated
 test suite backs it.
 History: [CHANGELOG.md](CHANGELOG.md) · plan: [docs/ROADMAP.md](docs/ROADMAP.md) ·
 remaining ideas: [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) §6.

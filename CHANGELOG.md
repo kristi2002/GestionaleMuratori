@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 0: docs sync + hygiene
+
+Opening phase of the Hetzner/Coolify production-readiness effort. No behavior, route,
+or schema change — this pass makes the repo tell the truth and removes dead weight so
+the following feature phases build on a clean base. Full suite **541 green** throughout.
+
+- **JS i18n compliance** — every user-facing Italian literal in `public/assets/js/app.js`
+  (dialog/confirm labels, login progress, delete/remove buttons, error + offline notices)
+  now routes through the existing `GM.t(key, fallback)` bridge. The layout injects a
+  `<script id="gm-i18n">` dictionary built from `lang/it.php` (new `js.*` group + reused
+  `common.*`/`auth.*`/`attendance.offline_queued` keys), so the "no hardcoded Italian in
+  JS" rule finally holds and future locales are unblocked. Behavior is byte-identical
+  (fallbacks equal the former literals).
+- **PWA polish** — `manifest.webmanifest` `theme_color`/`background_color` corrected from
+  the retired green (`#2e7d32`/`#fff`) to the Navy shell (`#080D1A`/`#0A0F1E`) to match the
+  layout meta. Service worker bumped `gm-shell-v23 → v24` (JS/manifest changed).
+- **Repo hygiene** — removed six committed `*.desktop-orig*.bak` leftovers from the
+  desktop→muratori redesign (`views/layout`, `views/admin/projects/index`,
+  `ProjectController`, `ProjectModel`, `app.css`, `app.js`).
+- **Docs re-synced to reality** — README, `docs/TESTING.md`, `docs/DEPLOYMENT_COOLIFY.md`,
+  `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/ROADMAP.md` corrected from the stale
+  "451 assertions / migrations 001–016" baseline to the current **541 assertions /
+  migrations 001–022**, and now list the shipped-but-undocumented modules (suppliers,
+  purchase orders + DDT, audit log, password reset, profile fields, project notes,
+  keyboard shortcuts) plus `PurchaseOrderReceiptService` and case `20`. Dated CHANGELOG
+  milestone counts left intact as historical record.
+
 ## 2026-07-16 — Buoni d'Ordine (purchase orders) + suppliers
 
 First supplier-facing document set — the app's document layer previously pointed only

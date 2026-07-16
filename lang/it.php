@@ -268,6 +268,19 @@ return [
         'no_results_hint'    => 'Modifica i filtri o aggiungi un nuovo elemento.',
     ],
 
+    // Strings used by public/assets/js/app.js. The layout injects these (plus a
+    // few reused common./auth. keys) into a <script id="gm-i18n"> dictionary that
+    // GM.t(key, fallback) reads, so no Italian literal lives in the JS itself.
+    'js' => [
+        'ok'                   => 'OK',
+        'error'                => 'Errore',
+        'confirm'              => 'Conferma',
+        'confirm_generic'      => 'Confermi?',
+        'remove'               => 'Rimuovi',
+        'login_progress'       => 'Accesso…',
+        'photo_offline_queued' => 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.',
+    ],
+
     'auth' => [
         // Login screen (split hero + form).
         'login_heading'          => 'Accedi al tuo account',
@@ -1430,6 +1443,7 @@ return [
         'title'           => 'Badge di Cantiere',
         'subtitle'        => 'Timbra la tua entrata e uscita dal cantiere.',
         'nav'             => 'Timbratura',
+        'offline_queued'  => 'Sei offline: la timbratura è stata salvata e verrà inviata alla riconnessione.',
         'on_site'         => 'In cantiere',
         'off_site'        => 'Fuori cantiere',
         'kpi_status'      => 'Stato attuale',

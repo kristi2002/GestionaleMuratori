@@ -96,9 +96,11 @@ php database/migrate.php
 php scripts/create-admin.php "Nome Cognome" admin@example.com 'strong-password'
 ```
 
-`migrate.php` is idempotent — it applies migrations `001`–`009` (all the v2 tables:
+`migrate.php` is idempotent — it applies migrations `001`–`022` (the v2 tables:
 stock locations, subcontractors, attendance, daily logs, S.A.L., compliance, photo
-geo) and is safe to re-run on every deploy. **Do not run `database/seed.php` in
+geo; plus the later ones: notifications, audit log, password resets, user profile
+fields, and the purchase-order tables — suppliers, purchase orders and their lines)
+and is safe to re-run on every deploy. **Do not run `database/seed.php` in
 production** — it truncates all tables and loads demo data.
 
 Then open `https://muratori.example.com` and log in.
@@ -182,5 +184,6 @@ It is idempotent (deduped on `notifications.dedup_key`), so an accidental double
 does nothing. To also e-mail admins a digest of new alerts, set the `MAIL_*`
 environment variables (disabled by default) — full list in
 [CONFIGURATION.md](CONFIGURATION.md), which also documents the new `COMPANY_*` vars
-(contractor identity on invoice/quote/S.A.L. PDFs). New migrations (`015`, `016`)
-apply automatically on the next `php database/migrate.php`.
+(contractor identity on invoice/quote/S.A.L. PDFs). The full migration set runs
+`001`–`022` (the newest being the purchase-order tables in `022`); all pending
+migrations apply automatically on the next `php database/migrate.php`.

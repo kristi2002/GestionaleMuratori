@@ -210,7 +210,7 @@ Still genuinely out of scope: S3 storage, multi-tenancy, e-mail notifications
 
 # Post-v2 — 2026-07-10 hardening & automation pass ✅
 
-Delivered (all test-gated, 451 assertions green; see [CHANGELOG.md](../CHANGELOG.md)
+Delivered (all test-gated, full suite green — 541 assertions today; see [CHANGELOG.md](../CHANGELOG.md)
 and [GAP_ANALYSIS.md](GAP_ANALYSIS.md) §7):
 
 1. **Regression fixes** from the "juli" redesign — restored GPS clock-in/out (+offline

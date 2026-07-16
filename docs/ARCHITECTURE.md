@@ -82,6 +82,14 @@ is the single coordination point after any movement write: it recomputes the
   (warehouse↔cantiere) as a paired `transfer_out`+`transfer_in` write in one
   transaction; locks the item row `FOR UPDATE`, guards the source balance, and
   refreshes both location caches. Total stock across locations is conserved.
+- **`PurchaseOrderReceiptService`** — books a delivery (DDT) against a purchase
+  order: writes one `in` stock movement per received line, tagged with
+  `purchase_order_line_id`, into the order's delivery location. Same discipline as
+  `StockTransferService` (one transaction, items locked `FOR UPDATE` in ascending
+  id order, caches recomputed from the ledger before commit). Received quantities
+  are always summed back from the ledger, never cached; receiving is repeatable so
+  partial deliveries accumulate, and over-receipt is allowed and reported as a
+  warning rather than blocked.
 - **`Services\Report`** — `ReportDataService` (shared data gathering),
   `PdfReportBuilder` (mPDF over `views/reports/pdf.php`), `ExcelReportBuilder`
   (PhpSpreadsheet, data-only export), `ReportFilename`.
@@ -96,9 +104,11 @@ Thin: guard → validate input → call model/service → `Response`. Validation
 helpers return `null` after sending a `fail()` response, so actions read top-down.
 
 - `Admin\*` — Clients, Projects, Warehouse (+ ledger + reconcile), Interventions
-  (list + detail with history/photos/signature, materials, status), Users
-  (create/edit/toggle/password-reset with self-lockout guards), Photos
-  (streaming), Reports (PDF/Excel).
+  (list + detail with history/photos/signature, materials, status), Suppliers
+  (Fornitori), Purchase Orders (Buoni d'Ordine — CRUD, PDF, and DDT goods receipt
+  via `PurchaseOrderReceiptService`), Invoices (project_invoices), Quotes, Expenses,
+  Users (create/edit/toggle/password-reset with self-lockout guards, avatars),
+  Notifications, Audit log, Photos (streaming), Reports (PDF/Excel).
 - `Worker\*` — TaskController (task tabs today/upcoming/done, detail, status,
   complete, signature), PhotoController (upload + permission-checked streaming).
 - `Client\*` — read-only projects, permission-checked photo streaming, reports.
