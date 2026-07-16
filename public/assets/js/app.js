@@ -1069,6 +1069,72 @@
         recompute();
     });
 
+    // --- Purchase orders: dynamic line editor (Buoni d'Ordine form) ------------
+    // Same running-index line editor as quotes, with an extra item <select> per row:
+    // picking a warehouse item fills the description/unit when they are still blank.
+    $(function () {
+        var $editor = $('.js-po-lines');
+        if (!$editor.length) {
+            return;
+        }
+        var index = parseInt($editor.attr('data-next-index'), 10) || 0;
+
+        function formatEuro(v) {
+            var parts = v.toFixed(2).split('.');
+            return '€ ' + parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + parts[1];
+        }
+
+        function recompute() {
+            var subtotal = 0;
+            $editor.find('.js-po-line').each(function () {
+                var qty = parseFloat($(this).find('[data-role="qty"]').val()) || 0;
+                var price = parseFloat($(this).find('[data-role="price"]').val()) || 0;
+                var line = qty * price;
+                $(this).find('.js-po-line-total').text(line > 0 ? formatEuro(line) : '—');
+                subtotal += line;
+            });
+            var vat = parseFloat($('.js-po-vat').val()) || 0;
+            $('.js-po-subtotal').text(formatEuro(subtotal));
+            $('.js-po-vat-amount').text(formatEuro(subtotal * vat / 100));
+            $('.js-po-total').text(formatEuro(subtotal * (1 + vat / 100)));
+        }
+
+        $(document).on('click', '.js-po-add-line', function () {
+            var html = $editor.find('.js-po-line-template').html().replace(/__INDEX__/g, index++);
+            $editor.find('.js-po-lines-body').append(html);
+            recompute();
+        });
+
+        $(document).on('click', '.js-po-remove-line', function () {
+            $(this).closest('.js-po-line').remove();
+            recompute();
+        });
+
+        // Choosing an item pre-fills the row's description and unit if left blank.
+        $(document).on('change', '.js-po-item', function () {
+            var $opt = $(this).find('option:selected');
+            var $row = $(this).closest('.js-po-line');
+            var name = $opt.data('name');
+            var unit = $opt.data('unit');
+            if (name) {
+                var $desc = $row.find('[name$="[description]"]');
+                if (!$desc.val()) { $desc.val(name); }
+            }
+            if (unit) {
+                var $unit = $row.find('[name$="[unit]"]');
+                if (!$unit.val()) { $unit.val(unit); }
+            }
+        });
+
+        $(document).on('input change', '.js-po-lines input, .js-po-vat', recompute);
+
+        // An empty editor starts with one blank row ready to fill in.
+        if (!$editor.find('.js-po-line').length) {
+            $editor.find('.js-po-add-line').trigger('click');
+        }
+        recompute();
+    });
+
     // --- Filter date-range control: custom themeable calendar popup ----------
     // The native date-picker overlay can't be styled, so for the "Dal / Al"
     // fields we render our own in-page calendar (month names / weekday labels

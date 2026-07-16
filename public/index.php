@@ -19,7 +19,9 @@ use App\Controllers\Admin\ExpenseController;
 use App\Controllers\Admin\InterventionController;
 use App\Controllers\Admin\InvoiceController;
 use App\Controllers\Admin\NotificationController;
+use App\Controllers\Admin\PurchaseOrderController;
 use App\Controllers\Admin\QuoteController;
+use App\Controllers\Admin\SupplierController;
 use App\Controllers\Admin\PhotoController as AdminPhotoController;
 use App\Controllers\Admin\ProjectController;
 use App\Controllers\Admin\AttendanceController as AdminAttendanceController;
@@ -197,6 +199,25 @@ $router->post('/admin/quotes',              [QuoteController::class, 'store']);
 $router->post('/admin/quotes/{id}',         [QuoteController::class, 'update']);
 $router->post('/admin/quotes/{id}/delete',  [QuoteController::class, 'destroy']);
 $router->post('/admin/quotes/{id}/invoice', [QuoteController::class, 'toInvoice']);
+
+// --- Fornitori (Suppliers) ---
+$router->get('/admin/suppliers',               [SupplierController::class, 'index']);
+$router->get('/admin/suppliers/create',        [SupplierController::class, 'create']);
+$router->get('/admin/suppliers/{id}/edit',     [SupplierController::class, 'edit']);
+$router->post('/admin/suppliers',              [SupplierController::class, 'store']);
+$router->post('/admin/suppliers/{id}',         [SupplierController::class, 'update']);
+$router->post('/admin/suppliers/{id}/toggle',  [SupplierController::class, 'toggleActive']);
+
+// --- Buoni d'Ordine (Purchase Orders) ---
+$router->get('/admin/purchase-orders',                [PurchaseOrderController::class, 'index']);
+$router->get('/admin/purchase-orders/create',         [PurchaseOrderController::class, 'create']);
+$router->get('/admin/purchase-orders/{id}/edit',      [PurchaseOrderController::class, 'edit']);
+$router->get('/admin/purchase-orders/{id}/pdf',       [PurchaseOrderController::class, 'pdf']);
+$router->get('/admin/purchase-orders/{id}/receive',   [PurchaseOrderController::class, 'receive']);
+$router->post('/admin/purchase-orders',               [PurchaseOrderController::class, 'store']);
+$router->post('/admin/purchase-orders/{id}',          [PurchaseOrderController::class, 'update']);
+$router->post('/admin/purchase-orders/{id}/receive',  [PurchaseOrderController::class, 'doReceive']);
+$router->post('/admin/purchase-orders/{id}/delete',   [PurchaseOrderController::class, 'destroy']);
 
 // --- Fatture (Invoices) ---
 $router->get('/admin/invoices',               [InvoiceController::class, 'index']);

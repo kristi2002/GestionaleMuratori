@@ -31,6 +31,7 @@ $dataTables = [
     'daily_log_equipment', 'daily_logs', 'equipment', 'site_attendance',
     // Project detail sub-resources + billing (migrations 010–014). Must be reset
     // too, otherwise re-seeding leaves rows pointing at truncated parents.
+    'purchase_order_lines', 'purchase_orders', 'suppliers',
     'quote_lines', 'quotes', 'expenses',
     'project_documents', 'project_invoices', 'project_materials',
     'project_absences', 'project_workers',
@@ -353,6 +354,75 @@ try {
             $quoteLineStmt->execute([
                 ':quote_id' => $quoteId, ':desc' => $line[0], ':qty' => $line[1],
                 ':unit' => $line[2], ':price' => $line[3], ':sort' => $sort,
+            ]);
+        }
+    }
+
+    // --- Suppliers (fornitori) + purchase orders (buoni d'ordine) ------------
+    $supplierStmt = $pdo->prepare(
+        'INSERT INTO suppliers (name, vat_or_tax_id, email, phone, address, notes, is_active)
+         VALUES (:name, :vat, :email, :phone, :address, :notes, 1)'
+    );
+    $suppliers = [
+        ['Ferramenta Lombarda S.r.l.', 'IT02233445566', 'ordini@ferramentalombarda.it', '+39 02 5551234', 'Via dei Fabbri 8, Milano', 'Consegne in giornata su Milano.'],
+        ['Calcestruzzi Adriatici S.p.A.', 'IT03344556677', 'vendite@calcestruzziadriatici.it', '+39 071 998877', 'Zona Industriale 12, Ancona', null],
+    ];
+    $supplierIds = [];
+    foreach ($suppliers as $s) {
+        $supplierStmt->execute([
+            ':name' => $s[0], ':vat' => $s[1], ':email' => $s[2],
+            ':phone' => $s[3], ':address' => $s[4], ':notes' => $s[5],
+        ]);
+        $supplierIds[] = (int) $pdo->lastInsertId();
+    }
+
+    $poStmt = $pdo->prepare(
+        'INSERT INTO purchase_orders
+            (supplier_id, project_id, location_id, number, title, order_date, expected_date, status, vat_rate, notes, created_by)
+         VALUES (:supplier_id, :project_id, 1, :number, :title, :odate, :edate, :status, 22.00, :notes, :by)'
+    );
+    $poLineStmt = $pdo->prepare(
+        'INSERT INTO purchase_order_lines (purchase_order_id, item_id, description, qty, unit, unit_price, sort_order)
+         VALUES (:po_id, :item_id, :desc, :qty, :unit, :price, :sort)'
+    );
+    // [supplier_idx, project_idx|null, number, title, +/-days order, +/-days expected, status,
+    //  [ [item_idx|null, desc, qty, unit, price], ... ] ]
+    $purchaseOrders = [
+        [0, 0, 'BO-2026-001', 'Materiali murari Villa Rossi', -5, 3, 'sent', [
+            [0, 'Cemento Portland 25kg', '100.000', 'sacchi', '6.20'],
+            [3, 'Calce idraulica', '300.000', 'kg', '0.30'],
+            [null, 'Trasporto in cantiere', '1.000', 'a corpo', '80.00'],
+        ]],
+        [1, 1, 'BO-2026-002', 'Ferro e tondino facciata Via Bianchi', -2, 6, 'confirmed', [
+            [4, 'Tondino acciaio 12mm', '800.000', 'm', '1.10'],
+        ]],
+        [0, null, 'BO-2026-003', 'Reintegro magazzino DPI e colle', 0, 10, 'draft', [
+            [6, 'Colla per piastrelle', '200.000', 'kg', '0.80'],
+            [9, 'Guanti da lavoro', '100.000', 'pcs', '1.15'],
+        ]],
+    ];
+    foreach ($purchaseOrders as $po) {
+        $poStmt->execute([
+            ':supplier_id' => $supplierIds[$po[0]],
+            ':project_id'  => $po[1] !== null ? $projectIds[$po[1]] : null,
+            ':number'      => $po[2],
+            ':title'       => $po[3],
+            ':odate'       => $todayDt->modify(($po[4] >= 0 ? '+' : '') . $po[4] . ' days')->format('Y-m-d'),
+            ':edate'       => $todayDt->modify(($po[5] >= 0 ? '+' : '') . $po[5] . ' days')->format('Y-m-d'),
+            ':status'      => $po[6],
+            ':notes'       => null,
+            ':by'          => $adminId,
+        ]);
+        $poId = (int) $pdo->lastInsertId();
+        foreach ($po[7] as $sort => $line) {
+            $poLineStmt->execute([
+                ':po_id'   => $poId,
+                ':item_id' => $line[0] !== null ? $itemIds[$line[0]] : null,
+                ':desc'    => $line[1],
+                ':qty'     => $line[2],
+                ':unit'    => $line[3],
+                ':price'   => $line[4],
+                ':sort'    => $sort,
             ]);
         }
     }

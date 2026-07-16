@@ -37,6 +37,8 @@ if ($user !== null) {
             [Lang::get('admin.projects.title'),       '/admin/projects',      'bi-buildings'],
             [Lang::get('admin.subcontractors.title'), '/admin/subcontractors','bi-diagram-3'],
             [Lang::get('admin.quotes.title'),         '/admin/quotes',        'bi-file-earmark-text'],
+            [Lang::get('admin.suppliers.title'),      '/admin/suppliers',     'bi-truck'],
+            [Lang::get('admin.purchase_orders.title'),'/admin/purchase-orders','bi-receipt-cutoff'],
             [Lang::get('admin.invoices.title'),       '/admin/invoices',      'bi-receipt'],
             // One entry per expense category: the list page pre-filtered.
             [Lang::get('admin.expenses.title'),       '/admin/expenses',      'bi-cash-coin',
@@ -149,6 +151,7 @@ $fabActions = [
     ['/admin/projects/create',      Lang::get('admin.projects.new'),      'bi-buildings'],
     ['/admin/interventions/create', Lang::get('admin.interventions.new'), 'bi-calendar-plus'],
     ['/admin/quotes/create',        Lang::get('admin.quotes.new'),        'bi-file-earmark-text'],
+    ['/admin/purchase-orders/create', Lang::get('admin.purchase_orders.new'), 'bi-receipt-cutoff'],
     ['/admin/invoices/create',      Lang::get('admin.invoices.new'),      'bi-receipt'],
     ['/admin/expenses/create',      Lang::get('admin.expenses.new'),      'bi-cash-coin'],
 ];
