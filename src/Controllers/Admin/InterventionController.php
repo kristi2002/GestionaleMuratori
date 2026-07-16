@@ -137,6 +137,76 @@ final class InterventionController
         ], 'layout'));
     }
 
+    /**
+     * GET /admin/interventions/dispatch — workload / dispatch board. Active
+     * (non-completed) scheduled interventions for a 7-day window, grouped by worker
+     * then day; flags any worker/day with 2+ jobs as a double-booking and offers a
+     * quick worker reassignment per row. Unassigned work sits in its own bucket.
+     */
+    public function dispatch(Request $request): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $fromRaw = (string) $request->input('from', '');
+        $from    = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromRaw)
+            ? new \DateTimeImmutable($fromRaw)
+            : new \DateTimeImmutable('today');
+        $to = $from->modify('+6 days');
+
+        $model = new InterventionModel();
+        $rows  = $model->dispatchBetween($from->format('Y-m-d'), $to->format('Y-m-d'));
+
+        // Group by worker (0 = unassigned) and count per (worker, date) so the view
+        // can flag double-bookings.
+        $byWorker = [];
+        $dayCount = [];
+        foreach ($rows as $r) {
+            $wid = (int) ($r['assigned_worker_id'] ?? 0);
+            $byWorker[$wid][] = $r;
+            $date = (string) $r['scheduled_date'];
+            $dayCount[$wid][$date] = ($dayCount[$wid][$date] ?? 0) + 1;
+        }
+
+        Response::html(View::render('admin/interventions/dispatch', [
+            'title'    => Lang::get('admin.interventions.dispatch'),
+            'from'     => $from,
+            'to'       => $to,
+            'prev'     => $from->modify('-7 days')->format('Y-m-d'),
+            'next'     => $from->modify('+7 days')->format('Y-m-d'),
+            'byWorker' => $byWorker,
+            'dayCount' => $dayCount,
+            'workers'  => (new UserModel())->listByRole('worker'),
+            'kpis'     => $this->kpiCounts($model),
+        ], 'layout'));
+    }
+
+    /**
+     * POST /admin/interventions/{id}/reassign — set (worker_id) or clear (0/empty)
+     * the assigned worker from the dispatch board.
+     */
+    public function reassign(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new InterventionModel();
+        if ($model->find((int) $id) === null) {
+            Response::fail(Lang::get('admin.interventions.not_found'), 404);
+            return;
+        }
+
+        $workerId = (int) $request->input('worker_id', 0);
+        if ($workerId > 0) {
+            $worker = (new UserModel())->findById($workerId);
+            if ($worker === null || $worker['role'] !== 'worker') {
+                Response::fail(Lang::get('admin.interventions.worker_invalid'), 422);
+                return;
+            }
+        }
+
+        $model->reassign((int) $id, $workerId > 0 ? $workerId : null);
+        Response::ok();
+    }
+
     /** Header KPI counts shared by the list + calendar views (single query). */
     private function kpiCounts(InterventionModel $model): array
     {

@@ -48,6 +48,39 @@ final class InterventionModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Active (non-completed, non-cancelled) scheduled interventions in a date window,
+     * carrying the assigned worker id so the dispatch board can group by worker and
+     * flag double-bookings (same worker, same day). Ordered worker → date → time,
+     * with unassigned last.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function dispatchBetween(string $from, string $to): array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT i.id, i.title, i.status, i.scheduled_date, i.scheduled_start_time,
+                    i.assigned_worker_id, p.id AS project_id, p.name AS project_name,
+                    w.name AS worker_name
+             FROM interventions i
+             JOIN projects p ON p.id = i.project_id
+             LEFT JOIN users w ON w.id = i.assigned_worker_id
+             WHERE i.scheduled_date BETWEEN ? AND ?
+               AND i.status IN ('pending','in_progress','on_hold')
+             ORDER BY i.assigned_worker_id IS NULL, i.assigned_worker_id,
+                      i.scheduled_date, i.scheduled_start_time, i.id"
+        );
+        $stmt->execute([$from, $to]);
+        return $stmt->fetchAll();
+    }
+
+    /** Reassign an intervention's worker (null = unassign). */
+    public function reassign(int $id, ?int $workerId): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE interventions SET assigned_worker_id = ? WHERE id = ?');
+        return $stmt->execute([$workerId, $id]);
+    }
+
     /** Row count for the same filters (drives pagination). */
     public function count(array $filters = []): int
     {

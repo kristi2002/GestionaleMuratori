@@ -391,6 +391,24 @@
             }
         });
 
+        // Dispatch board: reassign an intervention's worker from a <select>. Reloads
+        // so the board regroups (and re-evaluates double-booking flags).
+        $(document).on('change', '.js-reassign', function () {
+            var $sel = $(this);
+            $sel.prop('disabled', true);
+            Api.post($sel.data('url'), { worker_id: $sel.val() }).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                    $sel.prop('disabled', false);
+                }
+            }).fail(function (xhr) {
+                Dialog.alert(failMessage(xhr));
+                $sel.prop('disabled', false);
+            });
+        });
+
         // Admin "send test e-mail": posts and reports the outcome inline (no reload),
         // so the SMTP config can be verified from the notifications page.
         $(document).on('click', '.js-test-email', function () {

@@ -159,3 +159,20 @@ $admin->post('/admin/invoices', [
 ]);
 $projPage2 = $c1->get('/client/projects/' . $projId, ['json' => false]);
 T::ok(!str_contains($projPage2['body'], 'DRAFT-HIDDEN-1'), 'draft invoice is hidden from the client');
+
+// --- Dispatch board + reassign (Phase 5) -------------------------------------
+T::section('Dispatch board + worker reassignment');
+T::equals(403, $worker->get('/admin/interventions/dispatch')['status'], 'worker cannot open the dispatch board');
+T::equals(200, $admin->get('/admin/interventions/dispatch', ['json' => false])['status'], 'admin opens the dispatch board');
+
+$ivId         = (int) $pdo->query("SELECT id FROM interventions ORDER BY id LIMIT 1")->fetchColumn();
+$wId          = (int) $pdo->query("SELECT id FROM users WHERE role = 'worker' AND is_active = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$clientUserId = (int) $pdo->query("SELECT id FROM users WHERE role = 'client' ORDER BY id LIMIT 1")->fetchColumn();
+
+$ra = $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $wId]);
+T::ok(($ra['json']['ok'] ?? false) === true, 'admin reassigns an intervention to a worker');
+T::equals($wId, (int) $pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn(), 'worker assignment persisted');
+T::equals(422, $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $clientUserId])['status'], 'cannot assign a non-worker user');
+$admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => 0]);
+T::ok($pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn() === null, 'worker_id 0 unassigns (NULL)');
+T::equals(403, $worker->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $wId])['status'], 'worker cannot reassign');

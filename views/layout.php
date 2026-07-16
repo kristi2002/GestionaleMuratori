@@ -47,10 +47,16 @@ if ($user !== null) {
                     ['meals', 'fuel', 'vehicle', 'clothing', 'other'],
                 )],
             [Lang::get('admin.interventions.title'),  '/admin/interventions', 'bi-calendar-week',
-                // One entry per workflow status: the list page pre-filtered.
-                array_map(
-                    static fn (string $s): array => [Lang::label('intervention_status', $s), '/admin/interventions?status=' . $s, $s],
-                    ['in_progress', 'on_hold', 'pending', 'completed'],
+                array_merge(
+                    // Views first, then one entry per workflow status (list pre-filtered).
+                    [
+                        [Lang::get('admin.interventions.dispatch'),      '/admin/interventions/dispatch'],
+                        [Lang::get('admin.interventions.calendar_view'), '/admin/interventions/calendar'],
+                    ],
+                    array_map(
+                        static fn (string $s): array => [Lang::label('intervention_status', $s), '/admin/interventions?status=' . $s, $s],
+                        ['in_progress', 'on_hold', 'pending', 'completed'],
+                    )
                 )],
             [Lang::get('admin.attendance.title'),     '/admin/attendance',    'bi-person-badge'],
             [Lang::get('admin.daily_logs.title'),     '/admin/daily-logs',    'bi-journal-text'],

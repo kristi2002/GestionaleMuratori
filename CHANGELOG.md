@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 5: scheduling & dispatch
+
+Turn the flat intervention list into a workload command-centre. No schema change.
+Suite **589 green**.
+
+- **Dispatch board** — `GET /admin/interventions/dispatch`: active (non-completed)
+  scheduled interventions for a 7-day window (`?from=`, week paging), grouped by worker
+  then day, each worker card showing their **load** count. Unassigned work has its own
+  bucket. `InterventionModel::dispatchBetween()` backs it.
+- **Double-booking detection** — any worker with 2+ jobs on the same day is flagged
+  inline ("Più interventi nello stesso giorno"), computed from per-(worker,date) counts.
+- **Quick reassignment** — a per-row worker `<select>` posts to
+  `POST /admin/interventions/{id}/reassign` (`worker_id` 0 = unassign), validating the
+  target is actually a worker; the board reloads to regroup and re-flag.
+  `InterventionModel::reassign()` + a small `.js-reassign` handler.
+- **Discoverability** — the interventions sidebar submenu now leads with **Piano di
+  lavoro** (dispatch) and **Calendario**, above the status filters.
+- **Tests** — dispatch RBAC (worker 403 / admin 200), reassign persistence, non-worker
+  rejection (422), unassign-to-NULL, and worker-cannot-reassign, in case 19.
+  Service worker `v25 → v26` (app.js changed).
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 4: client self-service
 
 Give the client portal its own voice: an in-app notification feed and read-only

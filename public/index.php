@@ -184,6 +184,7 @@ $router->post('/admin/warehouse/{id}/transfer',  [WarehouseController::class, 't
 
 $router->get('/admin/interventions',               [InterventionController::class, 'index']);
 $router->get('/admin/interventions/calendar',       [InterventionController::class, 'calendar']);
+$router->get('/admin/interventions/dispatch',       [InterventionController::class, 'dispatch']);
 $router->get('/admin/interventions/export',         [InterventionController::class, 'exportCsv']);
 $router->get('/admin/interventions/create',         [InterventionController::class, 'create']);
 $router->get('/admin/interventions/{id}/edit',      [InterventionController::class, 'edit']);
@@ -191,6 +192,7 @@ $router->post('/admin/interventions',               [InterventionController::cla
 $router->get('/admin/interventions/{id}',           [InterventionController::class, 'show']);
 $router->post('/admin/interventions/{id}',          [InterventionController::class, 'update']);
 $router->post('/admin/interventions/{id}/status',   [InterventionController::class, 'status']);
+$router->post('/admin/interventions/{id}/reassign', [InterventionController::class, 'reassign']);
 $router->get('/admin/interventions/{id}/signature', [InterventionController::class, 'signature']);
 
 // --- Preventivi (Quotes) ---

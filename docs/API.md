@@ -77,6 +77,8 @@ Conventions:
 | Method | Path | Body / params | Description |
 |--------|------|---------------|-------------|
 | GET | `/admin/interventions` | `project_id`, `worker_id`, `status`, `range` (`today|week`) | HTML list with materials. |
+| GET | `/admin/interventions/dispatch` | `from` (YYYY-MM-DD, default today) | Workload/dispatch board: 7-day window grouped by worker, per-day double-booking flags, quick reassign. |
+| POST | `/admin/interventions/{id}/reassign` | `worker_id` (0 = unassign) | Set/clear the assigned worker from the dispatch board (role-checked; 422 for a non-worker). |
 | POST | `/admin/interventions` | `project_id`*, `title`*, `assigned_worker_id` (role-checked), `description`, `scheduled_date`, `scheduled_start_time`, repeated `item_id[]` + `qty_planned[]` | Create + reserve materials in one transaction. 422 with Italian message on insufficient stock / invalid item / duplicate item. |
 | GET | `/admin/interventions/{id}` | — | Detail page: metadata, planned vs used materials, photos by type, signature, completion notes, full status history. |
 | POST | `/admin/interventions/{id}` | title/worker/description/schedule fields | Update basic fields (no project, no materials, no status). |
