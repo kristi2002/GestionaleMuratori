@@ -187,3 +187,33 @@ environment variables (disabled by default) — full list in
 (contractor identity on invoice/quote/S.A.L. PDFs). The full migration set runs
 `001`–`022` (the newest being the purchase-order tables in `022`); all pending
 migrations apply automatically on the next `php database/migrate.php`.
+
+## Automated backups (Scheduled Task)
+
+Besides the manual commands in [§7](#7-backups), schedule
+[`scripts/backup.sh`](../scripts/backup.sh) as a second Coolify **Scheduled Task** on
+the `app` service so the database and uploads volume are dumped nightly (14-day
+rotation by default):
+
+- Command: `bash scripts/backup.sh`
+- Frequency (cron): `30 2 * * *` (just after the scheduler)
+
+The script reads DB credentials from the environment. **Copy the resulting archive
+off the server** (object storage / another host) — a backup that lives only on the
+same VPS does not survive a disk loss. Test a restore at least once (procedure in
+[DEPLOYMENT.md](DEPLOYMENT.md)) before relying on it.
+
+## Scaling & sessions (single replica only)
+
+Keep the `app` service at **exactly one replica**. Two design choices make horizontal
+scaling unsafe today, both intentional for a single-VPS deployment:
+
+- **Sessions are file-based** on the app container's local filesystem. A second
+  replica would not share them, so logins would break intermittently. (Sessions are
+  also not on a named volume, so they reset on redeploy — users simply log in again.)
+- **Uploads use the local `STORAGE_DRIVER`.** Photos/signatures/PDFs live on the
+  `uploads` volume attached to the one app container. A shared object store (the `s3`
+  driver reserved in `App\Support\Storage\Storage`, ADR-0001) is required before
+  multiple replicas can serve them.
+
+For more capacity, scale the VPS up (CPU/RAM), not out.

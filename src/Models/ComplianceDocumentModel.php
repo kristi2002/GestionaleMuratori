@@ -192,4 +192,20 @@ final class ComplianceDocumentModel
         $stmt = Database::pdo()->prepare('DELETE FROM compliance_documents WHERE id = ?');
         return $stmt->execute([$id]);
     }
+
+    /**
+     * Delete every compliance document attached to a polymorphic subject. The
+     * subject_type/subject_id pair carries no foreign key (it can point at a
+     * worker, company, subcontractor or project), so callers must clean up here
+     * when the subject itself is deleted — otherwise the Scadenzario keeps orphan
+     * rows whose subject no longer resolves.
+     */
+    public function deleteForSubject(string $subjectType, int $subjectId): int
+    {
+        $stmt = Database::pdo()->prepare(
+            'DELETE FROM compliance_documents WHERE subject_type = ? AND subject_id = ?'
+        );
+        $stmt->execute([$subjectType, $subjectId]);
+        return $stmt->rowCount();
+    }
 }

@@ -621,7 +621,20 @@ final class ProjectController
             return;
         }
 
-        $model->delete((int) $id);
+        // Project delete relies on FK cascade for its child rows, but compliance
+        // documents are polymorphic (no FK), so clean their project-scoped rows in
+        // the same transaction to avoid orphaning the Scadenzario.
+        $pdo = \App\Support\Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            (new ComplianceDocumentModel())->deleteForSubject('project', (int) $id);
+            $model->delete((int) $id);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
         AuditLog::record('deleted', 'project', (int) $id, (string) $project['name']);
         Response::ok();
     }

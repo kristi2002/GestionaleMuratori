@@ -68,3 +68,23 @@ T::equals('PSC', (string) $model->find($id)['doc_type'], 'update persists the ne
 
 T::ok($model->delete($id), 'delete returns true');
 T::ok($model->find($id) === null, 'document gone after delete');
+
+// ---------------------------------------------------------------------------
+T::section('Compliance: deleteForSubject cleans polymorphic orphans');
+// The subject_type/subject_id pair has no FK, so deleting a subject (e.g. a
+// project) must clean its documents explicitly or the Scadenzario keeps orphans.
+$orphanProject = $model->create([
+    'subject_type' => 'project', 'subject_id' => 999999, 'doc_type' => 'POS',
+    'reference' => 'ORPH-P', 'issue_date' => null, 'expiry_date' => null,
+    'credits' => null, 'notes' => null, 'created_by' => 1,
+]);
+$otherWorker = $model->create([
+    'subject_type' => 'worker', 'subject_id' => 999999, 'doc_type' => 'DURC',
+    'reference' => 'ORPH-W', 'issue_date' => null, 'expiry_date' => null,
+    'credits' => null, 'notes' => null, 'created_by' => 1,
+]);
+$removed = $model->deleteForSubject('project', 999999);
+T::equals(1, $removed, 'deleteForSubject removes exactly the project-scoped row');
+T::ok($model->find($orphanProject) === null, 'project document gone');
+T::ok($model->find($otherWorker) !== null, 'same subject_id under a different type is untouched');
+$model->delete($otherWorker); // cleanup

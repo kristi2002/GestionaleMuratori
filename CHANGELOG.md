@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 1: deploy hardening
+
+- **Compliance orphan fix** — `compliance_documents` uses a polymorphic
+  `subject_type`/`subject_id` with no foreign key, so deleting a project used to
+  leave dangling Scadenzario rows whose subject no longer resolved. Added
+  `ComplianceDocumentModel::deleteForSubject()` and made `ProjectController::destroy`
+  run the project delete + compliance cleanup in one transaction. Project is the only
+  deletable compliance subject today (workers/subcontractors are deactivated, not
+  deleted; clients aren't a compliance subject). Covered by
+  `tests/cases/09_compliance.php` (3 new assertions; suite **544 green**).
+- **Deployment docs** — `DEPLOYMENT_COOLIFY.md` now documents nightly
+  `scripts/backup.sh` as a second Coolify Scheduled Task (with the off-site-copy and
+  tested-restore caveats), and a prominent **single-replica constraint** (file-based
+  sessions + local `uploads` volume) with the rationale and the scale-up-not-out
+  guidance.
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 0: docs sync + hygiene
 
 Opening phase of the Hetzner/Coolify production-readiness effort. No behavior, route,
