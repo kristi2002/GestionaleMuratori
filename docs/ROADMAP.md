@@ -278,3 +278,43 @@ Coolify stack + DB). See [ADR-0007](adr/0007-evolve-existing-stack-earn-from-one
 
 Next candidates (client decision): FatturaPA/SDI e-invoicing, recurring invoices, e-signature
 on quote acceptance, worker day/workload calendar view, push/SMS alerts.
+
+---
+
+# Phase 8 — Multi-tenancy / SaaS foundation 🅿️ (registered, not started)
+
+**Status:** parked, awaiting an explicit go-ahead. Trigger: instance-per-tenant ops become
+painful (more than a handful of paying customers), or a customer contractually requires
+DB-enforced cross-tenant isolation. Rationale and the earn-from-one-client-first decision:
+[ADR-0007](adr/0007-evolve-existing-stack-earn-from-one-client-first.md).
+
+**Bridge until then (in effect now):** *instance-per-tenant* — one Coolify stack + one
+database per customer. Full isolation, zero new code. Good for the first few customers.
+
+**When Phase 8 is greenlit, the shared-schema build (do NOT rewrite — extend this stack):**
+
+1. **Tenancy column everywhere** — an `organizations` table; `organization_id` on every
+   tenant-owned table via a numbered migration; every model query scoped by the current
+   tenant (a single choke-point in the base model/PDO layer, not per-call).
+2. **Request-time tenant resolution** — resolve the tenant from the host/subdomain or the
+   authenticated user; bind it once per request; `AuthGuard`/ownership guards gain a tenant
+   dimension (cross-tenant access → 404, same convention as today's ownership guards).
+3. **Cross-tenant test matrix** — the non-negotiable deliverable: every endpoint proven to
+   refuse another tenant's ids (list scoping, direct-id fetch, writes, file/PDF streaming).
+   No shared-schema tenancy ships without this suite green.
+4. **Onboarding & billing** — self-serve organization signup, plan/seat management, Stripe
+   (subscription + webhooks). Prohibited-action rules still apply: the operator enters
+   payment credentials, not the assistant.
+5. **Per-tenant configuration** — company profile, MAIL_*, branding, numbering prefixes move
+   from env to per-organization rows.
+6. **Isolation hardening** — uploads and sessions partitioned per tenant; a platform-admin
+   role distinct from a tenant admin; audit-log scoping.
+
+**Open decision carried from [ADR-0006](adr/0006-future-field-and-ai-platform-direction-parked.md):**
+if a move to **PostgreSQL** is on the table anyway, re-open
+[ADR-0003](adr/0003-tenancy-isolation-model-and-enforcement.md) to use **Postgres RLS** for
+DB-enforced isolation — strictly stronger than MySQL app-layer scoping. Otherwise the
+app-layer `organization_id` scope above is the plan.
+
+**Explicitly still out of scope for Phase 8** unless separately requested: the greenfield
+TS/Supabase rebuild (parked, ADR-0006) and the AI/mobile additive services.
