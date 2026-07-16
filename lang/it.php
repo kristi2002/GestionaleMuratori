@@ -865,6 +865,11 @@ return [
             'line_not_found' => 'Voce non trovata.',
             'signature_empty' => 'Firma il documento prima di salvare.',
             'signature_too_large' => 'Immagine della firma troppo grande.',
+            'to_invoice'      => 'Genera fattura',
+            'invoice_help'    => 'Genera una fattura in bozza a partire da questo S.A.L. Potrai rivederla e completarla prima di emetterla.',
+            'invoice_confirm' => 'Generare una fattura in bozza da questo S.A.L.?',
+            'invoice_requires_issued' => 'Emetti il S.A.L. prima di generare la fattura.',
+            'invoice_note'    => 'Da S.A.L. n. %s',
         ],
 
         'compliance' => [

@@ -80,3 +80,20 @@ T::ok(str_starts_with($admin->get('/admin/sal/' . $salId . '/pdf', ['json' => fa
 $r2 = $admin->post('/admin/sal', ['project_id' => $project]);
 $draftId = (int) ($r2['json']['data']['id'] ?? 0);
 T::equals(404, $admin->get('/admin/sal/' . $draftId . '/pdf', ['json' => false])['status'], 'draft has no downloadable PDF');
+
+// --- S.A.L. -> draft invoice (Phase 3) ---------------------------------------
+T::section('E2E: generate a draft invoice from a signed S.A.L.');
+$salAmount = (string) $pdo->query("SELECT amount FROM sal_documents WHERE id = {$salId}")->fetchColumn();
+$salNumber = (string) $pdo->query("SELECT number FROM sal_documents WHERE id = {$salId}")->fetchColumn();
+
+T::equals(403, $worker->post('/admin/sal/' . $salId . '/invoice')['status'], 'worker cannot generate an invoice from a S.A.L.');
+T::equals(422, $admin->post('/admin/sal/' . $draftId . '/invoice')['status'], 'a draft S.A.L. cannot be invoiced');
+
+$conv = $admin->post('/admin/sal/' . $salId . '/invoice');
+T::ok(($conv['json']['ok'] ?? false) === true, 'admin converts a signed S.A.L. to an invoice');
+$invId = (int) ($conv['json']['data']['id'] ?? 0);
+T::ok($invId > 0, 'conversion returns an invoice id');
+$inv = $pdo->query("SELECT * FROM project_invoices WHERE id = {$invId}")->fetch();
+T::equals('draft', (string) $inv['status'], 'generated invoice is a draft (admin reviews before issuing)');
+T::equals($salAmount, (string) $inv['amount'], 'invoice amount equals the S.A.L. amount');
+T::ok(str_contains((string) $inv['note'], $salNumber), 'invoice note references the S.A.L. number');

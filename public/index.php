@@ -272,6 +272,7 @@ $router->post('/admin/sal/{id}/lines',               [SalController::class, 'add
 $router->post('/admin/sal/{id}/lines/{lineId}/delete', [SalController::class, 'deleteLine']);
 $router->post('/admin/sal/{id}/issue',               [SalController::class, 'issue']);
 $router->post('/admin/sal/{id}/sign',                [SalController::class, 'sign']);
+$router->post('/admin/sal/{id}/invoice',             [SalController::class, 'toInvoice']);
 $router->get('/admin/sal/{id}/pdf',                  [SalController::class, 'pdf']);
 
 $router->get('/admin/compliance',                    [ComplianceController::class, 'index']);

@@ -194,6 +194,19 @@ $cur   = $order[$status] ?? 0;
         <?php else: ?>
             <div class="alert alert-success"><?= $e($t('admin.sal.signed_notice')) ?> (<?= $e(substr((string) $document['signed_at'], 0, 16)) ?>)</div>
         <?php endif; ?>
+
+        <?php if (!$isDraft): ?>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <p class="small text-muted mb-2"><?= $e($t('admin.sal.invoice_help')) ?></p>
+                    <button type="button" class="btn btn-outline-primary js-post-action"
+                            data-url="<?= $e(Url::to('/admin/sal/' . $document['id'] . '/invoice')) ?>"
+                            data-confirm="<?= $e($t('admin.sal.invoice_confirm')) ?>">
+                        <i class="bi bi-receipt" aria-hidden="true"></i> <?= $e($t('admin.sal.to_invoice')) ?>
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <aside class="app-rail">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Http\Middleware\AuthGuard;
+use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Models\SalDocumentModel;
 use App\Models\SalLineModel;
@@ -15,6 +16,7 @@ use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Storage\Storage;
+use App\Support\Url;
 use App\Support\Validate;
 use App\Support\View;
 
@@ -266,6 +268,42 @@ final class SalController
 
         (new SalDocumentModel())->markSigned((int) $id, $relPath);
         Response::ok();
+    }
+
+    /**
+     * POST /admin/sal/{id}/invoice — draft a project invoice from an issued or
+     * signed S.A.L. This is the domain-native billing path: in Italian construction
+     * accounting you invoice against an approved Stato Avanzamento Lavori. The
+     * invoice is created as a DRAFT (auto-numbered, amount = S.A.L. amount) so the
+     * admin reviews it and issues it through the normal flow — issuing is what
+     * e-mails the client (see InvoiceController).
+     */
+    public function toInvoice(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $doc = (new SalDocumentModel())->find((int) $id);
+        if ($doc === null) {
+            Response::fail(Lang::get('admin.sal.not_found'), 404);
+            return;
+        }
+        if ($doc['status'] === 'draft') {
+            Response::fail(Lang::get('admin.sal.invoice_requires_issued'), 422);
+            return;
+        }
+
+        $invoices  = new ProjectInvoiceModel();
+        $invoiceId = $invoices->create([
+            'project_id' => (int) $doc['project_id'],
+            'number'     => $invoices->nextNumberSuggestion(),
+            'issue_date' => date('Y-m-d'),
+            'amount'     => number_format((float) $doc['amount'], 2, '.', ''),
+            'status'     => 'draft',
+            'note'       => mb_substr(sprintf(Lang::get('admin.sal.invoice_note'), (string) $doc['number']), 0, 255),
+            'created_by' => Auth::id(),
+        ]);
+
+        Response::ok(['id' => $invoiceId, 'redirect' => Url::to('/admin/invoices/' . $invoiceId . '/edit')]);
     }
 
     /** GET /admin/sal/{id}/pdf — regenerate the S.A.L. PDF (embeds the DL signature when signed). */

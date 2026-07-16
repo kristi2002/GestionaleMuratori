@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 3: invoicing automation
+
+Automate the invoice-creation drudgery, staying inside the Italian construction
+billing model (progress billing against an approved S.A.L. — not subscriptions).
+Suite **567 green**.
+
+- **S.A.L. → draft invoice** — `SalController::toInvoice`
+  (`POST /admin/sal/{id}/invoice`) turns an *issued or signed* Stato Avanzamento
+  Lavori into a **draft** `project_invoices` row: auto-numbered
+  (`nextNumberSuggestion`, per-year sequential), today's date, amount copied from the
+  S.A.L., note back-referencing the S.A.L. number. Draft on purpose — the admin
+  reviews, then issues through the normal flow, and *issuing* is what e-mails the
+  client (Phase 2). A "Genera fattura" button appears on the S.A.L. page once the
+  document leaves draft. Mirrors the existing `QuoteController::toInvoice` pattern.
+- **Automatic invoice numbering** — verified already present:
+  `ProjectInvoiceModel::nextNumberSuggestion()` (MAX+1 within the current year,
+  gap-free-forward) already pre-fills the invoice create form.
+- **Tests** — `tests/cases/15_sal_http.php` gains the conversion path: RBAC (worker
+  403), draft-S.A.L. guard (422), draft-status/amount/note assertions.
+- **Deliberately deferred** — *recurring invoices* (construction billing is
+  milestone/S.A.L.-based, not subscription — poor domain fit) and *FatturaPA/SDI XML*
+  (the project's own stance, per the 2026-07-16 purchase-orders note, is that the
+  commercialista + SDI handle electronic invoicing). Both await an explicit need.
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 2: transactional e-mail live
 
 The `Mailer` (SMTP/`mail`, built earlier) was only wired to the daily alert digest;
