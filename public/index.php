@@ -38,6 +38,7 @@ use App\Controllers\Admin\SubcontractorController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\WarehouseController;
 use App\Controllers\AuthController;
+use App\Controllers\Client\NotificationController as ClientNotificationController;
 use App\Controllers\Client\PhotoController as ClientPhotoController;
 use App\Controllers\Client\ProjectController as ClientProjectController;
 use App\Controllers\Client\QuoteController as ClientQuoteController;
@@ -99,12 +100,14 @@ if ($request->isPost() && !Csrf::check(Csrf::fromRequest($request))) {
     exit;
 }
 
-// Unread notification count for the admin topbar bell (one indexed COUNT for
-// admins only; every other role skips the query).
+// Unread notification count for the topbar bell: the admin/global feed for admins,
+// the user's own feed for clients; every other role skips the query.
 $notifUnread = 0;
-if (Auth::role() === 'admin') {
+$notifRole   = Auth::role();
+if ($notifRole === 'admin' || $notifRole === 'client') {
     try {
-        $notifUnread = (new \App\Models\NotificationModel())->unreadCount();
+        $notifUnread = (new \App\Models\NotificationModel())
+            ->unreadCount($notifRole === 'client' ? (int) Auth::id() : null);
     } catch (\Throwable $e) {
         $notifUnread = 0; // e.g. before the notifications migration has run
     }
@@ -319,6 +322,9 @@ $router->get('/sub/photos/{id}',             [SubPhotoController::class, 'show']
 $router->get('/sub/photos/{id}/thumb',       [SubPhotoController::class, 'thumb']);
 
 $router->get('/client',                          [ClientProjectController::class, 'index']);
+$router->get('/client/notifications',             [ClientNotificationController::class, 'index']);
+$router->post('/client/notifications/read-all',   [ClientNotificationController::class, 'readAll']);
+$router->post('/client/notifications/{id}/read',  [ClientNotificationController::class, 'read']);
 $router->get('/client/projects/{id}',             [ClientProjectController::class, 'show']);
 $router->get('/client/quotes',                     [ClientQuoteController::class, 'index']);
 $router->get('/client/quotes/{id}',                [ClientQuoteController::class, 'show']);

@@ -170,4 +170,20 @@ final class UserModel
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Active portal-user ids for a client company (role = 'client', linked to the
+     * given client_id). Used to fan out a client-facing notification to whoever can
+     * actually log into that client's portal.
+     *
+     * @return array<int,int>
+     */
+    public function clientUserIds(int $clientId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT id FROM users WHERE role = 'client' AND client_id = ? AND is_active = 1"
+        );
+        $stmt->execute([$clientId]);
+        return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+    }
 }

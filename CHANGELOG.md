@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-07-16 — Deployment-readiness pass, Phase 4: client self-service
+
+Give the client portal its own voice: an in-app notification feed and read-only
+visibility of what's been billed. Suite **582 green**.
+
+- **User-scoped notifications (migration 023)** — `notifications.user_id` (nullable
+  FK → `users`, `ON DELETE CASCADE`, indexed with `is_read`). NULL preserves the
+  admin/global feed exactly (scheduler + existing rows unchanged); a non-NULL id
+  addresses one user. `NotificationModel` gained a `?int $userId` scope on every
+  read/mark method (default null = global), so a client can only ever see or mark
+  their own rows.
+- **Client notification feed** — `Client\NotificationController`
+  (`/client/notifications`, `…/read-all`, `…/{id}/read`), a client feed view, and the
+  topbar **bell now shows for clients** (their own unread count) as well as admins.
+- **Event fan-out** — `App\Services\NotificationService::notifyClient()` creates one
+  notification per active portal user of a client (dedup_key suffixed with the user id
+  so the global-UNIQUE constraint dedups per recipient). Wired into the Phase 2 events:
+  sending a quote / issuing an invoice now e-mails **and** rings the client's bell.
+  Added `UserModel::clientUserIds()`; `ProjectInvoiceModel::findWithDetails` now also
+  returns `client_id`.
+- **Read-only billing for the client** — the client project page lists that project's
+  **issued/paid** invoices (number, date, amount, status). Drafts are never shown.
+- **Tests** — case 19 gains per-user scoping (ownership on mark-read), the client feed
+  RBAC + invoice fan-out integration, and the draft-hidden / issued-visible invoice
+  checks.
+- **Scope note** — client document center, project-progress timeline, and quote
+  e-signature remain candidates for a later client-portal iteration.
+
 ## 2026-07-16 — Deployment-readiness pass, Phase 3: invoicing automation
 
 Automate the invoice-creation drudgery, staying inside the Italian construction

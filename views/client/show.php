@@ -71,6 +71,36 @@ echo View::render('partials/page_head', [
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+
+        <h2 class="app-section-title mt-4"><?= $e($t('client.invoices')) ?></h2>
+        <?php if ($invoices === []): ?>
+            <div class="card"><div class="card-body"><p class="mb-0 text-muted"><?= $e($t('client.no_invoices')) ?></p></div></div>
+        <?php else: ?>
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th><?= $e($t('client.invoice_number')) ?></th>
+                                <th><?= $e($t('client.invoice_date')) ?></th>
+                                <th class="text-end"><?= $e($t('client.invoice_amount')) ?></th>
+                                <th><?= $e($t('client.invoice_status')) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($invoices as $inv): ?>
+                                <tr>
+                                    <td class="fw-semibold"><?= $e((string) $inv['number']) ?></td>
+                                    <td><?= $e((string) $inv['issue_date']) ?></td>
+                                    <td class="text-end mono tnum"><?= $inv['amount'] !== null ? '€ ' . $e(number_format((float) $inv['amount'], 2, ',', '.')) : '—' ?></td>
+                                    <td><?= View::render('partials/status_badge', ['group' => 'invoice_status', 'value' => (string) $inv['status']], null) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="app-rail">

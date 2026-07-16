@@ -150,6 +150,7 @@ final class ProjectInvoiceModel
     {
         $stmt = Database::pdo()->prepare(
             'SELECT i.*, p.name AS project_name, p.location AS project_location,
+                    p.client_id AS client_id,
                     c.name AS client_name, c.address AS client_address,
                     c.vat_or_tax_id AS client_vat, c.email AS client_email,
                     u.name AS created_by_name

@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Services\MailService;
+use App\Services\NotificationService;
 use App\Services\Report\InvoicePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
@@ -125,14 +126,26 @@ final class InvoiceController
         Response::ok();
     }
 
-    /** Best-effort client e-mail when an invoice is issued; never breaks the request. */
+    /**
+     * Best-effort client alert when an invoice is issued: an e-mail plus an in-app
+     * notification in the client portal's bell. Never breaks the request.
+     */
     private function notifyInvoiceIssued(int $invoiceId): void
     {
         try {
             $invoice = (new ProjectInvoiceModel())->findWithDetails($invoiceId);
-            if ($invoice !== null) {
-                MailService::invoiceIssued($invoice);
+            if ($invoice === null) {
+                return;
             }
+            MailService::invoiceIssued($invoice);
+            NotificationService::notifyClient((int) ($invoice['client_id'] ?? 0), [
+                'type'      => 'system',
+                'severity'  => 'info',
+                'title'     => sprintf(Lang::get('notifications.client_invoice_issued'), (string) $invoice['number']),
+                'body'      => Lang::get('notifications.client_invoice_issued_body'),
+                'link'      => '/client',
+                'dedup_key' => 'client_invoice_issued:' . $invoiceId,
+            ]);
         } catch (\Throwable $e) {
             \App\Support\Logger::exception($e, ['context' => 'notifyInvoiceIssued', 'invoice_id' => $invoiceId]);
         }

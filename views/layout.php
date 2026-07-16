@@ -204,8 +204,12 @@ $fabActions = [
             <div class="d-flex align-items-center gap-2">
                 <span class="badge rounded-pill role"><?= $e(Lang::label('roles', $user['role'])) ?></span>
                 <span class="small text-white d-none d-md-inline"><?= $e($user['name']) ?></span>
-                <?php if (($user['role'] ?? '') === 'admin'): $nu = $notifUnread ?? 0; ?>
-                    <a class="btn btn-sm btn-icon position-relative" href="<?= $e(Url::to('/admin/notifications')) ?>"
+                <?php
+                // Notification bell: admin sees the global feed, a client their own.
+                $notifHref = ($user['role'] ?? '') === 'admin' ? '/admin/notifications'
+                    : (($user['role'] ?? '') === 'client' ? '/client/notifications' : null);
+                if ($notifHref !== null): $nu = $notifUnread ?? 0; ?>
+                    <a class="btn btn-sm btn-icon position-relative" href="<?= $e(Url::to($notifHref)) ?>"
                        title="<?= $e(Lang::get('nav.notifications')) ?>" aria-label="<?= $e(Lang::get('nav.notifications')) ?>">
                         <i class="bi bi-bell" aria-hidden="true"></i>
                         <?php if ($nu > 0): ?>

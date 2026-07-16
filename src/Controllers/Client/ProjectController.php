@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Http\Middleware\ClientProjectGuard;
 use App\Models\InterventionModel;
 use App\Models\PhotoModel;
+use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Support\Auth;
 use App\Support\Lang;
@@ -52,10 +53,18 @@ final class ProjectController
         }
         unset($intervention);
 
+        // Read-only billing view: the client sees issued/paid invoices for this
+        // project (never drafts, which are still being prepared by the office).
+        $invoices = array_values(array_filter(
+            (new ProjectInvoiceModel())->forProject((int) $id),
+            static fn (array $inv): bool => $inv['status'] !== 'draft'
+        ));
+
         Response::html(View::render('client/show', [
             'title'         => $project['name'],
             'project'       => $project,
             'interventions' => $interventions,
+            'invoices'      => $invoices,
         ], 'layout'));
     }
 }

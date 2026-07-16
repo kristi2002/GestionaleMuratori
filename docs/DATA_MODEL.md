@@ -285,3 +285,19 @@ deliveries accumulate; over-receipt is allowed and warned, not blocked; once any
 delivery exists the order is locked against edit/delete. **`warehouse_items.unit_cost`
 is intentionally NOT written on receipt** — stock valuation stays manual for now
 (Weighted Average Cost handled in a later phase, never a blind overwrite).
+
+## Addendum — user-scoped notifications (2026-07-16, migration 023)
+
+- `notifications.user_id` (nullable `BIGINT UNSIGNED`, FK → `users`, `ON DELETE CASCADE`;
+  indexed together with `is_read`). The column splits one table into two audiences:
+  - **`user_id IS NULL`** — the admin/global feed. This is the original behaviour: the
+    scheduler writes these rows and every admin-facing query reads only them, so nothing
+    about the admin experience changes.
+  - **`user_id = N`** — a single user's feed (today: client portal users, notified when a
+    quote is sent or an invoice issued).
+- `NotificationModel`'s read/mark methods take a `?int $userId` scope (default `null` =
+  global), so a client can only ever see or mark **their own** rows — the same
+  ownership-by-construction pattern the portals use elsewhere.
+- Client-facing rows are fanned out by `App\Services\NotificationService::notifyClient()`,
+  one per active portal user of the client; the `dedup_key` is suffixed with the user id
+  so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.

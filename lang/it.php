@@ -76,6 +76,11 @@ return [
         'mark_all_read'  => 'Segna tutte come lette',
         'test_email'     => 'Invia email di prova',
         'view_all'       => 'Vedi tutte le notifiche',
+        // Client-facing feed (user-scoped notifications).
+        'client_quote_sent'          => 'Nuovo preventivo disponibile: N. %s',
+        'client_quote_sent_body'     => 'Accedi al portale per visualizzare e accettare il preventivo.',
+        'client_invoice_issued'      => 'Nuova fattura emessa: N. %s',
+        'client_invoice_issued_body' => 'È disponibile una nuova fattura nel tuo portale.',
         'none_unread'    => 'Nessuna notifica non letta.',
         // Scheduler-generated messages (%s placeholders filled server-side).
         'compliance_expiring'       => 'Documento in scadenza: %s',
@@ -1332,6 +1337,12 @@ return [
         'gallery'           => 'Foto',
         'no_photos'         => 'Nessuna foto disponibile.',
         'not_found'         => 'Progetto non trovato.',
+        'invoices'          => 'Fatture',
+        'no_invoices'       => 'Nessuna fattura emessa per questo cantiere.',
+        'invoice_number'    => 'Numero',
+        'invoice_date'      => 'Data',
+        'invoice_amount'    => 'Importo',
+        'invoice_status'    => 'Stato',
         'quotes' => [
             'title'            => 'I miei preventivi',
             'subtitle'         => 'Consulta e approva i preventivi ricevuti.',

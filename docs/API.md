@@ -124,7 +124,10 @@ Conventions:
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/client` | My projects (read-only). |
-| GET | `/client/projects/{id}` | Project detail: interventions + before/after gallery ("during" photos are internal). |
+| GET | `/client/notifications` (`?filter=unread`) | The client's own notification feed (user-scoped). |
+| POST | `/client/notifications/read-all` | Mark all of the client's own read → `{ok,data:{count}}`. |
+| POST | `/client/notifications/{id}/read` | Mark one of the client's own read (no-op on a foreign/other row). |
+| GET | `/client/projects/{id}` | Project detail: interventions + before/after gallery + read-only issued/paid invoices. |
 | GET | `/client/photos/{id}` / `/client/photos/{id}/thumb` | Photo streaming with ownership chain photo→intervention→project→client. |
 | GET | `/client/projects/{id}/report/pdf` / `.../excel` | Same reports as admin, own projects only. |
 

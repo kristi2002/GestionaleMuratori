@@ -9,6 +9,7 @@ use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Models\QuoteModel;
 use App\Services\MailService;
+use App\Services\NotificationService;
 use App\Services\Report\QuotePdfBuilder;
 use App\Services\Report\ReportFilename;
 use App\Support\Auth;
@@ -137,14 +138,26 @@ final class QuoteController
         Response::ok();
     }
 
-    /** Best-effort client e-mail when a quote becomes "sent"; never breaks the request. */
+    /**
+     * Best-effort client alert when a quote becomes "sent": an e-mail plus an in-app
+     * notification in the client portal's bell. Never breaks the request.
+     */
     private function notifyQuoteSent(int $quoteId): void
     {
         try {
             $quote = (new QuoteModel())->find($quoteId);
-            if ($quote !== null) {
-                MailService::quoteSent($quote);
+            if ($quote === null) {
+                return;
             }
+            MailService::quoteSent($quote);
+            NotificationService::notifyClient((int) $quote['client_id'], [
+                'type'      => 'system',
+                'severity'  => 'info',
+                'title'     => sprintf(Lang::get('notifications.client_quote_sent'), (string) $quote['number']),
+                'body'      => Lang::get('notifications.client_quote_sent_body'),
+                'link'      => '/client/quotes',
+                'dedup_key' => 'client_quote_sent:' . $quoteId,
+            ]);
         } catch (\Throwable $e) {
             \App\Support\Logger::exception($e, ['context' => 'notifyQuoteSent', 'quote_id' => $quoteId]);
         }

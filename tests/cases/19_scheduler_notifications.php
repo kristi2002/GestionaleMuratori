@@ -36,6 +36,20 @@ $marked = $notif->markAllRead();
 T::ok($marked >= $before, 'markAllRead clears every unread row');
 T::equals(0, $notif->unreadCount(), 'no unread notifications after markAllRead');
 
+// --- Per-user scoping (Phase 4) ----------------------------------------------
+T::section('NotificationModel: per-user scoping');
+$clientUid = (int) $pdo->query("SELECT id FROM users WHERE email = 'client1@gestionale.local'")->fetchColumn();
+$otherUid  = (int) $pdo->query("SELECT id FROM users WHERE email = 'client2@gestionale.local'")->fetchColumn();
+$gBefore   = $notif->unreadCount();
+$notif->createIfAbsent(['type' => 'system', 'title' => 'Solo per il cliente', 'user_id' => $clientUid, 'dedup_key' => 'scope:test:' . $clientUid]);
+T::equals(1, $notif->unreadCount($clientUid), 'the target user sees their own unread row');
+T::equals($gBefore, $notif->unreadCount(), 'a user-scoped row never enters the admin/global feed');
+T::equals(0, $notif->unreadCount($otherUid), 'a different user does not see it');
+$scopedId = (int) $pdo->query("SELECT id FROM notifications WHERE user_id = {$clientUid} ORDER BY id DESC LIMIT 1")->fetchColumn();
+T::ok($notif->markRead($scopedId, $otherUid) === false, 'a different user cannot mark it read (ownership)');
+T::ok($notif->markRead($scopedId, $clientUid) === true, 'the owner marks it read');
+T::equals(0, $notif->unreadCount($clientUid), 'owner unread cleared after mark-read');
+
 // --- Notifications HTTP surface ----------------------------------------------
 T::section('Notifications: HTTP RBAC');
 $admin = new HttpClient($baseUrl);
@@ -107,3 +121,41 @@ T::equals(403, $workerTest['status'], 'worker is blocked from the test-email end
 $adminTest = $admin->post('/admin/notifications/test-email');
 T::equals(422, $adminTest['status'], 'admin test-email reports mail-disabled (422, not a crash)');
 T::ok(($adminTest['json']['ok'] ?? true) === false, 'test-email response is ok:false when mail is disabled');
+
+// --- Client notification feed + event fan-out (Phase 4) ----------------------
+T::section('Client notifications: RBAC + invoice event fan-out');
+// A non-client cannot open the client feed.
+T::equals(403, $worker->get('/client/notifications')['status'], 'worker cannot open the client feed');
+// The client can open their own feed.
+T::equals(200, $c1->get('/client/notifications', ['json' => false])['status'], 'client can open their own feed');
+
+// Issuing an invoice for the client's project creates an in-app notification for them.
+$projId  = (int) $pdo->query("SELECT id FROM projects WHERE client_id = {$cid} ORDER BY id LIMIT 1")->fetchColumn();
+$before  = (int) $pdo->query("SELECT COUNT(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = 'client1@gestionale.local'")->fetchColumn();
+$invResp = $admin->post('/admin/invoices', [
+    'project_id' => $projId,
+    'number'     => 'TEST-NOTIF-1',
+    'issue_date' => '2026-07-16',
+    'amount'     => '100',
+    'status'     => 'issued',
+]);
+T::ok(($invResp['json']['ok'] ?? false) === true, 'admin issues an invoice for the client project');
+$after = (int) $pdo->query("SELECT COUNT(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = 'client1@gestionale.local'")->fetchColumn();
+T::ok($after > $before, 'issuing the invoice fanned out a client notification');
+// A client cannot mark another client's notification (ownership via user scope).
+$otherRow = (int) $pdo->query("SELECT n.id FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = 'client1@gestionale.local' ORDER BY n.id DESC LIMIT 1")->fetchColumn();
+T::ok($c2->post('/client/notifications/' . $otherRow . '/read')['status'] === 200, 'foreign mark-read returns ok (no-op, not an error)');
+T::equals(0, (int) $pdo->query("SELECT is_read FROM notifications WHERE id = {$otherRow}")->fetchColumn(), 'foreign client did NOT actually mark it read');
+
+// --- Client-visible invoices on the project page (Phase 4) -------------------
+T::section('Client project page: read-only invoices');
+$projPage = $c1->get('/client/projects/' . $projId, ['json' => false]);
+T::equals(200, $projPage['status'], 'client opens their project page');
+T::ok(str_contains($projPage['body'], 'TEST-NOTIF-1'), 'issued invoice is visible on the client project page');
+// A draft invoice must never be shown to the client.
+$admin->post('/admin/invoices', [
+    'project_id' => $projId, 'number' => 'DRAFT-HIDDEN-1',
+    'issue_date' => '2026-07-16', 'amount' => '50', 'status' => 'draft',
+]);
+$projPage2 = $c1->get('/client/projects/' . $projId, ['json' => false]);
+T::ok(!str_contains($projPage2['body'], 'DRAFT-HIDDEN-1'), 'draft invoice is hidden from the client');
