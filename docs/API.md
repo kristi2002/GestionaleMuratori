@@ -153,3 +153,22 @@ Admin list pages (`/admin/interventions|expenses|invoices|quotes`) accept `?page
 
 Not an HTTP route: `php scripts/scheduler.php` (cron) generates the notifications and,
 when `MAIL_ENABLED=true`, e-mails the admins a digest. See [CONFIGURATION.md](CONFIGURATION.md).
+
+## Addendum — suppliers + buoni d'ordine (2026-07-16, migration 022)
+
+Admin routes (all `AuthGuard::require(..., ['admin'])`, JSON `{ok,data?,error?}` on writes):
+
+- `GET /admin/suppliers`, `GET /admin/suppliers/create`, `GET /admin/suppliers/{id}/edit`,
+  `POST /admin/suppliers`, `POST /admin/suppliers/{id}`, `POST /admin/suppliers/{id}/toggle`.
+- `GET /admin/purchase-orders` (`?q=&status=&supplier_id=&page=`),
+  `GET /admin/purchase-orders/create`, `GET /admin/purchase-orders/{id}/edit`
+  (redirects to `/receive` once deliveries exist), `GET /admin/purchase-orders/{id}/pdf`,
+  `GET /admin/purchase-orders/{id}/receive` (DDT booking screen),
+  `POST /admin/purchase-orders`, `POST /admin/purchase-orders/{id}`
+  (422 on validation, 409 once receipts exist), `POST /admin/purchase-orders/{id}/receive`
+  (books received quantities into stock → `{ok,data:{received,redirect,warning?}}`),
+  `POST /admin/purchase-orders/{id}/delete` (409 once receipts exist).
+
+`POST .../{id}/receive` accepts `received[lineId]=qty`; only lines with a warehouse
+`item_id` can be received. A cancelled order, an empty submission, or a line id from
+another order is 422; over-receipt succeeds with a `warning`.

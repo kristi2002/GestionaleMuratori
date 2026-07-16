@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-07-16 — Buoni d'Ordine (purchase orders) + suppliers
+
+First supplier-facing document set — the app's document layer previously pointed only
+at clients, and inbound stock had no document behind it. Shipped as two commits: the
+CRUD/PDF layer, then the stock-writing receipt layer.
+
+- **Schema (migration 022)** — `suppliers` (fornitori, separate from subcontractors),
+  `purchase_orders` + `purchase_order_lines` (line `item_id` nullable so non-stock
+  lines can be ordered too), and a `stock_movements.purchase_order_line_id` column that
+  ties inbound `type='in'` movements to their ordering document. PO header carries a
+  `project_id` from day one for per-cantiere cost reporting.
+- **CRUD + PDF** — `SupplierController` / `PurchaseOrderController` (admin-only),
+  list/form views with the shared `page_head` + KPI + pill-filter kit, printable A4
+  order PDF, sidebar + quick-create nav, IT strings, seed suppliers & sample orders.
+- **Receiving (DDT)** — `PurchaseOrderReceiptService` books a delivery as one
+  `type='in'` movement per line (one transaction, items locked `FOR UPDATE` in
+  ascending id order, caches refreshed from the ledger). `qty_received` is never
+  stored — always summed from the ledger; header status is derived (partial → received).
+  Partial deliveries accumulate; over-receipt is warned not blocked; a PO with any
+  delivery is locked against edit/delete.
+- **Stock valuation** — `warehouse_items.unit_cost` is deliberately **not** overwritten
+  on receipt (blind overwrite would corrupt historical valuation and distort S.A.L.
+  margins); Weighted Average Cost is deferred to a later phase. Supplier-invoice
+  reconciliation is out of scope (Italian SDI + commercialista handle it).
+- **Tests** — `tests/cases/20_purchase_orders.php` covers receipt math vs the ledger,
+  partial→full transition, over-receipt, and the receipt guards. Full suite 541 green.
+  Service worker bumped `gm-shell-v22 → v23` (JS changed).
+
 ## 2026-07-14 — Full "muratori design" refresh across every page
 
 App-wide restyle to match the `muratori design/` mockups, extending the Navy +
