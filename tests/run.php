@@ -104,8 +104,12 @@ rrmdir($UPLOADS);
 mkdir($UPLOADS, 0775, true);
 
 // --- 2. In-process unit + service tests ----------------------------------------
+// 0*.php are the original in-process cases; 2*.php are later feature cases that also
+// run in-process (10–19 are reserved for the HTTP phase below).
 $pdo = Database::pdo();
-foreach (glob(__DIR__ . '/cases/0*.php') ?: [] as $case) {
+$unitCases = array_merge(glob(__DIR__ . '/cases/0*.php') ?: [], glob(__DIR__ . '/cases/2*.php') ?: []);
+sort($unitCases);
+foreach ($unitCases as $case) {
     require $case;
 }
 

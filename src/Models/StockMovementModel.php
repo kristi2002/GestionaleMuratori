@@ -10,18 +10,19 @@ final class StockMovementModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO stock_movements (item_id, location_id, type, qty, intervention_id, user_id, note)
-             VALUES (:item_id, :location_id, :type, :qty, :intervention_id, :user_id, :note)'
+            'INSERT INTO stock_movements (item_id, location_id, type, qty, intervention_id, purchase_order_line_id, user_id, note)
+             VALUES (:item_id, :location_id, :type, :qty, :intervention_id, :purchase_order_line_id, :user_id, :note)'
         );
         $stmt->execute([
-            ':item_id'         => $data['item_id'],
+            ':item_id'                => $data['item_id'],
             // Defaults to the main warehouse so pre-multi-site callers stay correct.
-            ':location_id'     => $data['location_id'] ?? StockLocationModel::MAIN_WAREHOUSE_ID,
-            ':type'            => $data['type'],
-            ':qty'             => $data['qty'],
-            ':intervention_id' => $data['intervention_id'] ?? null,
-            ':user_id'         => $data['user_id'],
-            ':note'            => $data['note'] ?? null,
+            ':location_id'            => $data['location_id'] ?? StockLocationModel::MAIN_WAREHOUSE_ID,
+            ':type'                   => $data['type'],
+            ':qty'                    => $data['qty'],
+            ':intervention_id'        => $data['intervention_id'] ?? null,
+            ':purchase_order_line_id' => $data['purchase_order_line_id'] ?? null,
+            ':user_id'                => $data['user_id'],
+            ':note'                   => $data['note'] ?? null,
         ]);
         return (int) Database::pdo()->lastInsertId();
     }
