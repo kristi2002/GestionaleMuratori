@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-07-18 — Cleanup pass + live browser verification
+
+Safe dead-code cleanups plus a live browser check of the visual changes. Suite **589 passed, 0 failed**.
+
+- **`View::initials()`** — extracted the 2-letter-initials helper (duplicated as a
+  closure across 5 views, plus an inline variant in `users/show`) into one static on
+  `View`, next to `View::e()`. All 6 views now call it.
+- **Removed dead `js-crud-new` / `js-crud-edit` handlers** from `app.js` — zero views
+  used those classes (all CRUD moved to dedicated create/edit pages). `js-crud-delete`
+  is still used and kept.
+- **Profile-tab dark-mode fix (found via browser check).** The tabs still looked like
+  filled chips in the dark (default) theme because `.app-profile-tabs .nav-link` was
+  part of a shared dark-mode rule that painted a surface background. Removed it from
+  that selector list so the tabs render as the intended pure underline (verified by
+  computed style: borders 0, 3px underline, transparent background). Inactive tabs use
+  the theme-aware `--app-slate` (light grey in dark mode), matching the mockup.
+- **Live verification** — brought the app up against a seeded DB and confirmed the
+  unified `login` + `forgot` split-hero and the orange primary CTA in the browser.
+- Bumped the service worker to `gm-shell-v29` (app.css changed).
+
 ## 2026-07-18 — Audit follow-up: auth-page unification & CSS collision cleanup
 
 Completing the three items deferred from the audit pass. Suite still **589 passed, 0 failed**.

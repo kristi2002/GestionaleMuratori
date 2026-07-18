@@ -25,13 +25,6 @@ if (($record['hire_date'] ?? null)) {
     }
 }
 
-// Initials for the fallback avatar.
-$initials = '';
-foreach (preg_split('/\s+/', trim((string) $record['name'])) ?: [] as $w) {
-    if ($w !== '') { $initials .= mb_strtoupper(mb_substr($w, 0, 1)); }
-}
-$initials = mb_substr($initials, 0, 2);
-
 // Current-month calendar scaffold for the attendance heatmap (Monday-first).
 $fullMonths = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -84,7 +77,7 @@ echo View::render('partials/page_head', [
                     <?php if ($hasAvatar): ?>
                         <img src="<?= $e(Url::to('/admin/users/' . $record['id'] . '/avatar')) ?>" alt="" class="app-avatar-img">
                     <?php else: ?>
-                        <span class="app-avatar-initials"><?= $e($initials) ?></span>
+                        <span class="app-avatar-initials"><?= $e(View::initials((string) $record['name'])) ?></span>
                     <?php endif; ?>
                 </div>
 

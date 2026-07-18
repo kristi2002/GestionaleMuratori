@@ -317,27 +317,6 @@
             $('.js-user-subcontractor-field').toggleClass('d-none', role !== 'subcontractor');
         });
 
-        $(document).on('click', '.js-crud-new', function () {
-            var $modal = $($(this).data('target-modal'));
-            var $form = $modal.find('form');
-            $form[0].reset();
-            $form.find('[name="id"]').val('');
-            $form.find('.js-crud-error').addClass('d-none');
-            $modal.find('.modal-title').text($modal.data('title-create'));
-        });
-
-        $(document).on('click', '.js-crud-edit', function () {
-            var record = $(this).data('record');
-            var $modal = $($(this).data('target-modal'));
-            var $form = $modal.find('form');
-            $form[0].reset();
-            $.each(record, function (key, val) {
-                $form.find('[name="' + key + '"]').val(val === null ? '' : val);
-            });
-            $form.find('.js-crud-error').addClass('d-none');
-            $modal.find('.modal-title').text($modal.data('title-edit'));
-        });
-
         $(document).on('click', '.js-crud-delete', function () {
             var $btn = $(this);
             Dialog.confirm($btn.data('confirm') || GM.t('js.confirm_generic', 'Confermi?'), {

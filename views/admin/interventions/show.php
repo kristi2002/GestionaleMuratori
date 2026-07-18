@@ -12,17 +12,6 @@ $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $qty = static fn ($v): string => $v !== null ? rtrim(rtrim((string) $v, '0'), '.') : '—';
 
-// Compact initials avatar from a display name (same pattern as projects/index.php).
-$initials = static function (string $name): string {
-    $parts = preg_split('/\s+/', trim($name)) ?: [];
-    $ini = '';
-    foreach ($parts as $p) {
-        if ($p !== '') { $ini .= mb_strtoupper(mb_substr($p, 0, 1)); }
-        if (mb_strlen($ini) >= 2) { break; }
-    }
-    return $ini !== '' ? $ini : '—';
-};
-
 $status = (string) $intervention['status'];
 
 $nextActions = [
@@ -166,7 +155,7 @@ echo View::render('partials/page_head', [
             <div class="d-flex align-items-center gap-2 mb-3">
                 <?php if (($intervention['worker_name'] ?? null) !== null): ?>
                     <span class="app-avatars">
-                        <span class="app-avatar"><?= $e($initials((string) $intervention['worker_name'])) ?></span>
+                        <span class="app-avatar"><?= $e(View::initials((string) $intervention['worker_name'])) ?></span>
                     </span>
                     <span><?= $e($intervention['worker_name']) ?></span>
                 <?php else: ?>

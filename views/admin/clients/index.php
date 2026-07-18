@@ -13,17 +13,6 @@ $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 $money = static fn (float $v): string => '€ ' . number_format($v, 0, ',', '.');
 
-// Compact initials avatar from a client name (same pattern as projects/index.php).
-$initials = static function (string $name): string {
-    $parts = preg_split('/\s+/', trim($name)) ?: [];
-    $ini = '';
-    foreach ($parts as $p) {
-        if ($p !== '') { $ini .= mb_strtoupper(mb_substr($p, 0, 1)); }
-        if (mb_strlen($ini) >= 2) { break; }
-    }
-    return $ini !== '' ? $ini : '—';
-};
-
 $actions = '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/clients/export' . ($search !== '' ? '?q=' . rawurlencode($search) : ''))) . '">'
     . '<i class="bi bi-download" aria-hidden="true"></i> ' . $e($t('common.export_csv')) . '</a>'
     . '<a class="btn btn-success" href="' . $e(Url::to('/admin/clients/create')) . '">'
@@ -98,7 +87,7 @@ echo View::render('partials/page_head', [
                 <div class="card h-100 app-record-card">
                     <div class="card-body d-flex flex-column">
                         <a href="<?= $e($profileUrl) ?>" class="app-card-media<?= $mediaTint ?> mb-3 text-decoration-none">
-                            <span class="app-avatar app-avatar-lg"><?= $e($initials((string) $c['name'])) ?></span>
+                            <span class="app-avatar app-avatar-lg"><?= $e(View::initials((string) $c['name'])) ?></span>
                         </a>
                         <h2 class="h6 mb-1 text-truncate">
                             <a class="app-card-title-link" href="<?= $e($profileUrl) ?>">

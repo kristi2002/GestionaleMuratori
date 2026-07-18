@@ -45,4 +45,20 @@ final class View
     {
         return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
+
+    /** Compact up-to-2-letter initials from a display name, for avatar badges. */
+    public static function initials(?string $name): string
+    {
+        $parts = preg_split('/\s+/', trim((string) $name)) ?: [];
+        $ini   = '';
+        foreach ($parts as $p) {
+            if ($p !== '') {
+                $ini .= mb_strtoupper(mb_substr($p, 0, 1));
+            }
+            if (mb_strlen($ini) >= 2) {
+                break;
+            }
+        }
+        return $ini !== '' ? $ini : '—';
+    }
 }

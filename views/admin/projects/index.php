@@ -24,17 +24,6 @@ $pillHref = static function (string $status) use ($filters): string {
     return '/admin/projects' . ($q !== [] ? '?' . http_build_query($q) : '');
 };
 
-// Compact initials avatar from a display name (real worker names, no photos).
-$initials = static function (string $name): string {
-    $parts = preg_split('/\s+/', trim($name)) ?: [];
-    $ini = '';
-    foreach ($parts as $p) {
-        if ($p !== '') { $ini .= mb_strtoupper(mb_substr($p, 0, 1)); }
-        if (mb_strlen($ini) >= 2) { break; }
-    }
-    return $ini !== '' ? $ini : '—';
-};
-
 $projExportQ = http_build_query(array_filter([
     'q'         => $filters['search'] ?? '',
     'client_id' => ($filters['client_id'] ?? 0) ?: null,
@@ -148,7 +137,7 @@ echo View::render('partials/filter_pills', ['pills' => $pills], null);
                             <?php if ($workers !== []): ?>
                                 <span class="app-avatars" title="<?= $e(implode(', ', $workers)) ?>">
                                     <?php foreach (array_slice($workers, 0, 3) as $w): ?>
-                                        <span class="app-avatar"><?= $e($initials($w)) ?></span>
+                                        <span class="app-avatar"><?= $e(View::initials($w)) ?></span>
                                     <?php endforeach; ?>
                                     <?php if (count($workers) > 3): ?>
                                         <span class="app-avatar is-more">+<?= $e((string) (count($workers) - 3)) ?></span>

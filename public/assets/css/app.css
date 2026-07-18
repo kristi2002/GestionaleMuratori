@@ -2559,7 +2559,7 @@ tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
 [data-bs-theme="dark"] .app-stat-label{color:#94A3B8!important;}
 /* white-surfaced components → navy surfaces */
 [data-bs-theme="dark"] .app-stat-tile,[data-bs-theme="dark"] .app-timeline-item,
-[data-bs-theme="dark"] .app-profile-tabs .nav-link,[data-bs-theme="dark"] .app-att-worker-item,
+[data-bs-theme="dark"] .app-att-worker-item,
 [data-bs-theme="dark"] .app-att-panel,[data-bs-theme="dark"] .gm-kpi,
 [data-bs-theme="dark"] .app-note-item,[data-bs-theme="dark"] .app-worker-option,
 [data-bs-theme="dark"] .modal-content,[data-bs-theme="dark"] .dropdown-menu,

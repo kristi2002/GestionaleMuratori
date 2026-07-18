@@ -15,17 +15,6 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 
-// Compact initials avatar from a display name (same pattern as projects/index.php).
-$initials = static function (string $name): string {
-    $parts = preg_split('/\s+/', trim($name)) ?: [];
-    $ini = '';
-    foreach ($parts as $p) {
-        if ($p !== '') { $ini .= mb_strtoupper(mb_substr($p, 0, 1)); }
-        if (mb_strlen($ini) >= 2) { break; }
-    }
-    return $ini !== '' ? $ini : '—';
-};
-
 // Users-list URL that keeps the active search while switching the role pill.
 $pillHref = static function (string $roleValue) use ($search): string {
     $q = array_filter([
@@ -139,7 +128,7 @@ echo View::render('partials/filter_pills', ['pills' => $pills], null);
                 <tr class="<?= $isActive ? '' : 'text-muted' ?>">
                     <td>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="app-avatar"><?= $e($initials((string) $u['name'])) ?></span>
+                            <span class="app-avatar"><?= $e(View::initials((string) $u['name'])) ?></span>
                             <a class="app-card-title-link fw-semibold" href="<?= $e(Url::to('/admin/users/' . $u['id'])) ?>"><?= $e($u['name']) ?></a>
                         </div>
                     </td>

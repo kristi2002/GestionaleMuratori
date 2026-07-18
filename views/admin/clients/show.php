@@ -15,15 +15,6 @@ $t = static fn (string $key): string => Lang::get($key);
 $money = static fn ($v): string => '€ ' . number_format((float) $v, 2, ',', '.');
 $moneyK = static fn ($v): string => '€ ' . number_format((float) $v, 0, ',', '.');
 
-$initials = static function (string $name): string {
-    $ini = '';
-    foreach (preg_split('/\s+/', trim($name)) ?: [] as $p) {
-        if ($p !== '') { $ini .= mb_strtoupper(mb_substr($p, 0, 1)); }
-        if (mb_strlen($ini) >= 2) { break; }
-    }
-    return $ini !== '' ? $ini : '—';
-};
-
 // "Cliente da N anni" from created_at (real).
 $yearsClient = null;
 if (!empty($client['created_at'])) {
@@ -57,7 +48,7 @@ echo View::render('partials/page_head', [
     <div class="col-12 col-lg-4">
         <div class="app-rail-card text-center mb-3">
             <span class="app-avatar app-avatar-lg mx-auto d-block" style="width:5rem;height:5rem;font-size:1.6rem;">
-                <?= $e($initials((string) $client['name'])) ?>
+                <?= $e(View::initials((string) $client['name'])) ?>
             </span>
             <h2 class="h5 mt-3 mb-1"><?= $e($client['name']) ?></h2>
             <?php if ($yearsClient !== null): ?>
