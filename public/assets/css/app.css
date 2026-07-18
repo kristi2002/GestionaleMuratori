@@ -752,21 +752,6 @@ input[type="time"]::-webkit-datetime-edit {
     color: #fff;
 }
 
-/* Top-level profile tabs sit on the page background: slightly bigger, on white chips. */
-.app-profile-tabs .nav-link {
-    padding: .45rem 1.1rem;
-    background-color: #fff;
-    border: 1px solid #eef0f2;
-}
-
-.app-profile-tabs .nav-link:hover {
-    border-color: #FFD9BE;
-}
-
-.app-profile-tabs .nav-link.active {
-    border-color: var(--app-green);
-}
-
 /* One row per cantiere/intervento inside a tab pane. */
 .app-timeline-item {
     display: flex;
@@ -1891,25 +1876,6 @@ input[type="time"]::-webkit-datetime-edit {
     background-color: var(--app-success) !important;
 }
 
-.app-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    background: rgba(249, 115, 22, .12);
-    color: var(--app-green-dark);
-    font-size: 1.1rem;
-}
-
-.app-avatar-lg {
-    width: 4rem;
-    height: 4rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
 /* Client profile header: inline meta row (P.IVA, phone, email, sites count). */
 .app-profile-meta .list-inline-item:not(:last-child) {
     margin-right: 1.25rem;
@@ -1928,6 +1894,8 @@ input[type="time"]::-webkit-datetime-edit {
 .app-profile-tabs .nav-link {
     border: 0;
     border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
     color: var(--app-slate);
     font-weight: 600;
     padding: .6rem 1rem;
@@ -1935,6 +1903,7 @@ input[type="time"]::-webkit-datetime-edit {
 
 .app-profile-tabs .nav-link:hover,
 .app-profile-tabs .nav-link:focus {
+    background-color: transparent;
     color: var(--app-green-dark);
     border-bottom-color: rgba(249, 115, 22, .35);
 }

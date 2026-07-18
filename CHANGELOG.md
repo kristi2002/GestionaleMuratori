@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-07-18 — Audit follow-up: auth-page unification & CSS collision cleanup
+
+Completing the three items deferred from the audit pass. Suite still **589 passed, 0 failed**.
+
+- **`btn-success` primary CTAs — verified correct, no change.** `.btn-success` is
+  themed to `--app-green` (orange) in `app.css`, and `btn-primary` is used nowhere, so
+  the primary buttons already render on-brand orange (confirmed against the
+  `muratori design/` mockups).
+- **CSS name-collision cleanup**
+  - Removed the dead first `.app-avatar` / `.app-avatar-lg` definitions — they were
+    fully overridden by the later avatar-stack rules, so removal is a no-op visually
+    and leaves a single definition per class.
+  - **Profile tabs are now a single, clean underline style** (matching the
+    `Profilo Cliente` mockup): dropped the redundant white-chip layer and neutralised
+    the pill background/border-radius that leaked in from the shared timeline-tab rules.
+- **Auth pages unified.** Extracted the login brand-hero into `partials/auth_hero.php`
+  and wrapped `forgot`/`reset` in the same `app-login-split`, so the whole
+  pre-login flow shares the login look. `password` stays an in-app card (it renders
+  inside the authenticated shell). Also moved the last hardcoded "Email" label to
+  `Lang::get`.
+
 ## 2026-07-18 — Full page audit: fixes, dead-code removal, i18n & style cleanup
 
 An end-to-end audit of every page (all GET routes and their controllers). The app
