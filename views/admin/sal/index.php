@@ -100,38 +100,3 @@ echo View::render('partials/page_head', [
         </table>
     </div>
 </div>
-
-<div class="modal fade" id="sal-modal" tabindex="-1" data-title-create="<?= $e($t('admin.sal.new')) ?>" data-title-edit="<?= $e($t('admin.sal.new')) ?>">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form class="js-crud-form" data-base-url="<?= $e(Url::to('/admin/sal')) ?>">
-                <div class="modal-header">
-                    <h2 class="modal-title h5"><?= $e($t('admin.sal.new')) ?></h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none js-crud-error" role="alert"></div>
-                    <input type="hidden" name="project_id" value="<?= $e((string) $projectId) ?>">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.sal.period_from')) ?></label>
-                            <input type="date" class="form-control" name="period_from">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label"><?= $e($t('admin.sal.period_to')) ?></label>
-                            <input type="date" class="form-control" name="period_to">
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label"><?= $e($t('admin.sal.description')) ?></label>
-                        <textarea class="form-control" name="description" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>
-                    <button type="submit" class="btn btn-success"><?= $e($t('common.create')) ?></button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>

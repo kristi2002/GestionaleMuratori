@@ -535,12 +535,6 @@ input[type="time"]::-webkit-datetime-edit {
     white-space: nowrap;
 }
 
-.app-vbars-svg { width: 100%; height: auto; display: block; }
-.app-vbars-bar { fill: var(--app-green); }
-.app-vbars-axis { stroke: #e4e7ea; stroke-width: .4; }
-.app-vbars-num { font-size: 4.5px; font-weight: 700; fill: #212529; }
-.app-vbars-label { font-size: 4px; fill: #6c757d; }
-
 /* Line / area chart */
 .app-linechart-svg { width: 100%; height: auto; display: block; }
 .app-chart-grid { stroke: #eef0f2; stroke-width: .3; }
@@ -555,13 +549,10 @@ input[type="time"]::-webkit-datetime-edit {
 [data-bs-theme="dark"] .app-linechart-val { fill: #E2E8F0; }
 
 [data-bs-theme="dark"] .app-donut-track { stroke: #1E2A44; }
-[data-bs-theme="dark"] .app-donut-num,
-[data-bs-theme="dark"] .app-vbars-num { fill: #E2E8F0; }
+[data-bs-theme="dark"] .app-donut-num { fill: #E2E8F0; }
 [data-bs-theme="dark"] .app-legend-val,
 [data-bs-theme="dark"] .app-hbar-val { color: #E2E8F0; }
 [data-bs-theme="dark"] .app-hbar-track { background: #1E2A44; }
-[data-bs-theme="dark"] .app-vbars-axis { stroke: #1E2A44; }
-[data-bs-theme="dark"] .app-vbars-label { fill: #94A3B8; }
 
 @media (min-width: 576px) {
     .app-filter-grid {
@@ -2511,6 +2502,8 @@ input[type="time"]::-webkit-datetime-edit {
   src:url("../fonts/inter-latin-600-normal.woff2") format("woff2");}
 @font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;
   src:url("../fonts/inter-latin-700-normal.woff2") format("woff2");}
+@font-face{font-family:"Inter";font-style:normal;font-weight:800;font-display:swap;
+  src:url("../fonts/inter-latin-800-normal.woff2") format("woff2");}
 :root{
   --font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
@@ -2617,7 +2610,6 @@ tr.sev-warn > td:first-child{box-shadow:inset 3px 0 0 var(--gm-warn);}
 [data-bs-theme="dark"] .btn{color:var(--bs-btn-color);}
 [data-bs-theme="dark"] .app-card-title-link{color:#E2E8F0;}
 [data-bs-theme="dark"] .app-card-title-link:hover{color:#FB923C;}
-[data-bs-theme="dark"] .app-quick-action{color:#E2E8F0;}
 [data-bs-theme="dark"] .app-bottom-link{color:#94A3B8;}
 [data-bs-theme="dark"] .app-bottom-link:hover,[data-bs-theme="dark"] .app-bottom-link:focus{color:#E2E8F0;}
 [data-bs-theme="dark"] .app-bottom-link.active{color:#FB923C;}

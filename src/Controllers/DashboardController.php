@@ -128,7 +128,7 @@ final class DashboardController
             Database::pdo()->query('SELECT 1');
             Response::ok(['status' => 'ok']);
         } catch (\Throwable $e) {
-            Response::fail('Database non raggiungibile.', 500);
+            Response::fail(Lang::get('errors.db_unreachable'), 500);
         }
     }
 }

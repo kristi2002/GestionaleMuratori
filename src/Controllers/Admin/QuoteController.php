@@ -206,14 +206,17 @@ final class QuoteController
         }
         $total = $subtotal * (1 + (float) $quote['vat_rate'] / 100);
 
+        // Create the invoice as a draft (mirrors SalController::toInvoice): the
+        // admin reviews and issues it, and issuing is what notifies the client —
+        // creating it 'issued' here would silently skip that notification path.
         $invoices  = new ProjectInvoiceModel();
         $invoiceId = $invoices->create([
             'project_id' => (int) $quote['project_id'],
             'number'     => $invoices->nextNumberSuggestion(),
             'issue_date' => date('Y-m-d'),
             'amount'     => number_format($total, 2, '.', ''),
-            'status'     => 'issued',
-            'note'       => mb_substr('Da preventivo n. ' . $quote['number'], 0, 255),
+            'status'     => 'draft',
+            'note'       => mb_substr(sprintf(Lang::get('admin.quotes.invoice_note'), (string) $quote['number']), 0, 255),
             'created_by' => Auth::id(),
         ]);
 

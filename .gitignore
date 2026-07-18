@@ -16,3 +16,6 @@ Thumbs.db
 
 # Local editor/agent settings
 /.claude/
+
+# Design reference mockups (Navy+Orange redesign screenshots — not app source)
+/muratori design/

@@ -53,7 +53,7 @@ echo View::render('partials/page_head', [
     <div class="d-flex flex-column gap-3">
         <?php foreach ($wids as $wid): $rows = $byWorker[$wid]; ?>
             <div class="card">
-                <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <div class="card-header d-flex align-items-center justify-content-between">
                     <span class="fw-semibold">
                         <i class="bi bi-person-workspace" aria-hidden="true"></i>
                         <?= $e($wid === 0 ? $t('admin.interventions.dispatch_unassigned') : ($workerName[$wid] ?? ('#' . $wid))) ?>

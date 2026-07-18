@@ -147,6 +147,21 @@ return [
         '12' => 'Dicembre',
     ],
 
+    'months_short' => [
+        '1'  => 'Gen',
+        '2'  => 'Feb',
+        '3'  => 'Mar',
+        '4'  => 'Apr',
+        '5'  => 'Mag',
+        '6'  => 'Giu',
+        '7'  => 'Lug',
+        '8'  => 'Ago',
+        '9'  => 'Set',
+        '10' => 'Ott',
+        '11' => 'Nov',
+        '12' => 'Dic',
+    ],
+
     'weekdays_short' => [
         '1' => 'LUN',
         '2' => 'MAR',
@@ -468,6 +483,7 @@ return [
             'to_invoice_confirm' => 'Generare una fattura da questo preventivo? Numero, cantiere e importo verranno compilati automaticamente.',
             'convert_requires_accepted' => 'Solo un preventivo accettato può diventare fattura.',
             'convert_requires_project'  => 'Collega il preventivo a un cantiere prima di generare la fattura.',
+            'invoice_note'              => 'Da preventivo n. %s',
         ],
 
         'suppliers' => [
@@ -938,6 +954,8 @@ return [
         'financials' => [
             'title'        => 'Andamento Economico',
             'subtitle'     => 'Entrate e uscite per cantiere, con il margine in tempo reale.',
+            'unit_million' => 'Mln',
+            'unit_thousand'=> 'K',
             'invoiced'     => 'Fatturato',
             'collected'    => 'Incassato',
             'outstanding'  => 'Da incassare',
@@ -1397,6 +1415,7 @@ return [
         'retry_hint'          => 'Riprova tra qualche istante. Se il problema persiste, contatta l\'amministratore.',
         'back_home'           => 'Torna alla home',
         'reference'           => 'Codice di riferimento',
+        'db_unreachable'      => 'Database non raggiungibile.',
     ],
 
     // PDF/Excel document labels (previously hardcoded in views/reports/*).

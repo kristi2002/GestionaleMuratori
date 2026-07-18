@@ -62,11 +62,9 @@ $needsAction = $buckets['expired'] > 0 || $buckets['exp30'] > 0 || $buckets['exp
     foreach ($kpis as [$variant, $icon, $label, $val]): ?>
         <div class="col-6 col-lg-3">
             <div class="card gm-kpi h-100 <?= $e($variant) ?>">
-                <div class="card-body">
-                    <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
-                    <div class="gm-kpi-val mt-2"><?= $e((string) $val) ?></div>
-                    <div class="gm-kpi-lab"><?= $e($label) ?></div>
-                </div>
+                <i class="bi <?= $e($icon) ?> gm-kpi-ic" aria-hidden="true"></i>
+                <div class="gm-kpi-val mt-2"><?= $e((string) $val) ?></div>
+                <div class="gm-kpi-lab"><?= $e($label) ?></div>
             </div>
         </div>
     <?php endforeach; ?>

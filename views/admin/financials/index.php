@@ -12,10 +12,10 @@ $pct   = static fn (?float $v): string => $v === null ? '—' : number_format($v
 
 // Compact currency for the KPI tiles / mini-cards (e.g. "€ 284 K"), matching the
 // mockup — same real figures, abbreviated so the big mono numbers never overflow.
-$moneyK = static function (float $v): string {
+$moneyK = static function (float $v) use ($t): string {
     $a = abs($v);
-    if ($a >= 1_000_000) { return '€ ' . number_format($v / 1_000_000, 1, ',', '.') . ' Mln'; }
-    if ($a >= 1_000)     { return '€ ' . number_format($v / 1_000, 1, ',', '.') . ' K'; }
+    if ($a >= 1_000_000) { return '€ ' . number_format($v / 1_000_000, 1, ',', '.') . ' ' . $t('admin.financials.unit_million'); }
+    if ($a >= 1_000)     { return '€ ' . number_format($v / 1_000, 1, ',', '.') . ' ' . $t('admin.financials.unit_thousand'); }
     return '€ ' . number_format($v, 0, ',', '.');
 };
 

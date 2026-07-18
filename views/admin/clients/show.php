@@ -34,7 +34,7 @@ if (!empty($client['created_at'])) {
     }
 }
 
-$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/projects/create')) . '">'
+$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/projects/create?client_id=' . $client['id'])) . '">'
     . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.clients.new_project')) . '</a>'
     . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/clients/' . $client['id'] . '/edit')) . '">'
     . '<i class="bi bi-pencil" aria-hidden="true"></i> ' . $e($t('common.edit')) . '</a>'

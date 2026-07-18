@@ -59,7 +59,7 @@ Then (in order, as the mockup shows): KPI row → pill filters → main content
   glowing hero alert `.app-banner-glow`.
 - **Star rating**: `.app-stars` with `bi-star-fill` / `bi-star`.
 - **Section heading** (no card): `.app-section-title`.
-- **Charts**: reuse `partials/chart_line`, `chart_donut`, `chart_hbars`, `chart_vbars`
+- **Charts**: reuse `partials/chart_line`, `chart_donut`, `chart_hbars`
   (see existing usage in statistics/financials views).
 
 ## Existing reference implementations

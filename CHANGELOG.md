@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-07-18 — Full page audit: fixes, dead-code removal, i18n & style cleanup
+
+An end-to-end audit of every page (all GET routes and their controllers). The app
+was found near-complete — no dead/view-only pages — so this is a correctness,
+consistency and hygiene pass. Suite green at **589 passed, 0 failed**.
+
+- **Functional fixes**
+  - **Subcontractor logins can now be created from the UI.** The user-form role
+    picker only revealed the *client* link field; picking "Subappaltatore" never
+    showed the required company select, so the controller always 422'd. The
+    `js-user-role` handler now toggles `.js-user-subcontractor-field` too.
+  - **Quote → invoice now creates a *draft*** (matching `SalController::toInvoice`)
+    instead of an `issued` invoice. Creating it issued silently skipped the
+    client-notification path that fires on issue; the admin now reviews and issues it.
+- **Dead / redundant / conflicting code removed**
+  - Deleted the never-triggered `#sal-modal` from `views/admin/sal/index.php` (the
+    "Nuovo S.A.L." button links to the dedicated create page).
+  - Deleted the unused `partials/chart_vbars.php` and its `.app-vbars-*` CSS.
+  - Removed an exact-duplicate dark-mode `.app-quick-action` rule in `app.css`.
+- **Orphaned asset activated** — `font-weight: 800` styles the page titles/metrics,
+  but no `@font-face` declared Inter-800 (the shipped, service-worker-cached
+  `inter-latin-800` file went unused, titles faux-bolded from 700). Added the face.
+- **i18n hard-rule compliance** — moved hardcoded Italian into `lang/it.php`:
+  `DashboardController::health()` DB error, `FinancialsService` month abbreviations
+  (new `months_short`), the financials view's `Mln`/`K` unit suffixes, and the
+  `AuthGuard` session-expired / access-denied messages.
+- **Style/layout consistency** — dropped a `bg-white` that broke the dispatch board
+  under the dark theme; removed a stray `.card-body` so the compliance KPI cards
+  match the other index pages; the client page's "Nuovo progetto" button now
+  pre-selects the client (`?client_id=`).
+- **Housekeeping** — git-ignored the 23 MB `muratori design/` reference mockups; bumped
+  the service-worker shell to `gm-shell-v27`.
+
 ## 2026-07-16 — Deployment-readiness pass, Phases 6 & 7: simulation + final docs
 
 Closing phases of the platform pass — no new features, no schema change: prove the

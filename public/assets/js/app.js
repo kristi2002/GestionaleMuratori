@@ -309,9 +309,12 @@
             });
         }
 
-        // User form: the linked-client field only applies to 'client' accounts.
+        // User form: role-specific link fields — client accounts reveal the
+        // client picker, subcontractor accounts reveal the company picker.
         $(document).on('change', '.js-user-role', function () {
-            $('.js-user-client-field').toggleClass('d-none', $(this).val() !== 'client');
+            var role = $(this).val();
+            $('.js-user-client-field').toggleClass('d-none', role !== 'client');
+            $('.js-user-subcontractor-field').toggleClass('d-none', role !== 'subcontractor');
         });
 
         $(document).on('click', '.js-crud-new', function () {

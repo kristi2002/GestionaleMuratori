@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Support\Auth;
+use App\Support\Lang;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Url;
@@ -21,7 +22,7 @@ final class AuthGuard
     {
         if (!Auth::check()) {
             if ($request->wantsJson()) {
-                Response::fail('Sessione scaduta. Effettua di nuovo l\'accesso.', 401);
+                Response::fail(Lang::get('auth.session_expired'), 401);
             } else {
                 Response::redirect(Url::to('/login'));
             }
@@ -31,7 +32,7 @@ final class AuthGuard
         $user = Auth::user();
         if ($roles !== [] && !in_array($user['role'], $roles, true)) {
             if ($request->wantsJson()) {
-                Response::fail('Accesso negato.', 403);
+                Response::fail(Lang::get('errors.access_denied'), 403);
             } else {
                 Response::html(View::render('errors/403', ['title' => 'Accesso negato'], 'layout'), 403);
             }

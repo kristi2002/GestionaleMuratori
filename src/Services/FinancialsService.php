@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Support\Database;
+use App\Support\Lang;
 use PDO;
 
 /**
@@ -94,13 +95,12 @@ final class FinancialsService
         )->fetchAll() as $row) {
             $byMonth[(string) $row['ym']] = (float) $row['v'];
         }
-        $shortMonths = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
         $months      = [];
         $first       = new \DateTimeImmutable('first day of this month');
         for ($i = 11; $i >= 0; $i--) {
             $m        = $first->modify("-{$i} months");
             $months[] = [
-                'label' => $shortMonths[(int) $m->format('n')],
+                'label' => Lang::label('months_short', $m->format('n')),
                 'value' => (int) round($byMonth[$m->format('Y-m')] ?? 0),
             ];
         }
