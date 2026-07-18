@@ -196,9 +196,9 @@ echo View::render('partials/page_head', [
                     <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th><?= $e($t('admin.clients.tab_invoices')) ?></th>
-                                <th><?= $e($t('admin.clients.projects_count')) ?></th>
-                                <th class="text-end"><?= $e($t('admin.clients.stat_invoiced')) ?></th>
+                                <th><?= $e($t('admin.clients.invoice_number')) ?></th>
+                                <th><?= $e($t('admin.clients.invoice_project')) ?></th>
+                                <th class="text-end"><?= $e($t('admin.clients.invoice_amount')) ?></th>
                                 <th><?= $e(Lang::get('admin.projects.status')) ?></th>
                             </tr>
                         </thead>

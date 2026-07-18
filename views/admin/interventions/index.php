@@ -13,9 +13,11 @@ use App\Support\View;
 /** @var int $totalCount */
 /** @var array{today:int,week:int,overdue:int,completed_month:int} $kpis */
 /** @var string $range */
+/** @var string $dateFilter */
 
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
+$dateFilter = $dateFilter ?? '';
 
 $rangeLink = static function (string $value) use ($filters): string {
     $query = array_filter([
@@ -119,6 +121,15 @@ foreach ($statuses as $s) {
 }
 echo View::render('partials/filter_pills', ['pills' => $pills], null);
 ?>
+
+<?php if ($dateFilter !== ''): ?>
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 mb-3">
+        <span><i class="bi bi-calendar-event me-1" aria-hidden="true"></i><?= $e(sprintf($t('admin.interventions.date_filter'), $dateFilter)) ?></span>
+        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions')) ?>">
+            <i class="bi bi-x-lg" aria-hidden="true"></i> <?= $e($t('admin.interventions.date_filter_clear')) ?>
+        </a>
+    </div>
+<?php endif; ?>
 
 <div class="card app-filter-card mb-3">
     <div class="card-body">

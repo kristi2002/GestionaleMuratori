@@ -107,6 +107,17 @@ final class InterventionController
         ];
         [$filters['date_from'], $filters['date_to']] = $this->dateRangeBounds($range);
 
+        // Exact-day filter (e.g. the calendar "+N" overflow chip links here); it
+        // pins date_from = date_to = that day and supersedes the range chips.
+        $date = (string) $request->input('date', '');
+        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && strtotime($date) !== false) {
+            $filters['date_from'] = $date;
+            $filters['date_to']   = $date;
+            $range = '';
+        } else {
+            $date = '';
+        }
+
         $model         = new InterventionModel();
         $paginator     = Paginator::fromRequest($request, $model->count($filters), 25);
         $interventions = $model->all($filters, $paginator->perPage, $paginator->offset);
@@ -133,6 +144,7 @@ final class InterventionController
             'totalCount'    => array_sum($statusCounts),
             'kpis'          => $this->kpiCounts($model),
             'range'         => $range,
+            'dateFilter'    => $date,
             'paginator'     => $paginator,
         ], 'layout'));
     }

@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-07-18 — Polish pass: nits + two interactivity features (browser-verified)
+
+The last optional items from the audit. All verified live in the browser. Suite **589 passed, 0 failed**.
+
+- **Calendar `+N` overflow is now interactive.** The month calendar's "+N" chip (shown
+  when a day has more than 4 interventions) links to a new **exact-day filter** on the
+  interventions list (`/admin/interventions?date=YYYY-MM-DD`), which pins
+  `date_from = date_to` and shows a dismissible "Interventi del …" banner. Previously an
+  inert `<div>`.
+- **Dispatch board date-jump.** Added a date picker to the dispatch board's week nav so
+  you can jump to any week directly, instead of only stepping ±7 days. Auto-submits.
+- **Cosmetic parity fixes**
+  - `404` page now has the same explanatory line as `403`/`500` (new `errors.not_found_hint`).
+  - `clients/show` invoice table headers use correct labels (`Numero` / `Cantiere` /
+    `Importo`) instead of reused tab/stat keys.
+  - `offline.html` retry control is now a plain link (`href=""` reload) instead of an
+    inline `onclick`, keeping it consistent with the app's no-inline-JS CSP.
+- **Profile-tab underline verified** in the browser against a seeded DB (borders gone,
+  orange underline on the active tab) — closes the visual check left open last pass.
+- Bumped the service worker to `gm-shell-v30` (app.css changed).
+
 ## 2026-07-18 — Cleanup pass + live browser verification
 
 Safe dead-code cleanups plus a live browser check of the visual changes. Suite **589 passed, 0 failed**.

@@ -29,10 +29,15 @@ echo View::render('partials/page_head', [
 ], null);
 ?>
 
-<div class="d-flex justify-content-between mb-3">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
     <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/dispatch?from=' . $prev)) ?>">
         <i class="bi bi-chevron-left" aria-hidden="true"></i> <?= $e($t('admin.interventions.dispatch_prev')) ?>
     </a>
+    <form method="get" action="<?= $e(Url::to('/admin/interventions/dispatch')) ?>" class="m-0">
+        <input type="date" name="from" value="<?= $e($from->format('Y-m-d')) ?>"
+               class="form-control form-control-sm w-auto js-auto-submit"
+               aria-label="<?= $e($t('admin.interventions.dispatch_jump')) ?>">
+    </form>
     <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/dispatch?from=' . $next)) ?>">
         <?= $e($t('admin.interventions.dispatch_next')) ?> <i class="bi bi-chevron-right" aria-hidden="true"></i>
     </a>

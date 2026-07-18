@@ -371,7 +371,10 @@ input[type="time"]::-webkit-datetime-edit {
 
 .app-cal-event:hover { background: var(--app-green-soft); color: var(--app-green-dark); }
 .app-cal-time { font-weight: 600; color: #6c757d; }
-.app-cal-more { font-size: .68rem; color: #6c757d; padding-left: .3rem; }
+.app-cal-more { display: inline-block; font-size: .68rem; color: #6c757d; padding-left: .3rem; text-decoration: none; }
+.app-cal-more:hover { color: var(--app-green); }
+[data-bs-theme="dark"] .app-cal-more { color: #94A3B8; }
+[data-bs-theme="dark"] .app-cal-more:hover { color: #FB923C; }
 
 @media (max-width: 575.98px) {
     .app-cal-day { min-height: 4.2rem; }

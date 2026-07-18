@@ -112,7 +112,8 @@ echo View::render('partials/page_head', [
                         </a>
                     <?php endforeach; ?>
                     <?php if (count($events) > 4): ?>
-                        <div class="app-cal-more">+<?= count($events) - 4 ?></div>
+                        <a class="app-cal-more" href="<?= $e(Url::to('/admin/interventions?date=' . $date)) ?>"
+                           title="<?= $e($t('admin.interventions.list_view')) ?>">+<?= count($events) - 4 ?></a>
                     <?php endif; ?>
                 </div>
             <?php endfor; ?>
