@@ -104,8 +104,8 @@ final class UserModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO users (name, job_title, email, phone, hire_date, password_hash, role, client_id, subcontractor_id, is_active)
-             VALUES (:name, :job_title, :email, :phone, :hire_date, :hash, :role, :client_id, :subcontractor_id, 1)'
+            'INSERT INTO users (name, job_title, email, phone, hire_date, hourly_rate, password_hash, role, client_id, subcontractor_id, is_active)
+             VALUES (:name, :job_title, :email, :phone, :hire_date, :hourly_rate, :hash, :role, :client_id, :subcontractor_id, 1)'
         );
         $stmt->execute([
             ':name'             => $data['name'],
@@ -113,6 +113,7 @@ final class UserModel
             ':email'            => $data['email'],
             ':phone'            => $data['phone'] ?? null,
             ':hire_date'        => $data['hire_date'] ?? null,
+            ':hourly_rate'      => $data['hourly_rate'] ?? null,
             ':hash'             => $data['password_hash'],
             ':role'             => $data['role'],
             ':client_id'        => $data['client_id'],
@@ -126,7 +127,7 @@ final class UserModel
     {
         $stmt = Database::pdo()->prepare(
             'UPDATE users SET name = :name, job_title = :job_title, email = :email,
-                phone = :phone, hire_date = :hire_date, role = :role,
+                phone = :phone, hire_date = :hire_date, hourly_rate = :hourly_rate, role = :role,
                 client_id = :client_id, subcontractor_id = :subcontractor_id
              WHERE id = :id'
         );
@@ -136,6 +137,7 @@ final class UserModel
             ':email'            => $data['email'],
             ':phone'            => $data['phone'] ?? null,
             ':hire_date'        => $data['hire_date'] ?? null,
+            ':hourly_rate'      => $data['hourly_rate'] ?? null,
             ':role'             => $data['role'],
             ':client_id'        => $data['client_id'],
             ':subcontractor_id' => $data['subcontractor_id'] ?? null,

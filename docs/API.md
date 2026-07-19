@@ -46,7 +46,8 @@ Conventions:
 |--------|------|-------------|
 | GET | `/admin` | Operations dashboard: active projects, open interventions, today's interventions by status, low-stock alert table, section links. |
 | GET | `/admin/statistics` | Read-only analytics: KPI row + status donuts, monthly interventions trend, expenses-by-category and top-clients bars (pure SVG/CSS). |
-| GET | `/admin/financials` | Read-only per-cantiere cash-in (invoiced/collected) vs cash-out (materials at unit_cost + expenses) and margin, with a portfolio KPI row. |
+| GET | `/admin/financials` | Read-only per-cantiere cash-in (invoiced/collected) vs cash-out (materials at unit_cost + expenses + **labor**) and margin, with a portfolio KPI row. |
+| GET | `/admin/financials/labor` | Labor-hours costing report: hours + euro cost per cantiere and per person, from the Badge di Cantiere register × the worker/subcontractor `hourly_rate`. |
 | GET | `/admin/audit` | Read-only audit log: security- and data-relevant actions recorded in `audit_log`. |
 | GET | `/shortcuts` | Keyboard-shortcut guide; for admins, an editor for the "G-then-key" nav shortcuts. Any authenticated user. |
 | POST | `/shortcuts` | `shortcuts[<action>]=<key>` map. Admin only. Validates (single letter, unique, "G" reserved), persists overrides → `{ok,data:{shortcuts}}` or `{ok:false,error}` (422). |

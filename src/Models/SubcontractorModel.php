@@ -81,15 +81,16 @@ final class SubcontractorModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO subcontractors (name, vat_or_tax_id, email, phone, notes, is_active)
-             VALUES (:name, :vat, :email, :phone, :notes, 1)'
+            'INSERT INTO subcontractors (name, vat_or_tax_id, email, phone, notes, hourly_rate, is_active)
+             VALUES (:name, :vat, :email, :phone, :notes, :hourly_rate, 1)'
         );
         $stmt->execute([
-            ':name'  => $data['name'],
-            ':vat'   => $data['vat_or_tax_id'],
-            ':email' => $data['email'],
-            ':phone' => $data['phone'],
-            ':notes' => $data['notes'],
+            ':name'        => $data['name'],
+            ':vat'         => $data['vat_or_tax_id'],
+            ':email'       => $data['email'],
+            ':phone'       => $data['phone'],
+            ':notes'       => $data['notes'],
+            ':hourly_rate' => $data['hourly_rate'] ?? null,
         ]);
         return (int) Database::pdo()->lastInsertId();
     }
@@ -98,16 +99,17 @@ final class SubcontractorModel
     {
         $stmt = Database::pdo()->prepare(
             'UPDATE subcontractors SET name = :name, vat_or_tax_id = :vat, email = :email,
-                phone = :phone, notes = :notes
+                phone = :phone, notes = :notes, hourly_rate = :hourly_rate
              WHERE id = :id'
         );
         return $stmt->execute([
-            ':name'  => $data['name'],
-            ':vat'   => $data['vat_or_tax_id'],
-            ':email' => $data['email'],
-            ':phone' => $data['phone'],
-            ':notes' => $data['notes'],
-            ':id'    => $id,
+            ':name'        => $data['name'],
+            ':vat'         => $data['vat_or_tax_id'],
+            ':email'       => $data['email'],
+            ':phone'       => $data['phone'],
+            ':notes'       => $data['notes'],
+            ':hourly_rate' => $data['hourly_rate'] ?? null,
+            ':id'          => $id,
         ]);
     }
 

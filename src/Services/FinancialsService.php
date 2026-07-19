@@ -39,6 +39,8 @@ final class FinancialsService
              GROUP BY i.project_id"
         );
 
+        $labor = (new LaborCostService())->costByProject();
+
         $projects = $pdo->query(
             "SELECT p.id, p.name, p.status, c.name AS client_name
              FROM projects p JOIN clients c ON c.id = p.client_id"
@@ -53,7 +55,8 @@ final class FinancialsService
             $col      = (float) ($collected[$id] ?? 0);
             $matCost  = (float) ($materials[$id] ?? 0);
             $expCost  = (float) ($expenses[$id] ?? 0);
-            $cost     = $matCost + $expCost;
+            $labCost  = (float) ($labor[$id] ?? 0);
+            $cost     = $matCost + $expCost + $labCost;
             $margin   = $inv - $cost;
 
             $rows[] = [
@@ -66,6 +69,7 @@ final class FinancialsService
                 'outstanding'  => $inv - $col,
                 'material_cost'=> $matCost,
                 'expenses'     => $expCost,
+                'labor_cost'   => $labCost,
                 'cost'         => $cost,
                 'margin'       => $margin,
                 'margin_pct'   => $inv > 0 ? $margin / $inv * 100 : null,
@@ -125,7 +129,8 @@ final class FinancialsService
              WHERE m.type = 'out' AND i.project_id = ?",
             $projectId
         );
-        $cost   = $mat + $exp;
+        $lab    = (new LaborCostService())->costForProject($projectId);
+        $cost   = $mat + $exp + $lab;
         $margin = $inv - $cost;
 
         return [
@@ -134,6 +139,7 @@ final class FinancialsService
             'outstanding'   => $inv - $col,
             'material_cost' => $mat,
             'expenses'      => $exp,
+            'labor_cost'    => $lab,
             'cost'          => $cost,
             'margin'        => $margin,
             'margin_pct'    => $inv > 0 ? $margin / $inv * 100 : null,

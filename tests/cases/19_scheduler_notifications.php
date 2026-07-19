@@ -194,3 +194,10 @@ T::equals(422, $admin->post('/admin/interventions/' . $ivId . '/reassign', ['wor
 $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => 0]);
 T::ok($pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn() === null, 'worker_id 0 unassigns (NULL)');
 T::equals(403, $worker->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $wId])['status'], 'worker cannot reassign');
+
+// --- Labor cost report (migration 025) ---------------------------------------
+T::section('Labor cost report: RBAC');
+T::equals(403, $worker->get('/admin/financials/labor')['status'], 'worker cannot open the labor cost report');
+$laborPage = $admin->get('/admin/financials/labor', ['json' => false]);
+T::equals(200, $laborPage['status'], 'admin opens the labor cost report');
+T::ok(str_contains($laborPage['body'], 'Costo Manodopera'), 'labor report renders its title');

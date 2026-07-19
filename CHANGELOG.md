@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-19 — Labor-hours costing
+
+Turns the Badge di Cantiere timestamps into money: hours and labor cost per cantiere and
+per person, folded into project profitability. Suite **632 passed, 0 failed**.
+
+- **New `hourly_rate`** on `users` (workers) and `subcontractors` (migration 025), editable
+  on their forms (worker-only field, €/h, accepts an Italian decimal comma). NULL by default.
+- **`LaborCostService`** computes hours (`entry_at`→`exit_at`, closed shifts only) × the
+  resolved rate — a subcontractor row uses the company rate, a worker row the user rate; a
+  missing rate counts as €0 (hours still reported).
+- **Folded into the P&L**: `FinancialsService` now includes labor in each project's cost and
+  margin. Because the default rate is NULL (→ €0), existing margins are unchanged until rates
+  are set — fully backward-compatible.
+- **New report** `GET /admin/financials/labor` — hours + cost per cantiere and per person,
+  with a hint when no rates are configured yet. Linked from the financials page; the margin
+  note now reads "materiali + spese + manodopera".
+- New `admin.labor.*` / `hourly_rate` lang strings; in-process cost-math tests (delta-based)
+  + report RBAC e2e.
+
 ## 2026-07-19 — Worker-targeted notifications + push
 
 Completes the Web Push feature: alerts now reach the field worker, not just admins and

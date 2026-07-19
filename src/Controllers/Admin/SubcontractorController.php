@@ -161,12 +161,25 @@ final class SubcontractorController
         $phone = trim((string) $request->input('phone', ''));
         $notes = trim((string) $request->input('notes', ''));
 
+        // Labor charge rate (euros/hour). Accepts an Italian comma or a dot; blank = none.
+        $hourlyRate = null;
+        $rateRaw    = trim((string) $request->input('hourly_rate', ''));
+        if ($rateRaw !== '') {
+            $normalized = str_replace(',', '.', $rateRaw);
+            if (!is_numeric($normalized) || (float) $normalized < 0 || (float) $normalized > 99999999.99) {
+                Response::fail(Lang::get('admin.subcontractors.rate_invalid'), 422);
+                return null;
+            }
+            $hourlyRate = round((float) $normalized, 2);
+        }
+
         return [
             'name'          => $name,
             'vat_or_tax_id' => $vat !== '' ? $vat : null,
             'email'         => $email !== '' ? $email : null,
             'phone'         => $phone !== '' ? $phone : null,
             'notes'         => $notes !== '' ? $notes : null,
+            'hourly_rate'   => $hourlyRate,
         ];
     }
 }

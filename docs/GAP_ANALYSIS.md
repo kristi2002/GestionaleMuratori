@@ -2,7 +2,7 @@
 
 > **Status update (same day):** every 🔴 and 🟠 item below was closed by the
 > v1.1 release — see [CHANGELOG.md](../CHANGELOG.md) for the fix-by-fix mapping.
-> Only the 🟡 items in §2 (F6–F8) and §5 remain open by design (client decisions).
+> Only the 🟡 items in §2 (F6–F7) and §5 remain open by design (client decisions).
 > This document is kept as the "before" snapshot that motivated the roadmap.
 
 Assessment date: 2026-07-02. Baseline: full v1 implementation of the original
@@ -45,7 +45,7 @@ shows stack traces when debug is off.
 | F5 | **No low-stock signal** | 🟠 | `reorder_level` exists; warehouse list has a "Sotto scorta" string but nothing surfaced prominently. Tie into F3. |
 | F6 | **No pagination** | 🟡 | All lists load everything. Fine at current scale (hundreds of rows); revisit when data grows. |
 | F7 | Client cannot see completion notes / signature | 🟡 | Only photos + report. The PDF report contains them — acceptable for v1.1. |
-| F8 | Labor hours, GPS check-in | 🟡 | Explicitly out of scope for v1 by the spec; schema is ready (`lat`/`lng`). |
+| F8 | Labor hours, GPS check-in | ✅ | GPS check-in shipped (Badge di Cantiere). Labor-hours **costing** added 2026-07-19 (migration 025): `hourly_rate` on workers/subcontractors, `LaborCostService`, `/admin/financials/labor` report, folded into the project P&L. |
 
 ## 3. Deployment & operations (Hetzner)
 

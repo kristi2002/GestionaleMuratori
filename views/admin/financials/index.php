@@ -53,7 +53,9 @@ $avgRev   = $billed   !== [] ? (float) $tot['invoiced'] / count($billed)   : 0.0
 $avgCost  = $withCost !== [] ? (float) $tot['cost']     / count($withCost) : 0.0;
 $roi      = (float) $tot['cost'] > 0 ? (float) $tot['margin'] / (float) $tot['cost'] * 100 : null;
 
-$actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/invoices/create')) . '">'
+$actions = '<a class="btn btn-outline-secondary me-2" href="' . $e(Url::to('/admin/financials/labor')) . '">'
+    . '<i class="bi bi-clock-history" aria-hidden="true"></i> ' . $e($t('admin.labor.link')) . '</a>'
+    . '<a class="btn btn-success" href="' . $e(Url::to('/admin/invoices/create')) . '">'
     . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.financials.new_invoice')) . '</a>';
 
 echo View::render('partials/page_head', [

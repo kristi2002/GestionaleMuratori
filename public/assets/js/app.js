@@ -591,6 +591,7 @@
             var role = $(this).val();
             $('.js-user-client-field').toggleClass('d-none', role !== 'client');
             $('.js-user-subcontractor-field').toggleClass('d-none', role !== 'subcontractor');
+            $('.js-user-worker-field').toggleClass('d-none', role !== 'worker');
         });
 
         $(document).on('click', '.js-crud-delete', function () {

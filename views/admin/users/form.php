@@ -63,6 +63,18 @@ echo View::render('partials/page_head', [
                 </div>
             </div>
             <div class="row">
+                <div class="col-6 col-md-3 mb-3 js-user-worker-field <?= $selectedRole === 'worker' ? '' : 'd-none' ?>">
+                    <label class="form-label"><?= $e($t('admin.users.hourly_rate')) ?></label>
+                    <div class="input-group">
+                        <span class="input-group-text">€</span>
+                        <input type="text" inputmode="decimal" class="form-control" name="hourly_rate"
+                               value="<?= $e($value('hourly_rate')) ?>" placeholder="0,00">
+                        <span class="input-group-text">/h</span>
+                    </div>
+                    <div class="form-text"><?= $e($t('admin.users.hourly_rate_help')) ?></div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-12 col-md-6 mb-3">
                     <label class="form-label"><?= $e($t('admin.users.role')) ?></label>
                     <select class="form-select js-user-role" name="role" required>

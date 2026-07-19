@@ -302,6 +302,17 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Labor rate (2026-07-19, migration 025)
+
+- `users.hourly_rate` (nullable `DECIMAL(10,2)`) — a worker's pay/charge rate, €/hour.
+- `subcontractors.hourly_rate` (nullable `DECIMAL(10,2)`) — a subcontractor company's rate.
+- NULL = no rate → labor cost counted as €0, so folding labor into the project P&L
+  (`FinancialsService`) is backward-compatible (margins unchanged until rates are set).
+- `App\Services\LaborCostService` computes hours (`site_attendance` `entry_at`→`exit_at`,
+  closed shifts) × the resolved rate (subcontractor row → company rate; worker row → user
+  rate), consumed by `FinancialsService` and the `/admin/financials/labor` report. A single
+  current rate is kept — no dated rate history (matches `warehouse_items.unit_cost`).
+
 ## Addendum — Web Push subscriptions (2026-07-19, migration 024)
 
 - `push_subscriptions` — one row per browser/device a user opts into push on. Columns:

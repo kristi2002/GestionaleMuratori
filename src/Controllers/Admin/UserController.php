@@ -300,12 +300,26 @@ final class UserController
             return null;
         }
 
+        // Labor rate (euros/hour) — only meaningful for workers; cleared otherwise.
+        // Accepts an Italian decimal comma or a dot; blank = no rate.
+        $hourlyRate = null;
+        $rateRaw    = trim((string) $request->input('hourly_rate', ''));
+        if ($role === 'worker' && $rateRaw !== '') {
+            $normalized = str_replace(',', '.', $rateRaw);
+            if (!is_numeric($normalized) || (float) $normalized < 0 || (float) $normalized > 99999999.99) {
+                Response::fail(Lang::get('admin.users.rate_invalid'), 422);
+                return null;
+            }
+            $hourlyRate = round((float) $normalized, 2);
+        }
+
         return [
             'name'             => $name,
             'job_title'        => $jobTitle !== '' ? $jobTitle : null,
             'email'            => $email,
             'phone'            => $phone !== '' ? $phone : null,
             'hire_date'        => $hireDate !== '' ? $hireDate : null,
+            'hourly_rate'      => $hourlyRate,
             'role'             => $role,
             'client_id'        => $clientId > 0 ? $clientId : null,
             'subcontractor_id' => $subcontractorId > 0 ? $subcontractorId : null,

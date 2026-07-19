@@ -51,6 +51,18 @@ $value     = static fn (string $key): string => (string) ($subcontractor[$key] ?
                     <input type="text" class="form-control" name="phone" value="<?= $e($value('phone')) ?>">
                 </div>
             </div>
+            <div class="row">
+                <div class="col-6 col-md-4 mb-3">
+                    <label class="form-label"><?= $e($t('admin.subcontractors.hourly_rate')) ?></label>
+                    <div class="input-group">
+                        <span class="input-group-text">€</span>
+                        <input type="text" inputmode="decimal" class="form-control" name="hourly_rate"
+                               value="<?= $e($value('hourly_rate')) ?>" placeholder="0,00">
+                        <span class="input-group-text">/h</span>
+                    </div>
+                    <div class="form-text"><?= $e($t('admin.subcontractors.hourly_rate_help')) ?></div>
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="form-label"><?= $e($t('admin.subcontractors.notes')) ?></label>
                 <textarea class="form-control" name="notes" rows="3"><?= $e($value('notes')) ?></textarea>
