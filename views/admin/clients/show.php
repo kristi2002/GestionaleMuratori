@@ -112,6 +112,22 @@ echo View::render('partials/page_head', [
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> <?= $e($t('admin.clients.add_note')) ?>
             </a>
         </div>
+
+        <?php if (($lead ?? null) !== null): ?>
+        <div class="app-rail-card">
+            <h3 class="app-rail-title"><?= $e($t('admin.clients.origin')) ?></h3>
+            <p class="small mb-2">
+                <i class="bi bi-inbox text-muted" aria-hidden="true"></i>
+                <?= $e(sprintf($t('admin.clients.origin_lead'), substr((string) $lead['created_at'], 0, 10))) ?>
+            </p>
+            <?php if (($lead['message'] ?? '') !== ''): ?>
+                <p class="small text-muted mb-2" style="white-space:pre-line;"><?= $e($lead['message']) ?></p>
+            <?php endif; ?>
+            <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/leads/' . $lead['id'])) ?>">
+                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <?= $e($t('admin.clients.origin_open')) ?>
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Content column ------------------------------------------------- -->
@@ -183,6 +199,74 @@ echo View::render('partials/page_head', [
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Job history (interventions) -->
+        <h2 class="app-section-title"><?= $e($t('admin.clients.tab_interventions')) ?></h2>
+        <?php if (($interventions ?? []) === []): ?>
+            <div class="app-rail-empty"><?= $e($t('admin.clients.no_interventions')) ?></div>
+        <?php else: ?>
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th><?= $e($t('admin.clients.interv_title')) ?></th>
+                                <th class="d-none d-md-table-cell"><?= $e($t('admin.clients.interv_project')) ?></th>
+                                <th class="d-none d-md-table-cell"><?= $e($t('admin.clients.interv_date')) ?></th>
+                                <th><?= $e(Lang::get('admin.projects.status')) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($interventions as $iv): $ivDate = $iv['completed_at'] ?? $iv['scheduled_date'] ?? null; ?>
+                            <tr>
+                                <td>
+                                    <a class="app-card-title-link fw-semibold" href="<?= $e(Url::to('/admin/interventions/' . $iv['id'])) ?>"><?= $e($iv['title']) ?></a>
+                                    <?php if (($iv['worker_name'] ?? null) !== null): ?><div class="small text-muted"><i class="bi bi-person" aria-hidden="true"></i> <?= $e($iv['worker_name']) ?></div><?php endif; ?>
+                                </td>
+                                <td class="d-none d-md-table-cell text-truncate"><?= $e($iv['project_name'] ?? '') ?></td>
+                                <td class="d-none d-md-table-cell small text-muted"><?= $e($ivDate !== null ? substr((string) $ivDate, 0, 10) : '—') ?></td>
+                                <td><?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $iv['status']], null) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Quotes -->
+        <h2 class="app-section-title"><?= $e($t('admin.clients.tab_quotes')) ?></h2>
+        <?php if (($quotes ?? []) === []): ?>
+            <div class="app-rail-empty"><?= $e($t('admin.clients.no_quotes')) ?></div>
+        <?php else: ?>
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th><?= $e($t('admin.clients.quote_number')) ?></th>
+                                <th class="d-none d-md-table-cell"><?= $e($t('admin.clients.quote_project')) ?></th>
+                                <th class="text-end"><?= $e($t('admin.clients.quote_amount')) ?></th>
+                                <th><?= $e(Lang::get('admin.projects.status')) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($quotes as $q): ?>
+                            <tr>
+                                <td class="fw-semibold">
+                                    <a class="app-card-title-link" href="<?= $e(Url::to('/admin/quotes/' . $q['id'] . '/edit')) ?>"><?= $e($q['number'] ?? ('#' . $q['id'])) ?></a>
+                                    <div class="small text-muted"><?= $e($q['quote_date'] ?? '') ?></div>
+                                </td>
+                                <td class="d-none d-md-table-cell text-truncate"><?= $e($q['project_name'] ?? '—') ?></td>
+                                <td class="text-end fw-semibold"><?= $e($money($q['subtotal'] ?? 0)) ?></td>
+                                <td><?= View::render('partials/status_badge', ['group' => 'quote_status', 'value' => (string) $q['status']], null) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         <?php endif; ?>
 

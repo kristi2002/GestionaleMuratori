@@ -80,7 +80,10 @@ final class ClientController
             'client'    => $client,
             'stats'     => $model->profileStats((int) $id),
             'projects'  => $model->projectsForProfile((int) $id),
+            'interventions' => $model->interventionsForProfile((int) $id),
+            'quotes'    => $model->quotesForProfile((int) $id),
             'invoices'  => $model->invoicesForProfile((int) $id),
+            'lead'      => $model->leadForClient((int) $id),
             'monthly'   => $model->monthlyInvoiced((int) $id),
             'timeline'  => $model->activityTimeline((int) $id),
         ], 'layout'));

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-19 — Customer account / job-history view
+
+The admin client page becomes a full customer account, the way a CRM shows a customer
+timeline. Suite **723 passed, 0 failed**.
+
+- **Job history**: every intervention across all the client's projects (title, project, date,
+  status), newest first — a real service history for the customer.
+- **Quotes**: the client's quotes with computed subtotal + status, alongside the existing
+  invoices table and financial KPIs.
+- **Originating lead**: when a client was converted from a public "request a job" lead, the
+  account shows where they came from (date + message + a link back to the lead).
+- Pure extension of the existing rich profile — three new co-located `ClientModel` queries
+  (`interventionsForProfile`, `quotesForProfile`, `leadForClient`), no new routes/schema. New
+  `admin.clients.*` lang strings; model + render e2e tests.
+
 ## 2026-07-19 — Job time tracking (start/stop timers)
 
 A per-intervention work timer the worker starts/stops on the job — the time-tracking staple

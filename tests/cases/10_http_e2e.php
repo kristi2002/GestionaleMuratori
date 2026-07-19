@@ -345,6 +345,14 @@ T::ok(($worker3->post("/worker/interventions/{$e2eIvId}/timer/stop")['json']['ok
 T::equals(0, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId} AND ended_at IS NULL")->fetchColumn(), 'no running timer after stop');
 T::equals(1, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId}")->fetchColumn(), 'one completed time entry recorded');
 
+// --- Client account view (CRM) ----------------------------------------------
+T::section('E2E: client account view sections');
+$acctClient = (int) $pdo->query('SELECT id FROM clients ORDER BY id LIMIT 1')->fetchColumn();
+$acct = $admin->get('/admin/clients/' . $acctClient, ['json' => false]);
+T::equals(200, $acct['status'], 'admin opens the client account page');
+T::ok(str_contains($acct['body'], 'Storico interventi'), 'client page shows the job-history section');
+T::ok(str_contains($acct['body'], 'Preventivi'), 'client page shows the quotes section');
+
 $matId = (int) $pdo->query("SELECT id FROM intervention_materials WHERE intervention_id = {$e2eIvId}")->fetchColumn();
 $r = $worker3->post("/worker/interventions/{$e2eIvId}/complete", ["qty_used[{$matId}]" => '3']);
 T::equals(422, $r['status'], 'completion blocked without after photo');

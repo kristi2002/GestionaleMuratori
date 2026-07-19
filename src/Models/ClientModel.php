@@ -198,6 +198,56 @@ final class ClientModel
     }
 
     /**
+     * The client's interventions across all their projects (job history).
+     * @return array<int,array<string,mixed>>
+     */
+    public function interventionsForProfile(int $id, int $limit = 25): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT i.id, i.title, i.status, i.scheduled_date, i.scheduled_start_time, i.completed_at,
+                    p.name AS project_name, w.name AS worker_name
+             FROM interventions i
+             JOIN projects p ON p.id = i.project_id
+             LEFT JOIN users w ON w.id = i.assigned_worker_id
+             WHERE p.client_id = ?
+             ORDER BY COALESCE(i.completed_at, i.scheduled_date) DESC, i.id DESC
+             LIMIT ' . (int) $limit
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * The client's quotes (most recent first), with the computed subtotal.
+     * @return array<int,array<string,mixed>>
+     */
+    public function quotesForProfile(int $id, int $limit = 20): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT q.*, p.name AS project_name,
+                    (SELECT COALESCE(SUM(l.qty * l.unit_price), 0) FROM quote_lines l WHERE l.quote_id = q.id) AS subtotal
+             FROM quotes q
+             LEFT JOIN projects p ON p.id = q.project_id
+             WHERE q.client_id = ?
+             ORDER BY q.quote_date DESC, q.id DESC
+             LIMIT ' . (int) $limit
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetchAll();
+    }
+
+    /** The lead this client was converted from, if any (migration 028). */
+    public function leadForClient(int $id): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM leads WHERE client_id = ? ORDER BY created_at DESC LIMIT 1'
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /**
      * Invoiced amount per calendar month for the last 12 months (chart series).
      * @return array<int,array{label:string,value:int}>
      */
