@@ -302,6 +302,18 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Recurring interventions (2026-07-19, migration 027)
+
+- `recurring_interventions` — maintenance-plan templates: `project_id` (FK → projects,
+  `CASCADE`), `assigned_worker_id` (FK → users, `SET NULL`), `title`, `description`,
+  `frequency ENUM('weekly','monthly')`, `interval_count`, `scheduled_start_time`, `start_date`,
+  `next_run_date`, `end_date`, `is_active`, `last_generated_at`, `created_by` (FK → users,
+  `RESTRICT`).
+- `App\Services\SchedulerService::generateRecurring()` (run daily via the scheduler cron)
+  materialises a real intervention per due occurrence via `InterventionService::create()`
+  (no materials) and advances `next_run_date` — idempotent, catch-up capped at 60/plan/run,
+  auto-deactivates past `end_date`. Managed at `/admin/interventions/recurring`.
+
 ## Addendum — Intervention checklists (2026-07-19, migration 026)
 
 - `intervention_tasks` — checklist / punch-list items on an intervention: `intervention_id`

@@ -1,0 +1,23 @@
+CREATE TABLE recurring_interventions (
+    id                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    project_id           BIGINT UNSIGNED NOT NULL,
+    assigned_worker_id   BIGINT UNSIGNED NULL,
+    title                VARCHAR(190) NOT NULL,
+    description          TEXT NULL,
+    frequency            ENUM('weekly','monthly') NOT NULL,
+    interval_count       INT UNSIGNED NOT NULL DEFAULT 1,
+    scheduled_start_time TIME NULL,
+    start_date           DATE NOT NULL,
+    next_run_date        DATE NOT NULL,
+    end_date             DATE NULL,
+    is_active            TINYINT(1) NOT NULL DEFAULT 1,
+    last_generated_at    DATETIME NULL,
+    created_by           BIGINT UNSIGNED NOT NULL,
+    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_recurring_due (is_active, next_run_date),
+    KEY idx_recurring_project (project_id),
+    CONSTRAINT fk_recurring_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+    CONSTRAINT fk_recurring_worker FOREIGN KEY (assigned_worker_id) REFERENCES users (id) ON DELETE SET NULL,
+    CONSTRAINT fk_recurring_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -201,3 +201,33 @@ T::equals(403, $worker->get('/admin/financials/labor')['status'], 'worker cannot
 $laborPage = $admin->get('/admin/financials/labor', ['json' => false]);
 T::equals(200, $laborPage['status'], 'admin opens the labor cost report');
 T::ok(str_contains($laborPage['body'], 'Costo Manodopera'), 'labor report renders its title');
+
+// --- Recurring interventions (migration 027) ---------------------------------
+T::section('Recurring interventions: RBAC + CRUD');
+T::equals(403, $worker->get('/admin/interventions/recurring')['status'], 'worker cannot open recurring plans');
+$recPage = $admin->get('/admin/interventions/recurring', ['json' => false]);
+T::equals(200, $recPage['status'], 'admin opens recurring plans');
+T::ok(str_contains($recPage['body'], 'Interventi ricorrenti'), 'recurring plans page renders its title');
+
+$recProj = (int) $pdo->query('SELECT id FROM projects ORDER BY id LIMIT 1')->fetchColumn();
+T::equals(422, $admin->post('/admin/interventions/recurring', [
+    'project_id' => $recProj, 'title' => '', 'frequency' => 'weekly', 'interval_count' => 1, 'start_date' => '2026-08-01',
+])['status'], 'empty title rejected');
+T::equals(422, $admin->post('/admin/interventions/recurring', [
+    'project_id' => $recProj, 'title' => 'X', 'frequency' => 'daily', 'interval_count' => 1, 'start_date' => '2026-08-01',
+])['status'], 'invalid frequency rejected');
+
+$rc = $admin->post('/admin/interventions/recurring', [
+    'project_id' => $recProj, 'title' => 'Manutenzione mensile', 'frequency' => 'monthly',
+    'interval_count' => 1, 'start_date' => '2026-08-01',
+]);
+T::ok(($rc['json']['ok'] ?? false) === true, 'admin creates a recurring plan');
+$planId = (int) ($rc['json']['data']['id'] ?? 0);
+T::ok($planId > 0, 'plan id returned');
+T::equals('2026-08-01', (string) $pdo->query("SELECT next_run_date FROM recurring_interventions WHERE id = {$planId}")->fetchColumn(),
+    'next_run_date seeded from start_date');
+
+$admin->post("/admin/interventions/recurring/{$planId}/toggle");
+T::equals(0, (int) $pdo->query("SELECT is_active FROM recurring_interventions WHERE id = {$planId}")->fetchColumn(), 'plan paused via toggle');
+T::ok(($admin->post("/admin/interventions/recurring/{$planId}/delete")['json']['ok'] ?? false) === true, 'admin deletes the plan');
+T::equals(0, (int) $pdo->query("SELECT COUNT(*) FROM recurring_interventions WHERE id = {$planId}")->fetchColumn(), 'plan removed');

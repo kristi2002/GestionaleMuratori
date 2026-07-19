@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Models\ComplianceDocumentModel;
 use App\Models\NotificationModel;
+use App\Models\RecurringInterventionModel;
 use App\Models\UserModel;
 use App\Support\Config;
 use App\Support\Database;
@@ -34,7 +35,7 @@ final class SchedulerService
     }
 
     /**
-     * @return array{created:array<string,int>,total:int,emailed:bool}
+     * @return array{created:array<string,int>,total:int,emailed:bool,recurring:int}
      */
     public function run(?string $today = null): array
     {
@@ -55,7 +56,11 @@ final class SchedulerService
             $this->pushAdmins();
         }
 
-        return ['created' => $created, 'total' => $total, 'emailed' => $emailed];
+        // Materialise due recurring interventions (maintenance plans). Separate from
+        // the notification total — these create interventions, not alerts.
+        $recurring = $this->generateRecurringInterventions($today);
+
+        return ['created' => $created, 'total' => $total, 'emailed' => $emailed, 'recurring' => $recurring];
     }
 
     /** @param array<int,array{severity:string,title:string,body:?string}> $fresh */
@@ -253,6 +258,56 @@ final class SchedulerService
             $adminIds[] = (int) $admin['id'];
         }
         PushService::sendToUsers($adminIds);
+    }
+
+    /** Public entry (tests / targeted runs): only the recurring-intervention generation. */
+    public function generateRecurring(?string $today = null): int
+    {
+        return $this->generateRecurringInterventions($today ?? date('Y-m-d'));
+    }
+
+    /**
+     * Materialise real interventions from due recurring plans, advancing each plan's
+     * next_run_date. Idempotent: advancing past today means a same-day re-run finds
+     * nothing due. Catch-up is capped (60 occurrences/plan/run) as a runaway guard.
+     * A plan is deactivated once its schedule passes its end_date.
+     */
+    private function generateRecurringInterventions(string $today): int
+    {
+        $model   = new RecurringInterventionModel();
+        $service = new InterventionService();
+        $created = 0;
+
+        foreach ($model->due($today) as $rec) {
+            $next  = new \DateTimeImmutable((string) $rec['next_run_date']);
+            $end   = $rec['end_date'] !== null ? new \DateTimeImmutable((string) $rec['end_date']) : null;
+            $limit = 0;
+
+            while ($next->format('Y-m-d') <= $today && ($end === null || $next <= $end) && $limit < 60) {
+                $service->create([
+                    'project_id'           => (int) $rec['project_id'],
+                    'assigned_worker_id'   => $rec['assigned_worker_id'] !== null ? (int) $rec['assigned_worker_id'] : null,
+                    'title'                => (string) $rec['title'],
+                    'description'          => $rec['description'] !== null ? (string) $rec['description'] : null,
+                    'scheduled_date'       => $next->format('Y-m-d'),
+                    'scheduled_start_time' => $rec['scheduled_start_time'],
+                ], [], (int) $rec['created_by']);
+                $created++;
+                $next = $this->advanceDate($next, (string) $rec['frequency'], (int) $rec['interval_count']);
+                $limit++;
+            }
+
+            $stillActive = $end === null || $next <= $end;
+            $model->advance((int) $rec['id'], $next->format('Y-m-d'), $stillActive);
+        }
+
+        return $created;
+    }
+
+    private function advanceDate(\DateTimeImmutable $date, string $frequency, int $interval): \DateTimeImmutable
+    {
+        $unit = $frequency === 'monthly' ? 'months' : 'weeks';
+        return $date->modify('+' . max(1, $interval) . ' ' . $unit);
     }
 
     /** @return array<int,string> */

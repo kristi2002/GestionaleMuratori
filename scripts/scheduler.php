@@ -35,5 +35,6 @@ foreach ($result['created'] as $type => $n) {
     printf("  %-22s %d\n", $type, $n);
 }
 echo '  email digest: ' . ($result['emailed'] ? 'inviata' : 'non inviata (disabilitata o nulla da inviare)') . "\n";
+echo '  interventi ricorrenti generati: ' . ($result['recurring'] ?? 0) . "\n";
 
 exit(0);

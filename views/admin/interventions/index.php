@@ -59,6 +59,8 @@ $actions = '<a class="btn btn-outline-secondary app-icon-btn" href="' . $e(Url::
     . '<i class="bi bi-calendar3" aria-hidden="true"></i></a>'
     . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/interventions/export' . ($exportQ !== '' ? '?' . $exportQ : ''))) . '">'
     . '<i class="bi bi-download" aria-hidden="true"></i> ' . $e($t('common.export_csv')) . '</a>'
+    . '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/interventions/recurring')) . '">'
+    . '<i class="bi bi-arrow-repeat" aria-hidden="true"></i> ' . $e($t('admin.recurring.title')) . '</a>'
     . '<a class="btn btn-success" href="' . $e(Url::to('/admin/interventions/create')) . '">'
     . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.interventions.new')) . '</a>'
     . View::render('partials/back_button', ['href' => '/admin'], null);

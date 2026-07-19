@@ -87,6 +87,10 @@ Conventions:
 | GET | `/admin/interventions/dispatch` | `from` (YYYY-MM-DD, default today) | Workload/dispatch board: 7-day window grouped by worker, per-day double-booking flags, quick reassign. |
 | POST | `/admin/interventions/{id}/reassign` | `worker_id` (0 = unassign) | Set/clear the assigned worker from the dispatch board (role-checked; 422 for a non-worker). |
 | POST | `/admin/interventions` | `project_id`*, `title`*, `assigned_worker_id` (role-checked), `description`, `scheduled_date`, `scheduled_start_time`, repeated `item_id[]` + `qty_planned[]` | Create + reserve materials in one transaction. 422 with Italian message on insufficient stock / invalid item / duplicate item. |
+| GET | `/admin/interventions/recurring` | — | Recurring plans (maintenance) list. |
+| GET | `/admin/interventions/recurring/create` \| `/{id}/edit` | — | Plan create / edit form. |
+| POST | `/admin/interventions/recurring` \| `/{id}` | `project_id`*, `title`* (≤190), `frequency`* (`weekly\|monthly`), `interval_count` (1–52), `start_date`*, `end_date`, `assigned_worker_id`, `description`, `scheduled_start_time` | Create / update a plan. The daily scheduler generates interventions from due plans. |
+| POST | `/admin/interventions/recurring/{id}/toggle` \| `/delete` | — | Pause/resume or delete a plan (generated interventions are kept). |
 | GET | `/admin/interventions/{id}` | — | Detail page: metadata, checklist, planned vs used materials, photos by type, signature, completion notes, full status history. |
 | POST | `/admin/interventions/{id}` | title/worker/description/schedule fields | Update basic fields (no project, no materials, no status). |
 | POST | `/admin/interventions/{id}/status` | `to_status` | State-machine transition (admin may also cancel `pending`). Cancellation releases reservations. |

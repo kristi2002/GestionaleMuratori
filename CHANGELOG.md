@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-07-19 — Recurring interventions (maintenance plans)
+
+Define a job that repeats; the scheduler materialises the occurrences automatically — the
+recurring-jobs staple of ServiceTitan/Jobber/Buildertrend. Suite **670 passed, 0 failed**.
+
+- **New `recurring_interventions`** table (migration 027): a template (project, worker, title,
+  description, start time) + a schedule (`weekly`/`monthly` every N, start/end dates).
+- **Generator in `SchedulerService`**: each daily run creates real interventions for every due
+  plan and advances `next_run_date`. **Idempotent** (advancing past today means a same-day
+  re-run does nothing); catches up missed dates (capped at 60/plan/run); a plan self-deactivates
+  once past its end date. Reuses `InterventionService::create()` — occurrences carry no materials.
+- **Admin UI** at `/admin/interventions/recurring` — list with cadence/next-run/active, create &
+  edit form, pause/resume, delete; linked from the interventions list.
+- `recurring` count added to the scheduler result + CLI output; `admin.recurring.*` lang strings;
+  full RBAC/CRUD + generation/idempotency/end-date tests.
+
 ## 2026-07-19 — Intervention checklists / punch lists
 
 On-site task lists a worker ticks off as they go — the feature Fieldwire/Procore/Jobber are
