@@ -668,6 +668,64 @@
             });
         });
 
+        // --- Dispatch board: drag-and-drop scheduling ----------------------------
+        // Drop an intervention card on a (worker, day) cell to set worker + date in
+        // one POST; drop on the "to schedule" bucket (no date) to unschedule.
+        var boardDragEl = null;
+        function boardOverbook($cell) {
+            if (!$cell || !$cell.length) { return; }
+            var w = String($cell.attr('data-worker') || '');
+            var d = String($cell.attr('data-date') || '');
+            $cell.toggleClass('is-overbooked', w !== '' && w !== '0' && d !== '' && $cell.find('.js-board-card').length > 1);
+        }
+        $(document).on('dragstart', '.js-board-card', function (e) {
+            boardDragEl = this;
+            var dt = e.originalEvent.dataTransfer;
+            if (dt) { dt.effectAllowed = 'move'; try { dt.setData('text/plain', this.getAttribute('data-id')); } catch (x) {} }
+            $(this).addClass('is-dragging');
+        });
+        $(document).on('dragend', '.js-board-card', function () {
+            $(this).removeClass('is-dragging');
+            $('.js-board-cell').removeClass('is-dropover');
+            boardDragEl = null;
+        });
+        $(document).on('dragover', '.js-board-cell', function (e) {
+            e.preventDefault();
+            $(this).addClass('is-dropover');
+            if (e.originalEvent.dataTransfer) { e.originalEvent.dataTransfer.dropEffect = 'move'; }
+        });
+        $(document).on('dragleave', '.js-board-cell', function () {
+            $(this).removeClass('is-dropover');
+        });
+        $(document).on('drop', '.js-board-cell', function (e) {
+            e.preventDefault();
+            var $cell = $(this);
+            $cell.removeClass('is-dropover');
+            if (!boardDragEl) { return; }
+            var $card = $(boardDragEl);
+            var $from = $card.parent();
+            if ($from.is($cell)) { return; }
+
+            var cellWorker = String($cell.attr('data-worker') || '');
+            var cellDate = String($cell.attr('data-date') || '');
+            // The bucket has no worker column — keep the card's current worker there.
+            var workerVal = cellWorker === '' ? String($card.attr('data-worker') || '0') : cellWorker;
+
+            $card.appendTo($cell); // optimistic move
+            Api.post($card.data('url'), { worker_id: workerVal, scheduled_date: cellDate }).done(function (res) {
+                if (res && res.ok) {
+                    $card.attr('data-worker', workerVal).attr('data-date', cellDate);
+                    boardOverbook($cell); boardOverbook($from);
+                } else {
+                    $card.appendTo($from);
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                $card.appendTo($from);
+                Dialog.alert(failMessage(xhr));
+            });
+        });
+
         // Admin "send test e-mail": posts and reports the outcome inline (no reload),
         // so the SMTP config can be verified from the notifications page.
         $(document).on('click', '.js-test-email', function () {

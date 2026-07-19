@@ -5,8 +5,9 @@ use App\Support\View;
 
 /** @var \DateTimeImmutable $from */
 /** @var \DateTimeImmutable $to */
-/** @var array<int,array<int,array<string,mixed>>> $byWorker */
-/** @var array<int,array<string,int>> $dayCount */
+/** @var array<int,array{date:string,weekday:string,day:string,today:bool}> $days */
+/** @var array<int,array<string,array<int,array<string,mixed>>>> $byCell */
+/** @var array<int,array<string,mixed>> $unscheduled */
 /** @var array<int,array<string,mixed>> $workers */
 /** @var string $prev */
 /** @var string $next */
@@ -14,10 +15,19 @@ use App\Support\View;
 $e = static fn (?string $v): string => View::e($v);
 $t = static fn (string $key): string => Lang::get($key);
 
-$workerName = [];
-foreach ($workers as $w) {
-    $workerName[(int) $w['id']] = (string) $w['name'];
-}
+// One draggable intervention card. Carries its own schedule endpoint + current
+// (worker,date) so the drop handler can post the target cell's (worker,date).
+$card = static function (array $r) use ($e): string {
+    $time = $r['scheduled_start_time'] ? ' · ' . substr((string) $r['scheduled_start_time'], 0, 5) : '';
+    return '<div class="gm-board-card js-board-card" draggable="true"'
+        . ' data-id="' . $e((string) $r['id']) . '"'
+        . ' data-worker="' . (int) ($r['assigned_worker_id'] ?? 0) . '"'
+        . ' data-date="' . $e((string) ($r['scheduled_date'] ?? '')) . '"'
+        . ' data-url="' . $e(Url::to('/admin/interventions/' . $r['id'] . '/schedule')) . '">'
+        . '<div class="gm-board-card-title">' . $e((string) $r['title']) . '</div>'
+        . '<div class="gm-board-card-sub">' . $e((string) $r['project_name']) . $e($time) . '</div>'
+        . '</div>';
+};
 
 $actions = '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/interventions/calendar')) . '">'
     . '<i class="bi bi-calendar3" aria-hidden="true"></i> ' . $e($t('admin.interventions.calendar_view')) . '</a>';
@@ -29,7 +39,7 @@ echo View::render('partials/page_head', [
 ], null);
 ?>
 
-<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
     <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/interventions/dispatch?from=' . $prev)) ?>">
         <i class="bi bi-chevron-left" aria-hidden="true"></i> <?= $e($t('admin.interventions.dispatch_prev')) ?>
     </a>
@@ -43,62 +53,55 @@ echo View::render('partials/page_head', [
     </a>
 </div>
 
-<?php if ($byWorker === []): ?>
-    <?= View::render('partials/empty_state', ['message' => $t('admin.interventions.dispatch_empty'), 'hint' => '', 'actions' => []], null) ?>
-<?php else: ?>
-    <?php
-    // Assigned workers first (by name), the unassigned bucket (id 0) last.
-    $wids = array_keys($byWorker);
-    usort($wids, static function ($a, $b) use ($workerName): int {
-        if ($a === 0) { return 1; }
-        if ($b === 0) { return -1; }
-        return strcmp($workerName[$a] ?? '', $workerName[$b] ?? '');
-    });
-    ?>
-    <div class="d-flex flex-column gap-3">
-        <?php foreach ($wids as $wid): $rows = $byWorker[$wid]; ?>
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <span class="fw-semibold">
-                        <i class="bi bi-person-workspace" aria-hidden="true"></i>
-                        <?= $e($wid === 0 ? $t('admin.interventions.dispatch_unassigned') : ($workerName[$wid] ?? ('#' . $wid))) ?>
-                    </span>
-                    <span class="badge text-bg-secondary"><?= $e($t('admin.interventions.dispatch_load')) ?>: <?= count($rows) ?></span>
-                </div>
-                <div class="list-group list-group-flush">
-                    <?php foreach ($rows as $r):
-                        $date   = (string) $r['scheduled_date'];
-                        $double = $wid !== 0 && ($dayCount[$wid][$date] ?? 0) > 1;
-                    ?>
-                        <div class="list-group-item d-flex flex-wrap align-items-center gap-2">
-                            <span class="text-muted small" style="min-width:8rem">
-                                <i class="bi bi-calendar-event" aria-hidden="true"></i>
-                                <?= $e($date) ?><?= $r['scheduled_start_time'] ? ' ' . $e(substr((string) $r['scheduled_start_time'], 0, 5)) : '' ?>
-                            </span>
-                            <a class="app-card-title-link flex-grow-1" href="<?= $e(Url::to('/admin/interventions/' . $r['id'])) ?>">
-                                <?= $e((string) $r['title']) ?>
-                                <span class="text-muted small">— <?= $e((string) $r['project_name']) ?></span>
-                            </a>
-                            <?php if ($double): ?>
-                                <span class="badge text-bg-warning" title="<?= $e($t('admin.interventions.dispatch_double_booked')) ?>">
-                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <?= $e($t('admin.interventions.dispatch_double_booked')) ?>
-                                </span>
-                            <?php endif; ?>
-                            <?= View::render('partials/status_badge', ['group' => 'intervention_status', 'value' => (string) $r['status']], null) ?>
-                            <select class="form-select form-select-sm w-auto js-reassign"
-                                    data-url="<?= $e(Url::to('/admin/interventions/' . $r['id'] . '/reassign')) ?>"
-                                    aria-label="<?= $e($t('admin.interventions.dispatch_reassign')) ?>">
-                                <option value="0"><?= $e($t('admin.interventions.dispatch_unassign')) ?></option>
-                                <?php foreach ($workers as $w): ?>
-                                    <option value="<?= (int) $w['id'] ?>" <?= (int) $w['id'] === $wid ? 'selected' : '' ?>>
-                                        <?= $e((string) $w['name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
+<p class="small text-muted mb-3"><i class="bi bi-hand-index" aria-hidden="true"></i> <?= $e($t('admin.interventions.board_hint')) ?></p>
+
+<!-- To-schedule bucket -->
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold"><i class="bi bi-inbox" aria-hidden="true"></i> <?= $e($t('admin.interventions.board_unscheduled')) ?></span>
+        <span class="badge text-bg-secondary"><?= count($unscheduled) ?></span>
     </div>
-<?php endif; ?>
+    <div class="card-body gm-board-bucket js-board-cell" data-worker="" data-date="">
+        <?php if ($unscheduled === []): ?>
+            <span class="text-muted small"><?= $e($t('admin.interventions.board_bucket_empty')) ?></span>
+        <?php endif; ?>
+        <?php foreach ($unscheduled as $r) {
+            echo $card($r);
+        } ?>
+    </div>
+</div>
+
+<!-- Worker × day board -->
+<div class="gm-board">
+    <table class="gm-board-grid">
+        <thead>
+            <tr>
+                <th class="gm-board-corner"></th>
+                <?php foreach ($days as $day): ?>
+                    <th class="<?= $day['today'] ? 'is-today' : '' ?>">
+                        <?= $e($day['weekday']) ?><br><span class="fw-normal"><?= $e($day['day']) ?></span>
+                    </th>
+                <?php endforeach; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Assigned workers first (list order = by name), unassigned row last.
+            $rowWorkers = $workers;
+            $rowWorkers[] = ['id' => 0, 'name' => $t('admin.interventions.dispatch_unassigned')];
+            foreach ($rowWorkers as $w):
+                $wid = (int) $w['id'];
+            ?>
+                <tr>
+                    <th class="gm-board-rowhead"><?= $e((string) $w['name']) ?></th>
+                    <?php foreach ($days as $day): $cell = $byCell[$wid][$day['date']] ?? []; ?>
+                        <td class="gm-board-cell js-board-cell <?= ($wid !== 0 && count($cell) > 1) ? 'is-overbooked' : '' ?>"
+                            data-worker="<?= $wid ?>" data-date="<?= $e($day['date']) ?>">
+                            <?php foreach ($cell as $r) { echo $card($r); } ?>
+                        </td>
+                    <?php endforeach; ?>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>

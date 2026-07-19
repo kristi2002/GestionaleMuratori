@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-19 — Drag-and-drop dispatch board
+
+The dispatch board becomes direct-manipulation scheduling, the way ServiceTitan/Jobber work.
+Suite **732 passed, 0 failed**.
+
+- **Workers × days grid**: `/admin/interventions/dispatch` is now a weekly matrix. **Drag an
+  intervention card onto a (worker, day) cell** to set both the worker and the date in one
+  gesture; drop it on the **"to schedule" bucket** to remove its date. Live drop-highlight and
+  double-booking (2+ jobs, same worker+day) shading, updated as you drag.
+- **New combined endpoint** `POST /admin/interventions/{id}/schedule` — sets
+  `assigned_worker_id` + `scheduled_date` atomically (0 = unassign, empty date = unschedule),
+  role-validated, and notifies a newly-assigned worker (same rule/dedup as reassign).
+- Native HTML5 drag-and-drop (the app's first) with optimistic DOM moves + revert on failure;
+  new `.gm-board-*` CSS (theme-aware via Bootstrap vars); the unscheduled bucket surfaces
+  open interventions with no date (previously invisible on the board). sw → v37.
+- `admin.interventions.board_*` lang; endpoint (worker+date / unschedule / RBAC) + board-render
+  tests.
+
 ## 2026-07-19 — Customer account / job-history view
 
 The admin client page becomes a full customer account, the way a CRM shows a customer

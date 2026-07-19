@@ -171,27 +171,36 @@ final class InterventionController
         $model = new InterventionModel();
         $rows  = $model->dispatchBetween($from->format('Y-m-d'), $to->format('Y-m-d'));
 
-        // Group by worker (0 = unassigned) and count per (worker, date) so the view
-        // can flag double-bookings.
-        $byWorker = [];
-        $dayCount = [];
+        // Bucket by [worker][date] for the drag-and-drop grid (0 = unassigned).
+        $byCell = [];
         foreach ($rows as $r) {
             $wid = (int) ($r['assigned_worker_id'] ?? 0);
-            $byWorker[$wid][] = $r;
-            $date = (string) $r['scheduled_date'];
-            $dayCount[$wid][$date] = ($dayCount[$wid][$date] ?? 0) + 1;
+            $byCell[$wid][(string) $r['scheduled_date']][] = $r;
+        }
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $days  = [];
+        for ($i = 0; $i < 7; $i++) {
+            $d      = $from->modify("+{$i} days");
+            $days[] = [
+                'date'    => $d->format('Y-m-d'),
+                'weekday' => Lang::label('weekdays_short', $d->format('N')),
+                'day'     => $d->format('d/m'),
+                'today'   => $d->format('Y-m-d') === $today,
+            ];
         }
 
         Response::html(View::render('admin/interventions/dispatch', [
-            'title'    => Lang::get('admin.interventions.dispatch'),
-            'from'     => $from,
-            'to'       => $to,
-            'prev'     => $from->modify('-7 days')->format('Y-m-d'),
-            'next'     => $from->modify('+7 days')->format('Y-m-d'),
-            'byWorker' => $byWorker,
-            'dayCount' => $dayCount,
-            'workers'  => (new UserModel())->listByRole('worker'),
-            'kpis'     => $this->kpiCounts($model),
+            'title'       => Lang::get('admin.interventions.dispatch'),
+            'from'        => $from,
+            'to'          => $to,
+            'prev'        => $from->modify('-7 days')->format('Y-m-d'),
+            'next'        => $from->modify('+7 days')->format('Y-m-d'),
+            'days'        => $days,
+            'byCell'      => $byCell,
+            'unscheduled' => $model->unscheduledOpen(),
+            'workers'     => (new UserModel())->listByRole('worker'),
+            'kpis'        => $this->kpiCounts($model),
         ], 'layout'));
     }
 
@@ -232,6 +241,61 @@ final class InterventionController
                     Lang::get('notifications.intervention_assigned_body'),
                     (string) $iv['project_name'],
                     $iv['scheduled_date'] !== null ? (string) $iv['scheduled_date'] : '—'
+                ),
+                'link'      => '/worker/interventions/' . $id,
+                'dedup_key' => 'intervention_assigned:' . $id . ':' . $workerId,
+            ]);
+        }
+
+        Response::ok();
+    }
+
+    /**
+     * POST /admin/interventions/{id}/schedule — set worker AND scheduled date in one
+     * write (dispatch board drag-and-drop). worker_id 0 = unassign; empty date = unschedule.
+     */
+    public function schedule(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new InterventionModel();
+        $iv    = $model->find((int) $id);
+        if ($iv === null) {
+            Response::fail(Lang::get('admin.interventions.not_found'), 404);
+            return;
+        }
+
+        $workerId = (int) $request->input('worker_id', 0);
+        if ($workerId > 0) {
+            $worker = (new UserModel())->findById($workerId);
+            if ($worker === null || $worker['role'] !== 'worker') {
+                Response::fail(Lang::get('admin.interventions.worker_invalid'), 422);
+                return;
+            }
+        }
+
+        $dateRaw = trim((string) $request->input('scheduled_date', ''));
+        $date    = null;
+        if ($dateRaw !== '') {
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateRaw)) {
+                Response::fail(Lang::get('admin.interventions.date_invalid'), 422);
+                return;
+            }
+            $date = $dateRaw;
+        }
+
+        $model->schedule((int) $id, $workerId > 0 ? $workerId : null, $date);
+
+        // Alert the newly-assigned worker (same rule/dedup as reassign()).
+        if ($workerId > 0 && (int) ($iv['assigned_worker_id'] ?? 0) !== $workerId) {
+            NotificationService::notifyUser($workerId, [
+                'type'      => 'intervention_assigned',
+                'severity'  => 'info',
+                'title'     => sprintf(Lang::get('notifications.intervention_assigned'), (string) $iv['title']),
+                'body'      => sprintf(
+                    Lang::get('notifications.intervention_assigned_body'),
+                    (string) $iv['project_name'],
+                    $date !== null ? $date : '—'
                 ),
                 'link'      => '/worker/interventions/' . $id,
                 'dedup_key' => 'intervention_assigned:' . $id . ':' . $workerId,

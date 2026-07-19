@@ -195,6 +195,21 @@ $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => 0]);
 T::ok($pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn() === null, 'worker_id 0 unassigns (NULL)');
 T::equals(403, $worker->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $wId])['status'], 'worker cannot reassign');
 
+// Combined schedule endpoint (drag-and-drop board): sets worker AND date at once.
+T::equals(403, $worker->post("/admin/interventions/{$ivId}/schedule", ['worker_id' => $wId, 'scheduled_date' => '2026-08-10'])['status'], 'worker cannot use the schedule endpoint');
+T::equals(422, $admin->post("/admin/interventions/{$ivId}/schedule", ['worker_id' => $clientUserId, 'scheduled_date' => '2026-08-10'])['status'], 'scheduling to a non-worker rejected');
+T::equals(422, $admin->post("/admin/interventions/{$ivId}/schedule", ['worker_id' => $wId, 'scheduled_date' => 'not-a-date'])['status'], 'invalid date rejected');
+T::ok(($admin->post("/admin/interventions/{$ivId}/schedule", ['worker_id' => $wId, 'scheduled_date' => '2026-08-10'])['json']['ok'] ?? false) === true, 'admin schedules worker + date in one call');
+$sched = $pdo->query("SELECT assigned_worker_id, scheduled_date FROM interventions WHERE id = {$ivId}")->fetch();
+T::equals($wId, (int) $sched['assigned_worker_id'], 'schedule set the worker');
+T::equals('2026-08-10', (string) $sched['scheduled_date'], 'schedule set the date');
+$admin->post("/admin/interventions/{$ivId}/schedule", ['worker_id' => 0, 'scheduled_date' => '']);
+$sched2 = $pdo->query("SELECT assigned_worker_id, scheduled_date FROM interventions WHERE id = {$ivId}")->fetch();
+T::ok($sched2['assigned_worker_id'] === null && $sched2['scheduled_date'] === null, 'empty date + worker 0 unschedules and unassigns');
+$dispBody = $admin->get('/admin/interventions/dispatch', ['json' => false])['body'];
+T::ok(!preg_match('/(Warning:|Notice:|Deprecated:|Fatal error)/', $dispBody), 'dispatch board renders with no PHP warnings');
+T::ok(str_contains($dispBody, 'gm-board-grid'), 'dispatch board renders the drag-and-drop grid');
+
 // --- Labor cost report (migration 025) ---------------------------------------
 T::section('Labor cost report: RBAC');
 T::equals(403, $worker->get('/admin/financials/labor')['status'], 'worker cannot open the labor cost report');

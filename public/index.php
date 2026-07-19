@@ -214,6 +214,7 @@ $router->get('/admin/interventions/{id}',           [InterventionController::cla
 $router->post('/admin/interventions/{id}',          [InterventionController::class, 'update']);
 $router->post('/admin/interventions/{id}/status',   [InterventionController::class, 'status']);
 $router->post('/admin/interventions/{id}/reassign', [InterventionController::class, 'reassign']);
+$router->post('/admin/interventions/{id}/schedule', [InterventionController::class, 'schedule']);
 $router->post('/admin/interventions/{id}/tasks',                  [InterventionController::class, 'addTask']);
 $router->post('/admin/interventions/{id}/tasks/{taskId}/toggle', [InterventionController::class, 'toggleTask']);
 $router->post('/admin/interventions/{id}/tasks/{taskId}/delete', [InterventionController::class, 'deleteTask']);

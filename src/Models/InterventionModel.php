@@ -81,6 +81,33 @@ final class InterventionModel
         return $stmt->execute([$workerId, $id]);
     }
 
+    /** Set worker AND scheduled date in one write (drag-and-drop dispatch board). */
+    public function schedule(int $id, ?int $workerId, ?string $date): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            'UPDATE interventions SET assigned_worker_id = ?, scheduled_date = ? WHERE id = ?'
+        );
+        return $stmt->execute([$workerId, $date, $id]);
+    }
+
+    /**
+     * Open interventions with no scheduled date — the dispatch board's "to schedule"
+     * bucket (BETWEEN in dispatchBetween() never matches a NULL date).
+     * @return array<int,array<string,mixed>>
+     */
+    public function unscheduledOpen(int $limit = 100): array
+    {
+        return Database::pdo()->query(
+            "SELECT i.id, i.title, i.status, i.scheduled_start_time, i.assigned_worker_id,
+                    p.name AS project_name, w.name AS worker_name
+             FROM interventions i
+             JOIN projects p ON p.id = i.project_id
+             LEFT JOIN users w ON w.id = i.assigned_worker_id
+             WHERE i.scheduled_date IS NULL AND i.status IN ('pending','in_progress','on_hold')
+             ORDER BY i.id DESC LIMIT " . (int) $limit
+        )->fetchAll();
+    }
+
     /** Row count for the same filters (drives pagination). */
     public function count(array $filters = []): int
     {
