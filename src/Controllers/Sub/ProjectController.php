@@ -44,9 +44,12 @@ final class ProjectController
         }
 
         $interventions = (new InterventionModel())->all(['project_id' => (int) $id]);
-        $photoModel    = new PhotoModel();
+        // Batch-load all galleries in one query (no N+1 across interventions).
+        $galleries = (new PhotoModel())->forInterventions(
+            array_map(static fn (array $i): int => (int) $i['id'], $interventions)
+        );
         foreach ($interventions as &$intervention) {
-            $intervention['gallery'] = $photoModel->forIntervention((int) $intervention['id']);
+            $intervention['gallery'] = $galleries[(int) $intervention['id']] ?? [];
         }
         unset($intervention);
 

@@ -31,9 +31,12 @@ final class SubcontractorController
         $paginator = Paginator::fromRequest($request, $model->count($search), 24);
 
         $subcontractors = $model->all($search, $paginator->perPage, $paginator->offset);
-        // Attach each subcontractor's assigned project ids for the assignment modal.
+        // Batch-load assigned project ids for the whole page in one query (no N+1).
+        $projectIds = $links->projectIdsForMany(
+            array_map(static fn (array $s): int => (int) $s['id'], $subcontractors)
+        );
         foreach ($subcontractors as &$s) {
-            $s['project_ids'] = $links->projectIdsFor((int) $s['id']);
+            $s['project_ids'] = $projectIds[(int) $s['id']] ?? [];
         }
         unset($s);
 

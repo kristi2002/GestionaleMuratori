@@ -8,6 +8,7 @@ use App\Models\ClientModel;
 use App\Models\LeadModel;
 use App\Support\AuditLog;
 use App\Support\Lang;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\Url;
@@ -28,12 +29,14 @@ final class LeadController
             $status = '';
         }
 
-        $model = new LeadModel();
+        $model     = new LeadModel();
+        $paginator = Paginator::fromRequest($request, $model->count($status), 30);
         Response::html(View::render('admin/leads/index', [
-            'title'  => Lang::get('admin.leads.title'),
-            'leads'  => $model->all($status),
-            'counts' => $model->countByStatus(),
-            'status' => $status,
+            'title'     => Lang::get('admin.leads.title'),
+            'leads'     => $model->all($status, $paginator->perPage, $paginator->offset),
+            'counts'    => $model->countByStatus(),
+            'status'    => $status,
+            'paginator' => $paginator,
         ], 'layout'));
     }
 

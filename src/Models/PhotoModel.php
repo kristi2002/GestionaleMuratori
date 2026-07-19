@@ -47,6 +47,31 @@ final class PhotoModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Photos for several interventions in one query, grouped by intervention_id
+     * (avoids N+1 on list/detail pages that show a gallery per intervention).
+     *
+     * @param array<int,int> $interventionIds
+     * @return array<int,array<int,array<string,mixed>>> intervention_id => photos
+     */
+    public function forInterventions(array $interventionIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $interventionIds)));
+        if ($ids === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM photos WHERE intervention_id IN ({$placeholders}) ORDER BY type, created_at"
+        );
+        $stmt->execute($ids);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(int) $row['intervention_id']][] = $row;
+        }
+        return $out;
+    }
+
     /** All photos on a project (across its interventions), newest first, capped. */
     public function forProject(int $projectId, int $limit = 120): array
     {

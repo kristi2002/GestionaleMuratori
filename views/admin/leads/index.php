@@ -70,3 +70,7 @@ echo View::render('partials/filter_pills', ['pills' => [
         </table>
     </div>
 </div>
+
+<?php if (isset($paginator) && $paginator->total > 0): ?>
+    <?= View::render('partials/pagination', ['paginator' => $paginator], null) ?>
+<?php endif; ?>

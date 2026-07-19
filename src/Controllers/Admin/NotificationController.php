@@ -8,6 +8,7 @@ use App\Models\NotificationModel;
 use App\Services\MailService;
 use App\Support\Lang;
 use App\Support\Mailer;
+use App\Support\Paginator;
 use App\Support\Request;
 use App\Support\Response;
 use App\Support\View;
@@ -26,12 +27,14 @@ final class NotificationController
 
         $model      = new NotificationModel();
         $unreadOnly = (string) $request->input('filter', '') === 'unread';
+        $paginator  = Paginator::fromRequest($request, $model->countAll($unreadOnly), 30);
 
         Response::html(View::render('admin/notifications/index', [
             'title'         => Lang::get('notifications.title'),
-            'notifications' => $model->all($unreadOnly),
+            'notifications' => $model->all($unreadOnly, null, $paginator->perPage, $paginator->offset),
             'unreadOnly'    => $unreadOnly,
             'unreadCount'   => $model->unreadCount(),
+            'paginator'     => $paginator,
         ], 'layout'));
     }
 

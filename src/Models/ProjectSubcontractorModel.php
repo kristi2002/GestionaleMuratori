@@ -21,6 +21,32 @@ final class ProjectSubcontractorModel
         return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
     }
 
+    /**
+     * Assigned project ids for several subcontractors in one query (avoids N+1 on
+     * the admin list page).
+     *
+     * @param array<int,int> $subcontractorIds
+     * @return array<int,array<int,int>> subcontractor_id => [project ids]
+     */
+    public function projectIdsForMany(array $subcontractorIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $subcontractorIds)));
+        if ($ids === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::pdo()->prepare(
+            "SELECT subcontractor_id, project_id FROM project_subcontractors
+             WHERE subcontractor_id IN ({$placeholders})"
+        );
+        $stmt->execute($ids);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $out[(int) $row['subcontractor_id']][] = (int) $row['project_id'];
+        }
+        return $out;
+    }
+
     /** Full project rows a subcontractor may access. @return array<int,array<string,mixed>> */
     public function projectsFor(int $subcontractorId): array
     {

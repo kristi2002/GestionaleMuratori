@@ -67,17 +67,32 @@ final class NotificationModel
     }
 
     /** @return array<int,array<string,mixed>> */
-    public function all(bool $unreadOnly = false, ?int $userId = null): array
+    public function all(bool $unreadOnly = false, ?int $userId = null, ?int $limit = null, int $offset = 0): array
     {
         [$scope, $bind] = $this->scope($userId);
         $sql = "SELECT * FROM notifications WHERE {$scope}";
         if ($unreadOnly) {
             $sql .= ' AND is_read = 0';
         }
-        $sql .= ' ORDER BY is_read ASC, created_at DESC, id DESC LIMIT 500';
+        $sql .= ' ORDER BY is_read ASC, created_at DESC, id DESC';
+        // Paginated when a limit is given; otherwise a safety cap (legacy callers).
+        $sql .= $limit !== null ? ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset) : ' LIMIT 500';
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($bind);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same scope/filter (drives pagination). */
+    public function countAll(bool $unreadOnly = false, ?int $userId = null): int
+    {
+        [$scope, $bind] = $this->scope($userId);
+        $sql = "SELECT COUNT(*) FROM notifications WHERE {$scope}";
+        if ($unreadOnly) {
+            $sql .= ' AND is_read = 0';
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($bind);
+        return (int) $stmt->fetchColumn();
     }
 
     public function markRead(int $id, ?int $userId = null): bool

@@ -89,3 +89,7 @@ echo View::render('partials/filter_pills', ['pills' => [
         </div>
     </div>
 <?php endif; ?>
+
+<?php if (isset($paginator) && $paginator->total > 0): ?>
+    <?= View::render('partials/pagination', ['paginator' => $paginator], null) ?>
+<?php endif; ?>

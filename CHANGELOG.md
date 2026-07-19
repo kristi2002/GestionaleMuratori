@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-19 — Performance pass (indexes, pagination, N+1, asset caching)
+
+Targeted fixes from a performance audit — the schema was already well-indexed and the heavy
+aggregate services already batched, so these close the narrow gaps that degrade as data grows.
+Suite **757 passed, 0 failed**.
+
+- **Index** on the fastest-growing table: `audit_log (action, created_at)` (migration 031) —
+  the filtered audit view + per-action counts stop table-scanning.
+- **Pagination** on the two lists that loaded whole tables: **notifications** and **leads**
+  (both were `LIMIT 500`, no paging). Now 30/page via `Paginator`, with count queries — caps
+  both the query and the DOM regardless of history size. (The public `/request` form feeds the
+  leads table, so this also bounds an anonymous-writable table.)
+- **N+1 removed** in two spots via batch loaders: subcontractor-portal project galleries
+  (`PhotoModel::forInterventions`) and the admin subcontractor list's assigned-project ids
+  (`ProjectSubcontractorModel::projectIdsForMany`) — one query instead of one-per-row.
+- **Immutable asset caching** in Caddy for `/assets/*` (already cache-busted with `?v=<mtime>`)
+  — removes a revalidation round-trip for ~170 KB of CSS/JS on every page load.
+- Test harness: in-process cases now include `3*.php` (the numbering had silently capped at 29).
+
 ## 2026-07-19 — Two-factor authentication (TOTP)
 
 Optional 2FA closes the main remaining security gap — single-factor admin logins. Suite

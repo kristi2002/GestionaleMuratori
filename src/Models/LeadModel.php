@@ -40,7 +40,7 @@ final class LeadModel
     }
 
     /** @return array<int,array<string,mixed>> filtered by status (empty = all), newest first */
-    public function all(string $status = ''): array
+    public function all(string $status = '', ?int $limit = null, int $offset = 0): array
     {
         $sql    = 'SELECT l.*, c.name AS client_name FROM leads l
                    LEFT JOIN clients c ON c.id = l.client_id';
@@ -49,10 +49,25 @@ final class LeadModel
             $sql     .= ' WHERE l.status = ?';
             $params[] = $status;
         }
-        $sql .= ' ORDER BY l.created_at DESC, l.id DESC LIMIT 500';
+        $sql .= ' ORDER BY l.created_at DESC, l.id DESC';
+        $sql .= $limit !== null ? ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset) : ' LIMIT 500';
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /** Row count for the same status filter (drives pagination). */
+    public function count(string $status = ''): int
+    {
+        $sql    = 'SELECT COUNT(*) FROM leads';
+        $params = [];
+        if (in_array($status, self::STATUSES, true)) {
+            $sql     .= ' WHERE status = ?';
+            $params[] = $status;
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     /** @return array<string,int> per-status counts + '_total' */
