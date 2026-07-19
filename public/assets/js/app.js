@@ -55,6 +55,190 @@
         get: function (path, data) { return this.request('GET', path, data); }
     };
 
+    // Decode a data: URL into a Blob (used to store compressed photos in the
+    // outbox as binary rather than base64). Kept at module scope so both the
+    // photo-upload handler and the legacy-queue migration can reach it.
+    function dataUrlToBlob(dataUrl) {
+        var parts = dataUrl.split(',');
+        var mime = parts[0].match(/:(.*?);/)[1];
+        var binary = window.atob(parts[1]);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
+        return new Blob([bytes], { type: mime });
+    }
+
+    // --- Offline outbox (IndexedDB) ------------------------------------------
+    // Durable queue for writes made on a no-signal construction site: JSON POSTs
+    // (Badge di Cantiere timbrature, intervention status/completion) and binary
+    // photo uploads. Unlike the old localStorage queues it survives reloads and
+    // heavy-photo days (Blobs, not base64) and — paired with the service worker's
+    // Background Sync — flushes even with no tab open. A queued write is settled
+    // and dropped on ANY definite server response, because every target endpoint
+    // rejects a double-apply by domain invariant (a single open attendance; an
+    // illegal status transition). Only a network failure (offline) keeps it; a
+    // 401/403 (expired session) keeps it and asks the worker to sign in again.
+    var Outbox = (function () {
+        var DB_NAME = 'gm-outbox', STORE = 'writes', dbp = null, authExpired = false;
+
+        function open() {
+            if (dbp) { return dbp; }
+            dbp = new Promise(function (resolve, reject) {
+                if (!window.indexedDB) { reject(new Error('no-idb')); return; }
+                var req = window.indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = function () {
+                    if (!req.result.objectStoreNames.contains(STORE)) {
+                        req.result.createObjectStore(STORE, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = function () { resolve(req.result); };
+                req.onerror = function () { reject(req.error); };
+            });
+            return dbp;
+        }
+
+        function put(rec) {
+            return open().then(function (db) {
+                return new Promise(function (resolve, reject) {
+                    var t = db.transaction(STORE, 'readwrite');
+                    t.objectStore(STORE).put(rec);
+                    t.oncomplete = function () { resolve(); };
+                    t.onerror = function () { reject(t.error); };
+                });
+            });
+        }
+
+        function all() {
+            return open().then(function (db) {
+                return new Promise(function (resolve, reject) {
+                    var out = [];
+                    var cur = db.transaction(STORE, 'readonly').objectStore(STORE).openCursor();
+                    cur.onsuccess = function () {
+                        var c = cur.result;
+                        if (c) { out.push(c.value); c.continue(); } else { resolve(out); }
+                    };
+                    cur.onerror = function () { reject(cur.error); };
+                });
+            });
+        }
+
+        function del(id) {
+            return open().then(function (db) {
+                return new Promise(function (resolve) {
+                    var t = db.transaction(STORE, 'readwrite');
+                    t.objectStore(STORE).delete(id);
+                    t.oncomplete = function () { resolve(); };
+                    t.onerror = function () { resolve(); };
+                });
+            });
+        }
+
+        function newId() { return String(Date.now()) + '-' + Math.random().toString(36).slice(2); }
+        function absUrl(path) { return new URL(BASE + path, window.location.href).toString(); }
+
+        function send(rec) {
+            var headers = { 'X-CSRF-Token': rec.csrf || CSRF, 'X-Requested-With': 'XMLHttpRequest' };
+            var opts = { method: 'POST', credentials: 'same-origin', headers: headers };
+            if (rec.kind === 'photo') {
+                var fd = new FormData();
+                fd.append('photo', rec.blob, 'photo.jpg');
+                fd.append('type', rec.type || '');
+                opts.body = fd;
+            } else {
+                headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                opts.body = rec.body || '';
+            }
+            return fetch(rec.url, opts);
+        }
+
+        // Ask the service worker to replay the queue in the background (so a write
+        // made offline still goes out if the worker closes the tab before signal
+        // returns). Best-effort: unsupported on iOS Safari, where the page-side
+        // flush on reconnect/foreground covers the same cases.
+        function registerSync() {
+            if (!('serviceWorker' in navigator)) { return; }
+            navigator.serviceWorker.ready.then(function (reg) {
+                if (reg.sync) { reg.sync.register('gm-outbox').catch(function () {}); }
+            }).catch(function () {});
+        }
+
+        function enqueue(rec) {
+            rec.id = newId();
+            rec.csrf = CSRF;
+            return put(rec).then(function () { updateOutboxBanner(); registerSync(); });
+        }
+
+        function flush() {
+            if (!window.indexedDB) { return Promise.resolve(); }
+            return all().then(function (items) {
+                return Promise.all(items.map(function (rec) {
+                    return send(rec).then(function (res) {
+                        // Session/CSRF expired: keep the write and prompt re-login.
+                        if (res.status === 401 || res.status === 403) { authExpired = true; return; }
+                        authExpired = false;
+                        return del(rec.id);
+                    }).catch(function () { /* still offline — keep queued */ });
+                }));
+            }).then(function () { updateOutboxBanner(); }).catch(function () {});
+        }
+
+        function count() {
+            if (!window.indexedDB) { return Promise.resolve(0); }
+            return all().then(function (i) { return i.length; }).catch(function () { return 0; });
+        }
+
+        return {
+            json: function (path, data) { return enqueue({ kind: 'json', url: absUrl(path), body: $.param(data || {}) }); },
+            photo: function (path, type, blob) { return enqueue({ kind: 'photo', url: absUrl(path), type: type, blob: blob }); },
+            flush: flush,
+            count: count,
+            authExpired: function () { return authExpired; }
+        };
+    })();
+
+    // Shared pending-writes banner (element .js-offline-queue-banner, rendered on
+    // the worker/attendance screens). Reflects the total queued count, or a
+    // re-login prompt when the last flush hit an expired session.
+    function updateOutboxBanner() {
+        var $banner = $('.js-offline-queue-banner');
+        if (!$banner.length) { return; }
+        Outbox.count().then(function (n) {
+            if (n <= 0) { $banner.addClass('d-none').text(''); return; }
+            var txt;
+            if (Outbox.authExpired()) {
+                txt = GM.t('js.outbox_relogin', 'Modifiche in attesa: accedi di nuovo per sincronizzarle.');
+            } else if (n === 1) {
+                txt = GM.t('js.outbox_pending_one', '1 modifica in attesa di sincronizzazione.');
+            } else {
+                txt = GM.t('js.outbox_pending_many', '{n} modifiche in attesa di sincronizzazione.').replace('{n}', n);
+            }
+            $banner.removeClass('d-none').text(txt);
+        });
+    }
+
+    // One-time migration of the pre-outbox localStorage queues into IndexedDB so
+    // any write made offline on an older build is not lost on upgrade.
+    function migrateLegacyQueues() {
+        var pending = [];
+        try {
+            JSON.parse(window.localStorage.getItem('gm_photo_queue_v1') || '[]').forEach(function (it) {
+                if (it && it.dataUrl) { pending.push(Outbox.photo(it.url, it.type, dataUrlToBlob(it.dataUrl))); }
+            });
+            window.localStorage.removeItem('gm_photo_queue_v1');
+        } catch (e) { /* ignore malformed legacy data */ }
+        try {
+            JSON.parse(window.localStorage.getItem('gm_action_queue_v1') || '[]').forEach(function (it) {
+                if (it && it.url) { pending.push(Outbox.json(it.url, it.data)); }
+            });
+            window.localStorage.removeItem('gm_action_queue_v1');
+        } catch (e) { /* ignore malformed legacy data */ }
+        return Promise.all(pending);
+    }
+
+    function flushOutbox() { Outbox.flush(); }
+    $(window).on('online', flushOutbox);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { flushOutbox(); } });
+    $(function () { migrateLegacyQueues().then(flushOutbox); updateOutboxBanner(); });
+
     // --- In-app dialogs -------------------------------------------------------
     // One reusable Bootstrap modal replacing the native window.alert/confirm
     // popups, so messages match the app's look. Callback-based since a modal
@@ -720,6 +904,13 @@
                     $sel.val(previous).prop('disabled', false);
                 }
             }).fail(function (xhr) {
+                if (xhr.status === 0) {
+                    // No signal: queue the transition and keep the chosen value shown.
+                    Outbox.json($sel.data('url'), { to_status: toStatus });
+                    Dialog.alert(GM.t('js.status_offline_queued', 'Sei offline: la modifica di stato è stata salvata sul dispositivo e verrà sincronizzata alla riconnessione.'));
+                    $sel.prop('disabled', false);
+                    return;
+                }
                 Dialog.alert(failMessage(xhr));
                 $sel.val(previous).prop('disabled', false);
             });
@@ -744,47 +935,19 @@
                     Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
+                if (xhr.status === 0) {
+                    Outbox.json($btn.data('url'), { to_status: $btn.data('to-status') });
+                    Dialog.alert(GM.t('js.status_offline_queued', 'Sei offline: la modifica di stato è stata salvata sul dispositivo e verrà sincronizzata alla riconnessione.'));
+                    return;
+                }
                 Dialog.alert(failMessage(xhr));
             });
         }
 
-        // --- Worker: photo upload (§8 offline-friendly) ---------------------------
+        // --- Worker: photo upload (offline-friendly via the outbox) --------------
         // Compresses client-side before upload; on a network failure (offline —
         // distinct from a server-side validation rejection) the compressed photo is
-        // queued in localStorage and retried automatically on reconnect/page load.
-        var PHOTO_QUEUE_KEY = 'gm_photo_queue_v1';
-
-        function loadPhotoQueue() {
-            try {
-                return JSON.parse(window.localStorage.getItem(PHOTO_QUEUE_KEY) || '[]');
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function savePhotoQueue(queue) {
-            try {
-                window.localStorage.setItem(PHOTO_QUEUE_KEY, JSON.stringify(queue));
-            } catch (e) {
-                // Storage full or unavailable (e.g. private browsing) — best-effort only.
-            }
-        }
-
-        function updateQueueBanner() {
-            var $banner = $('.js-offline-queue-banner');
-            if (!$banner.length) {
-                return;
-            }
-            var count = loadPhotoQueue().length;
-            if (count > 0) {
-                $banner.removeClass('d-none').text(
-                    count === 1 ? '1 foto in attesa di connessione.' : count + ' foto in attesa di connessione.'
-                );
-            } else {
-                $banner.addClass('d-none').text('');
-            }
-        }
-
+        // stored in the IndexedDB outbox and replayed automatically on reconnect.
         function compressImageToDataUrl(file, maxDim, quality) {
             return new Promise(function (resolve, reject) {
                 var reader = new FileReader();
@@ -808,17 +971,6 @@
             });
         }
 
-        function dataUrlToBlob(dataUrl) {
-            var parts = dataUrl.split(',');
-            var mime = parts[0].match(/:(.*?);/)[1];
-            var binary = window.atob(parts[1]);
-            var bytes = new Uint8Array(binary.length);
-            for (var i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return new Blob([bytes], { type: mime });
-        }
-
         function uploadPhotoBlob(url, type, blob) {
             var data = new FormData();
             data.append('photo', blob, 'photo.jpg');
@@ -831,31 +983,6 @@
                 contentType: false,
                 dataType: 'json',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-        }
-
-        function queuePhotoForRetry(url, type, dataUrl) {
-            var queue = loadPhotoQueue();
-            queue.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, type: type, dataUrl: dataUrl });
-            savePhotoQueue(queue);
-            updateQueueBanner();
-        }
-
-        function flushPhotoQueue() {
-            loadPhotoQueue().forEach(function (item) {
-                uploadPhotoBlob(item.url, item.type, dataUrlToBlob(item.dataUrl)).always(function () {
-                    // Drop on any definite server response (success or validation
-                    // rejection) — only a .fail() with no response means "still
-                    // offline," which leaves the item queued for the next retry.
-                }).done(function () {
-                    savePhotoQueue(loadPhotoQueue().filter(function (q) { return q.id !== item.id; }));
-                    updateQueueBanner();
-                }).fail(function (xhr) {
-                    if (xhr.status > 0) {
-                        savePhotoQueue(loadPhotoQueue().filter(function (q) { return q.id !== item.id; }));
-                        updateQueueBanner();
-                    }
-                });
             });
         }
 
@@ -894,7 +1021,7 @@
                         $submit.prop('disabled', false);
                         return;
                     }
-                    queuePhotoForRetry(url, type, dataUrl);
+                    Outbox.photo(url, type, dataUrlToBlob(dataUrl));
                     showPhotoMessage($error, GM.t('js.photo_offline_queued', 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.'), true);
                     $submit.prop('disabled', false);
                     $form[0].reset();
@@ -904,10 +1031,6 @@
                 $submit.prop('disabled', false);
             });
         });
-
-        $(window).on('online', flushPhotoQueue);
-        updateQueueBanner();
-        flushPhotoQueue();
 
         // --- Worker: signature capture (canvas → PNG data URL) -------------------
         var canvas = document.getElementById('signature-pad');
@@ -1348,35 +1471,6 @@
             }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
         }
 
-        // Generic offline write queue (localStorage) for simple JSON POSTs — used
-        // by the Badge di Cantiere so a timbratura on a no-signal site is not lost.
-        // (Photos keep their own binary queue.)
-        var ACTION_QUEUE_KEY = 'gm_action_queue_v1';
-        function loadActionQueue() {
-            try { return JSON.parse(window.localStorage.getItem(ACTION_QUEUE_KEY) || '[]'); } catch (e) { return []; }
-        }
-        function saveActionQueue(q) {
-            try { window.localStorage.setItem(ACTION_QUEUE_KEY, JSON.stringify(q)); } catch (e) { /* best-effort */ }
-        }
-        function queueAction(url, data) {
-            var q = loadActionQueue();
-            q.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2), url: url, data: data });
-            saveActionQueue(q);
-        }
-        function flushActionQueue() {
-            loadActionQueue().forEach(function (item) {
-                Api.post(item.url, item.data).done(function () {
-                    saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
-                }).fail(function (xhr) {
-                    if (xhr.status > 0) { // definite server response — drop it, not "offline"
-                        saveActionQueue(loadActionQueue().filter(function (q) { return q.id !== item.id; }));
-                    }
-                });
-            });
-        }
-        $(window).on('online', flushActionQueue);
-        flushActionQueue();
-
         function postAttendance(url, data, $btn) {
             var $error = $('.js-attendance-error');
             $error.addClass('d-none').text('');
@@ -1391,7 +1485,7 @@
                 }
             }).fail(function (xhr) {
                 if (xhr.status === 0) {
-                    queueAction(url, data);
+                    Outbox.json(url, data);
                     $error.removeClass('d-none alert-danger').addClass('alert-warning')
                         .text(GM.t('attendance.offline_queued', 'Sei offline: la timbratura è stata salvata e verrà inviata alla riconnessione.'));
                     $btn.prop('disabled', false);

@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-07-19 — Offline outbox (IndexedDB + Background Sync)
+
+Field-reliability work: writes made on a no-signal construction site are now durable and
+replay automatically. Suite **589 passed, 0 failed**.
+
+- **Unified IndexedDB outbox** (`Outbox` in `app.js`) replaces the two separate localStorage
+  queues (photos + timbrature). It stores photos as Blobs (no more base64 5 MB-cap risk) and
+  survives reloads. Each record carries its own session-stable CSRF token and absolute URL.
+- **Intervention status/completion is now offline-safe.** Previously a worker marking a job
+  **completato** on a dead-signal site got a connection error and lost the close; the
+  transition is now queued and replayed on reconnect. This was the one write path not covered.
+- **Service-worker Background Sync** (`sw.js`): the queue also flushes with no tab open (via
+  the `gm-outbox` sync tag), with a page-side fallback flush on `online`/foreground for
+  browsers without Background Sync (iOS Safari).
+- **Safe replay:** a queued write is settled/dropped on any definite server response — the
+  endpoints already reject double-apply by domain invariant (single open attendance; illegal
+  status transition). A 401/403 keeps it queued and prompts re-login; a network failure keeps it.
+- **Push handlers added to `sw.js`** (`push` / `notificationclick`) ahead of the Web Push
+  backend (next stage). Shared pending-writes banner now shown on the attendance screen too.
+- New `js.*` strings in `lang/it.php` (`status_offline_queued`, `outbox_pending_*`,
+  `outbox_relogin`); bumped the service worker to `gm-shell-v31`.
+
 ## 2026-07-18 — Polish pass: nits + two interactivity features (browser-verified)
 
 The last optional items from the audit. All verified live in the browser. Suite **589 passed, 0 failed**.

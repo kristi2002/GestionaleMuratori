@@ -301,6 +301,10 @@ return [
         'remove'               => 'Rimuovi',
         'login_progress'       => 'Accesso…',
         'photo_offline_queued' => 'Sei offline: la foto è stata salvata sul dispositivo e verrà caricata automaticamente alla riconnessione.',
+        'status_offline_queued' => 'Sei offline: la modifica di stato è stata salvata sul dispositivo e verrà sincronizzata alla riconnessione.',
+        'outbox_pending_one'   => '1 modifica in attesa di sincronizzazione.',
+        'outbox_pending_many'  => '{n} modifiche in attesa di sincronizzazione.',
+        'outbox_relogin'       => 'Modifiche in attesa: accedi di nuovo per sincronizzarle.',
     ],
 
     // Transactional e-mails (App\Services\MailService). Sent only when MAIL_ENABLED=true.

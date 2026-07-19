@@ -382,6 +382,10 @@ $gmI18n = [
     'js.remove'                => Lang::get('js.remove'),
     'js.login_progress'        => Lang::get('js.login_progress'),
     'js.photo_offline_queued'  => Lang::get('js.photo_offline_queued'),
+    'js.status_offline_queued' => Lang::get('js.status_offline_queued'),
+    'js.outbox_pending_one'    => Lang::get('js.outbox_pending_one'),
+    'js.outbox_pending_many'   => Lang::get('js.outbox_pending_many'),
+    'js.outbox_relogin'        => Lang::get('js.outbox_relogin'),
 ];
 ?>
 <script type="application/json" id="gm-i18n"><?= json_encode($gmI18n, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>

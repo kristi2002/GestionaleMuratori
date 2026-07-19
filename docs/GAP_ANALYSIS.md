@@ -69,7 +69,10 @@ shows stack traces when debug is off.
 
 ## 5. Explicitly deferred (documented, not planned now)
 
-- Full PWA/service-worker offline queue (spec §8 stretch goal; localStorage retry queue exists).
+- ~~Full PWA/service-worker offline queue (spec §8 stretch goal; localStorage retry queue exists).~~
+  **Done (2026-07-19):** unified IndexedDB **outbox** replaces the localStorage queues,
+  covering timbrature, intervention status/completion and photos; flushed on reconnect and
+  via service-worker Background Sync (survives a closed tab). See CHANGELOG.
 - S3/object storage (StorageInterface ready).
 - Multi-tenancy, e-invoicing, cost/pricing module — out of original scope; would need
   client sign-off on schema changes first.
@@ -103,7 +106,7 @@ it must gain the Italian construction legal + operational feature set. Domain de
 | V6 | **S.A.L. generator** — no progress-statement documents. | 🔴 | ⏳ schema landed (`sal_documents`/`sal_lines`); feature Phase 4c. |
 | V7 | **Scadenzario Sicurezza** — no expiry tracking for DURC/POS/PSC/Patente a Crediti (D.Lgs. 81/2008). | 🔴 | ⏳ schema landed (`compliance_documents`); feature Phase 4d. |
 | V8 | **No subcontractor role/portal** — subappaltatori can't be managed or given scoped access. | 🟠 | ⏳ schema landed (`subcontractors`, role enum, M:N); portal Phase 3. |
-| V9 | **No true offline mode** — only a photo `localStorage` retry queue; thick-walled sites need PWA. | 🟠 | ⏳ Phase 5. |
+| V9 | **No true offline mode** — only a photo `localStorage` retry queue; thick-walled sites need PWA. | 🟠 | ✅ IndexedDB outbox (timbrature + status/completion + photos) + Background Sync (2026-07-19). |
 | V10 | **No geolocated photos** — evidence lacks coordinates/time. | 🟡 | ⏳ schema landed (`photos.lat/lng/captured_at`); feature Phase 5a. |
 | V11 | **Hardcoded-Italian report labels** — report builders bypass `lang/it.php`. | 🟡 | ⏳ chipped away as report files are touched (Phase 6). |
 | V12 | **Deploy is plain-Docker only** — client wants Coolify on Hetzner. | 🟠 | ⏳ Phase 7. |

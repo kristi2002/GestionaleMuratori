@@ -46,6 +46,7 @@ echo View::render('partials/page_head', [
     </div>
 </div>
 
+<div class="alert alert-warning d-none js-offline-queue-banner" role="status"></div>
 <div class="alert alert-danger d-none js-attendance-error" role="alert"></div>
 <div class="alert alert-info d-none js-attendance-geo" role="status"><?= $e($t('attendance.locating')) ?></div>
 
