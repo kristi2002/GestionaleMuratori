@@ -302,6 +302,15 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Two-factor auth (2026-07-19, migration 030)
+
+- `users.totp_secret` (base32, nullable) + `users.totp_enabled` (TINYINT) — TOTP two-factor
+  (RFC 6238) via `App\Support\Totp` (dependency-free HMAC-SHA1). When enabled, login requires a
+  code as a second step (`AuthController::login`); backward-compatible (skipped otherwise).
+- `user_recovery_codes` — one-time backup codes (sha256-hashed `code_hash`, `used_at`,
+  FK → users `CASCADE`); 8 generated on enable, shown once, consumed via `UserRecoveryCodeModel`.
+  Self-service at `/2fa` (`TwoFactorController`).
+
 ## Addendum — Job time entries (2026-07-19, migration 029)
 
 - `intervention_time_entries` — per-intervention work timers: `intervention_id` (FK →

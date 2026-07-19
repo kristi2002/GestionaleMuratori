@@ -6,8 +6,10 @@ namespace App\Controllers;
 use App\Http\Middleware\AuthGuard;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Models\UserRecoveryCodeModel;
 use App\Services\LoginRateLimiter;
 use App\Support\Auth;
+use App\Support\Totp;
 use App\Support\Config;
 use App\Support\Lang;
 use App\Support\Mailer;
@@ -53,13 +55,31 @@ final class AuthController
         }
 
         $user = Auth::attempt($email, $password);
-        $limiter->record($email, $ip, $user !== null);
-
         if ($user === null) {
+            $limiter->record($email, $ip, false);
             Response::fail(Lang::get('auth.invalid_credentials'), 401);
             return;
         }
 
+        // Two-factor second step — only for accounts with TOTP enabled (others log
+        // in exactly as before). A correct password with a missing code is not a
+        // failed attempt; a wrong code is (so it counts toward the rate limiter).
+        if ((int) ($user['totp_enabled'] ?? 0) === 1) {
+            $code = trim((string) $request->input('code', ''));
+            if ($code === '') {
+                Response::json(['ok' => false, 'error' => Lang::get('auth.mfa_required'), 'mfa_required' => true], 401);
+                return;
+            }
+            $ok = Totp::verify((string) ($user['totp_secret'] ?? ''), $code)
+                || (new UserRecoveryCodeModel())->consume((int) $user['id'], $code);
+            if (!$ok) {
+                $limiter->record($email, $ip, false);
+                Response::fail(Lang::get('auth.mfa_invalid'), 401);
+                return;
+            }
+        }
+
+        $limiter->record($email, $ip, true);
         Auth::login($user);
         Response::ok(['redirect' => Auth::homeFor($user['role'])]);
     }

@@ -509,6 +509,42 @@ T::equals(422, $admin->post("/admin/leads/{$leadId}/convert")['status'], 'an alr
 $pdo->exec("DELETE FROM notifications WHERE dedup_key = 'lead:{$leadId}'");
 
 // ---------------------------------------------------------------------------
+T::section('E2E: two-factor login (TOTP)');
+// Enable 2FA on client2 with a known secret + one recovery code, then clean up.
+$mfaSecret = App\Support\Totp::base32Encode('12345678901234567890');
+$mfaUid = (int) $pdo->query("SELECT id FROM users WHERE email = 'client2@gestionale.local'")->fetchColumn();
+$pdo->exec("UPDATE users SET totp_secret = " . $pdo->quote($mfaSecret) . ", totp_enabled = 1 WHERE id = {$mfaUid}");
+$pdo->exec("DELETE FROM user_recovery_codes WHERE user_id = {$mfaUid}");
+$recoveryCode = 'aaaa-bbbb';
+$pdo->prepare('INSERT INTO user_recovery_codes (user_id, code_hash) VALUES (?, ?)')
+    ->execute([$mfaUid, App\Models\UserRecoveryCodeModel::hash($recoveryCode)]);
+
+$mfaLogin = static function () use ($baseUrl) {
+    $c = new HttpClient($baseUrl);
+    $page = $c->get('/login', ['json' => false]);
+    if (preg_match('/name="csrf-token" content="([a-f0-9]+)"/', $page['body'], $m)) { $c->csrf = $m[1]; }
+    return $c;
+};
+
+// Correct password, no code → not logged in, prompts for the code.
+$c = $mfaLogin();
+$r = $c->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password']);
+T::equals(401, $r['status'], 'password ok but 2FA required is not a login');
+T::ok(($r['json']['mfa_required'] ?? false) === true, 'response flags mfa_required');
+// Wrong code → rejected.
+T::equals(401, $c->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password', 'code' => '000000'])['status'], 'wrong 2FA code rejected');
+// Correct TOTP → logged in.
+T::ok(($c->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password', 'code' => App\Support\Totp::code($mfaSecret)])['json']['ok'] ?? false) === true, 'correct TOTP code logs in');
+// Recovery code logs in once, then is used up.
+T::ok(($mfaLogin()->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password', 'code' => $recoveryCode])['json']['ok'] ?? false) === true, 'a recovery code logs in');
+T::equals(401, $mfaLogin()->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password', 'code' => $recoveryCode])['status'], 'a recovery code is one-time');
+
+// Teardown: turn 2FA back off so later cases log in normally.
+$pdo->exec("UPDATE users SET totp_secret = NULL, totp_enabled = 0 WHERE id = {$mfaUid}");
+$pdo->exec("DELETE FROM user_recovery_codes WHERE user_id = {$mfaUid}");
+T::ok(($mfaLogin()->post('/login', ['email' => 'client2@gestionale.local', 'password' => 'password'])['json']['ok'] ?? false) === true, 'login without 2FA works again after disable');
+
+// ---------------------------------------------------------------------------
 T::section('E2E: output hygiene');
 foreach ([['/login', $anon], ['/admin', $admin], ['/worker', $worker3], ['/client', $client1]] as [$path, $client]) {
     $r = $client->get($path, ['json' => false]);

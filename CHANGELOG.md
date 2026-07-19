@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-19 — Two-factor authentication (TOTP)
+
+Optional 2FA closes the main remaining security gap — single-factor admin logins. Suite
+**753 passed, 0 failed**.
+
+- **Dependency-free TOTP** (`App\Support\Totp`, RFC 6238, HMAC-SHA1/30s/6-digit) — compatible
+  with Google Authenticator / Authy / FreeOTP. Verified against the RFC test vectors; no library.
+- **Self-service** at `/2fa` (linked from the change-password page): scan the secret / open the
+  `otpauth://` link, confirm a code to enable, and receive **8 one-time recovery codes** (shown
+  once, sha256-hashed at rest). Disable by re-confirming the password.
+- **Login second step**: for accounts with 2FA on, a correct password now prompts for a code
+  (`mfa_required`); a valid TOTP **or** a recovery code completes login. Wrong codes count
+  toward the rate limiter. **Fully backward-compatible** — accounts without 2FA log in exactly
+  as before.
+- New `users.totp_secret`/`totp_enabled` + `user_recovery_codes` table (migration 030),
+  `UserRecoveryCodeModel`, `TwoFactorController`. `auth.mfa_*` lang; sw → v38. TOTP-vector +
+  recovery-code + full login-flow (prompt/wrong/TOTP/recovery/one-time/disable) tests.
+
 ## 2026-07-19 — Drag-and-drop dispatch board
 
 The dispatch board becomes direct-manipulation scheduling, the way ServiceTitan/Jobber work.

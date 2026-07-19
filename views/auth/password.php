@@ -33,6 +33,17 @@ $t = static fn (string $key): string => Lang::get($key);
                     </div>
                     <button type="submit" class="btn btn-success w-100"><?= $e($t('common.save')) ?></button>
                 </form>
+
+                <hr class="my-4">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div>
+                        <div class="fw-semibold"><?= $e($t('auth.mfa_title')) ?></div>
+                        <div class="small text-muted"><?= $e($t('auth.mfa_subtitle')) ?></div>
+                    </div>
+                    <a class="btn btn-outline-secondary" href="<?= $e(Url::to('/2fa')) ?>">
+                        <i class="bi bi-shield-lock" aria-hidden="true"></i> <?= $e($t('auth.mfa_manage')) ?>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

@@ -443,6 +443,7 @@
         }
         var $error = $('#login-error');
         var $submit = $('#login-submit');
+        var $mfa = $('#login-mfa');
 
         $form.on('submit', function (e) {
             e.preventDefault();
@@ -451,7 +452,8 @@
 
             Api.post('/login', {
                 email: $('#email').val(),
-                password: $('#password').val()
+                password: $('#password').val(),
+                code: $('#code').val()
             }).done(function (res) {
                 if (res && res.ok && res.data && res.data.redirect) {
                     window.location.href = res.data.redirect;
@@ -459,11 +461,16 @@
                     showError((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
                 }
             }).fail(function (xhr) {
-                var msg = GM.t('common.connection_error', 'Errore di connessione.');
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    msg = xhr.responseJSON.error;
+                var body = xhr.responseJSON || {};
+                // Password OK but the account needs a 2FA code — reveal the field.
+                if (body.mfa_required) {
+                    $mfa.removeClass('d-none');
+                    $('#code').trigger('focus');
+                    $submit.prop('disabled', false).text(GM.t('auth.login_submit', 'Accedi'));
+                    if (body.error) { $error.removeClass('d-none').text(body.error); }
+                    return;
                 }
-                showError(msg);
+                showError(body.error || GM.t('common.connection_error', 'Errore di connessione.'));
             });
         });
 

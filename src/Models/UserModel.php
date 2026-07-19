@@ -145,6 +145,20 @@ final class UserModel
         ]);
     }
 
+    /** Turn on TOTP two-factor with a confirmed secret. */
+    public function enableTotp(int $id, string $secret): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE users SET totp_secret = ?, totp_enabled = 1 WHERE id = ?');
+        return $stmt->execute([$secret, $id]);
+    }
+
+    /** Turn off TOTP two-factor and forget the secret. */
+    public function disableTotp(int $id): bool
+    {
+        $stmt = Database::pdo()->prepare('UPDATE users SET totp_secret = NULL, totp_enabled = 0 WHERE id = ?');
+        return $stmt->execute([$id]);
+    }
+
     /** Persist the relative path of a stored avatar image (or null to clear it). */
     public function setAvatarPath(int $id, ?string $path): bool
     {

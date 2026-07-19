@@ -23,7 +23,10 @@ Conventions:
 |--------|------|-------------|
 | GET | `/` | Redirect to role landing page (or `/login`). |
 | GET | `/login` | Login page. |
-| POST | `/login` | Body: `email`, `password`. → `{ok, data:{redirect}}`; 401 bad credentials, 422 empty fields, **429 after 5 failures/15 min per email (20 per IP)** — attempts audited in `login_attempts`. |
+| POST | `/login` | Body: `email`, `password`, optional `code` (2FA). → `{ok, data:{redirect}}`; 401 bad credentials, 422 empty fields, **429 after 5 failures/15 min per email (20 per IP)**. If the account has 2FA on, a correct password with no `code` returns `401 {mfa_required:true}`; a valid TOTP or recovery `code` completes login. |
+| GET | `/2fa` | Two-factor self-service (any authenticated user): status, enable (secret + confirm), or disable. |
+| POST | `/2fa/enable` | Body: `code` (TOTP for the pending secret). Turns 2FA on, shows one-time recovery codes. |
+| POST | `/2fa/disable` | Body: `password` (re-confirm). Turns 2FA off and clears recovery codes. |
 | POST | `/logout` | Clears the session. → `{ok, data:{redirect}}` (or 302 for non-AJAX). *(GET /logout was removed.)* |
 | GET | `/forgot-password` | "Forgot password" request page. |
 | POST | `/forgot-password` | Body: `email`. Issues a reset token (always responds success so accounts aren't enumerable). |

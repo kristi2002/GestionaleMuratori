@@ -33,6 +33,12 @@ $showDemo = Config::get('app.env', 'local') !== 'production';
                     <input type="password" class="form-control form-control-lg" id="password" name="password"
                            autocomplete="current-password" required>
                 </div>
+                <div id="login-mfa" class="mb-2 d-none">
+                    <label for="code" class="form-label"><?= $e($t('auth.mfa_code_label')) ?></label>
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" class="form-control form-control-lg"
+                           id="code" name="code" placeholder="123456">
+                    <div class="form-text"><?= $e($t('auth.mfa_code_help')) ?></div>
+                </div>
                 <div class="text-end mb-3">
                     <a class="small app-login-forgot" href="<?= $e(Url::to('/forgot-password')) ?>"><?= $e($t('auth.login_forgot')) ?></a>
                 </div>
