@@ -1037,6 +1037,71 @@
             });
         }
 
+        // --- Intervention checklist: tick items (offline-capable) + admin manage --
+        function refreshTaskProgress($el) {
+            var $card = $el.closest('.card');
+            var $badge = $card.find('.js-task-progress');
+            if (!$badge.length) { return; }
+            var total = $card.find('.js-task-toggle').length;
+            var done = $card.find('.js-task-toggle:checked').length;
+            $badge.attr('data-done', done).attr('data-total', total).text(done + '/' + total);
+        }
+        function styleTaskLabel($cb, done) {
+            $cb.closest('.form-check, .d-flex').find('.js-task-label')
+                .toggleClass('text-decoration-line-through text-muted', done === 1);
+        }
+
+        // Toggle is an ABSOLUTE set ({done:1|0}), so a replayed offline write is idempotent.
+        $(document).on('change', '.js-task-toggle', function () {
+            var $cb = $(this);
+            var done = $cb.is(':checked') ? 1 : 0;
+            var url = $cb.data('url');
+            styleTaskLabel($cb, done);
+            refreshTaskProgress($cb);
+            Api.post(url, { done: done }).done(function (res) {
+                if (!(res && res.ok)) {
+                    $cb.prop('checked', done !== 1);
+                    styleTaskLabel($cb, done !== 1 ? 1 : 0);
+                    refreshTaskProgress($cb);
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 0) {
+                    Outbox.json(url, { done: done }); // offline — queue and stay optimistic
+                    return;
+                }
+                $cb.prop('checked', done !== 1);
+                styleTaskLabel($cb, done !== 1 ? 1 : 0);
+                refreshTaskProgress($cb);
+                Dialog.alert(failMessage(xhr));
+            });
+        });
+
+        // Admin: add a checklist item.
+        $(document).on('submit', '.js-task-add-form', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var label = $.trim($form.find('input[name="label"]').val());
+            if (!label) { return; }
+            Api.post($form.data('url'), { label: label }).done(function (res) {
+                if (res && res.ok) { window.location.reload(); }
+                else { Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.')); }
+            }).fail(function (xhr) { Dialog.alert(failMessage(xhr)); });
+        });
+
+        // Admin: delete a checklist item.
+        $(document).on('click', '.js-task-delete', function () {
+            var $btn = $(this);
+            Dialog.confirm($btn.data('confirm'), {
+                onConfirm: function () {
+                    Api.post($btn.data('url')).done(function (res) {
+                        if (res && res.ok) { window.location.reload(); }
+                        else { Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.')); }
+                    }).fail(function (xhr) { Dialog.alert(failMessage(xhr)); });
+                }
+            });
+        });
+
         // --- Worker: photo upload (offline-friendly via the outbox) --------------
         // Compresses client-side before upload; on a network failure (offline —
         // distinct from a server-side validation rejection) the compressed photo is

@@ -311,6 +311,29 @@ T::equals(422, $r['status'], 'worker quick-transition to completed rejected (mus
 $r = $worker3->post("/worker/interventions/{$e2eIvId}/status", ['to_status' => 'in_progress']);
 T::equals(200, $r['status'], 'worker starts the intervention');
 
+// --- Intervention checklist (migration 026): admin manage + worker toggle ----
+T::section('Intervention checklist: RBAC + ownership + idempotent toggle');
+$rTask = $admin->post("/admin/interventions/{$e2eIvId}/tasks", ['label' => 'Scrostare la parete']);
+T::ok(($rTask['json']['ok'] ?? false) === true, 'admin adds a checklist item');
+$taskId = (int) $pdo->query("SELECT id FROM intervention_tasks WHERE intervention_id = {$e2eIvId} ORDER BY id DESC LIMIT 1")->fetchColumn();
+T::ok($taskId > 0, 'checklist item persisted');
+T::equals(422, $admin->post("/admin/interventions/{$e2eIvId}/tasks", ['label' => ''])['status'], 'empty label rejected');
+
+// A non-owner worker cannot toggle; the owner can.
+T::equals(404, $worker1->post("/worker/interventions/{$e2eIvId}/tasks/{$taskId}/toggle", ['done' => 1])['status'], "non-owner worker can't toggle a checklist item");
+T::ok(($worker3->post("/worker/interventions/{$e2eIvId}/tasks/{$taskId}/toggle", ['done' => 1])['json']['ok'] ?? false) === true, 'owner worker ticks the item');
+T::equals(1, (int) $pdo->query("SELECT is_done FROM intervention_tasks WHERE id = {$taskId}")->fetchColumn(), 'item marked done');
+// Absolute set → replay is idempotent (offline-safe).
+$worker3->post("/worker/interventions/{$e2eIvId}/tasks/{$taskId}/toggle", ['done' => 1]);
+T::equals(1, (int) $pdo->query("SELECT is_done FROM intervention_tasks WHERE id = {$taskId}")->fetchColumn(), 'repeated done stays done (idempotent)');
+$worker3->post("/worker/interventions/{$e2eIvId}/tasks/{$taskId}/toggle", ['done' => 0]);
+T::equals(0, (int) $pdo->query("SELECT is_done FROM intervention_tasks WHERE id = {$taskId}")->fetchColumn(), 'owner unticks the item');
+// A task id under the wrong intervention is a 404 (no cross-intervention writes).
+T::equals(404, $admin->post("/admin/interventions/999999/tasks/{$taskId}/toggle", ['done' => 1])['status'], 'cross-intervention toggle rejected');
+// Admin deletes it.
+T::ok(($admin->post("/admin/interventions/{$e2eIvId}/tasks/{$taskId}/delete")['json']['ok'] ?? false) === true, 'admin deletes the checklist item');
+T::equals(0, (int) $pdo->query("SELECT COUNT(*) FROM intervention_tasks WHERE id = {$taskId}")->fetchColumn(), 'checklist item removed');
+
 $matId = (int) $pdo->query("SELECT id FROM intervention_materials WHERE intervention_id = {$e2eIvId}")->fetchColumn();
 $r = $worker3->post("/worker/interventions/{$e2eIvId}/complete", ["qty_used[{$matId}]" => '3']);
 T::equals(422, $r['status'], 'completion blocked without after photo');

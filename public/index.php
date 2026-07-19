@@ -196,6 +196,9 @@ $router->get('/admin/interventions/{id}',           [InterventionController::cla
 $router->post('/admin/interventions/{id}',          [InterventionController::class, 'update']);
 $router->post('/admin/interventions/{id}/status',   [InterventionController::class, 'status']);
 $router->post('/admin/interventions/{id}/reassign', [InterventionController::class, 'reassign']);
+$router->post('/admin/interventions/{id}/tasks',                  [InterventionController::class, 'addTask']);
+$router->post('/admin/interventions/{id}/tasks/{taskId}/toggle', [InterventionController::class, 'toggleTask']);
+$router->post('/admin/interventions/{id}/tasks/{taskId}/delete', [InterventionController::class, 'deleteTask']);
 $router->get('/admin/interventions/{id}/signature', [InterventionController::class, 'signature']);
 
 // --- Preventivi (Quotes) ---
@@ -311,6 +314,7 @@ $router->get('/worker',                                  [TaskController::class,
 $router->get('/worker/interventions/{id}',                [TaskController::class, 'show']);
 $router->post('/worker/interventions/{id}/status',         [TaskController::class, 'status']);
 $router->post('/worker/interventions/{id}/complete',       [TaskController::class, 'complete']);
+$router->post('/worker/interventions/{id}/tasks/{taskId}/toggle', [TaskController::class, 'toggleTask']);
 $router->post('/worker/interventions/{id}/signature',      [TaskController::class, 'saveSignature']);
 $router->get('/worker/interventions/{id}/signature',       [TaskController::class, 'signature']);
 $router->post('/worker/interventions/{id}/photos',         [PhotoController::class, 'upload']);

@@ -42,6 +42,45 @@ echo View::render('partials/page_head', [
             </div>
         <?php endif; ?>
 
+        <?php
+        $tasks     = $tasks ?? [];
+        $taskDone  = 0;
+        foreach ($tasks as $task) { $taskDone += (int) $task['is_done'] === 1 ? 1 : 0; }
+        $taskTotal = count($tasks);
+        ?>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><?= $e($t('admin.interventions.checklist')) ?></span>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis js-task-progress"
+                      data-done="<?= (int) $taskDone ?>" data-total="<?= (int) $taskTotal ?>"><?= (int) $taskDone ?>/<?= (int) $taskTotal ?></span>
+            </div>
+            <div class="card-body">
+                <?php if ($tasks !== []): ?>
+                    <div class="js-task-list mb-3">
+                        <?php foreach ($tasks as $task): $done = (int) $task['is_done'] === 1; ?>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <input class="form-check-input mt-0 js-task-toggle" type="checkbox"
+                                       data-url="<?= $e(Url::to('/admin/interventions/' . $intervention['id'] . '/tasks/' . $task['id'] . '/toggle')) ?>"
+                                       <?= $done ? 'checked' : '' ?>>
+                                <span class="flex-grow-1 js-task-label <?= $done ? 'text-decoration-line-through text-muted' : '' ?>"><?= $e($task['label']) ?></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger js-task-delete"
+                                        data-url="<?= $e(Url::to('/admin/interventions/' . $intervention['id'] . '/tasks/' . $task['id'] . '/delete')) ?>"
+                                        data-confirm="<?= $e($t('admin.interventions.checklist_delete_confirm')) ?>"
+                                        aria-label="<?= $e($t('common.delete')) ?>"><i class="bi bi-trash" aria-hidden="true"></i></button>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p class="text-muted small"><?= $e($t('admin.interventions.checklist_empty')) ?></p>
+                <?php endif; ?>
+                <form class="js-task-add-form d-flex gap-2" data-url="<?= $e(Url::to('/admin/interventions/' . $intervention['id'] . '/tasks')) ?>">
+                    <input type="text" class="form-control form-control-sm" name="label" maxlength="255"
+                           placeholder="<?= $e($t('admin.interventions.checklist_add_placeholder')) ?>" required>
+                    <button type="submit" class="btn btn-sm btn-success"><?= $e($t('admin.interventions.checklist_add')) ?></button>
+                </form>
+            </div>
+        </div>
+
         <div class="card mb-3">
             <div class="card-header"><?= $e($t('admin.interventions.materials')) ?></div>
             <div class="card-body">

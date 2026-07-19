@@ -78,6 +78,36 @@ echo View::render('partials/page_head', [
     </div>
 </div>
 
+<?php
+$tasks     = $tasks ?? [];
+$taskDone  = 0;
+foreach ($tasks as $task) { $taskDone += (int) $task['is_done'] === 1 ? 1 : 0; }
+$taskTotal = count($tasks);
+?>
+<?php if ($taskTotal > 0): ?>
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><?= $e($t('worker.checklist')) ?></span>
+        <span class="badge bg-secondary-subtle text-secondary-emphasis js-task-progress"
+              data-done="<?= (int) $taskDone ?>" data-total="<?= (int) $taskTotal ?>"><?= (int) $taskDone ?>/<?= (int) $taskTotal ?></span>
+    </div>
+    <div class="card-body">
+        <div class="js-task-list">
+            <?php foreach ($tasks as $task): $done = (int) $task['is_done'] === 1; ?>
+                <div class="form-check mb-2">
+                    <input class="form-check-input js-task-toggle" type="checkbox" id="task-<?= $e((string) $task['id']) ?>"
+                           data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/tasks/' . $task['id'] . '/toggle')) ?>"
+                           <?= $done ? 'checked' : '' ?>>
+                    <label class="form-check-label js-task-label <?= $done ? 'text-decoration-line-through text-muted' : '' ?>" for="task-<?= $e((string) $task['id']) ?>">
+                        <?= $e($task['label']) ?>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php if ($materials === [] && !$isOpen): ?>
     <!-- no materials, nothing to show -->
 <?php else: ?>

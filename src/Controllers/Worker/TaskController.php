@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Http\Middleware\InterventionOwnerGuard;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
+use App\Models\InterventionTaskModel;
 use App\Models\PhotoModel;
 use App\Services\InterventionService;
 use App\Services\PhotoStreamService;
@@ -40,6 +41,15 @@ final class TaskController
         $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
         $interventions = (new InterventionModel())->forWorkerTab((int) Auth::id(), $tab, $today);
 
+        // Attach checklist progress in one batched query (no N+1).
+        $progress = (new InterventionTaskModel())->progressForInterventions(
+            array_map(static fn (array $i): int => (int) $i['id'], $interventions)
+        );
+        foreach ($interventions as &$iv) {
+            $iv['task_progress'] = $progress[(int) $iv['id']] ?? ['done' => 0, 'total' => 0];
+        }
+        unset($iv);
+
         Response::html(View::render('worker/today', [
             'title'         => Lang::get('worker.today_title'),
             'interventions' => $interventions,
@@ -67,7 +77,28 @@ final class TaskController
             'intervention' => $intervention,
             'materials'    => $materials,
             'photosByType' => $photosByType,
+            'tasks'        => (new InterventionTaskModel())->forIntervention((int) $id),
         ], 'layout'));
+    }
+
+    /** POST /worker/interventions/{id}/tasks/{taskId}/toggle — tick a checklist item. */
+    public function toggleTask(Request $request, string $id, string $taskId): void
+    {
+        AuthGuard::require($request, ['worker']);
+        $intervention = InterventionOwnerGuard::require($request, $id, (int) Auth::id());
+        if ($intervention === null) {
+            return;
+        }
+
+        $model = new InterventionTaskModel();
+        $task  = $model->find((int) $taskId);
+        if ($task === null || (int) $task['intervention_id'] !== (int) $id) {
+            Response::fail(Lang::get('worker.not_found'), 404);
+            return;
+        }
+
+        $model->setDone((int) $taskId, (int) $request->input('done', 0) === 1, (int) Auth::id());
+        Response::ok();
     }
 
     public function status(Request $request, string $id): void

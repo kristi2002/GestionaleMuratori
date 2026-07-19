@@ -87,9 +87,12 @@ Conventions:
 | GET | `/admin/interventions/dispatch` | `from` (YYYY-MM-DD, default today) | Workload/dispatch board: 7-day window grouped by worker, per-day double-booking flags, quick reassign. |
 | POST | `/admin/interventions/{id}/reassign` | `worker_id` (0 = unassign) | Set/clear the assigned worker from the dispatch board (role-checked; 422 for a non-worker). |
 | POST | `/admin/interventions` | `project_id`*, `title`*, `assigned_worker_id` (role-checked), `description`, `scheduled_date`, `scheduled_start_time`, repeated `item_id[]` + `qty_planned[]` | Create + reserve materials in one transaction. 422 with Italian message on insufficient stock / invalid item / duplicate item. |
-| GET | `/admin/interventions/{id}` | — | Detail page: metadata, planned vs used materials, photos by type, signature, completion notes, full status history. |
+| GET | `/admin/interventions/{id}` | — | Detail page: metadata, checklist, planned vs used materials, photos by type, signature, completion notes, full status history. |
 | POST | `/admin/interventions/{id}` | title/worker/description/schedule fields | Update basic fields (no project, no materials, no status). |
 | POST | `/admin/interventions/{id}/status` | `to_status` | State-machine transition (admin may also cancel `pending`). Cancellation releases reservations. |
+| POST | `/admin/interventions/{id}/tasks` | `label`* (≤255) | Add a checklist item. → `{ok,data:{id}}`; 422 on empty/too-long label. |
+| POST | `/admin/interventions/{id}/tasks/{taskId}/toggle` | `done` (1\|0) | Set a checklist item's absolute done state. 404 if the task isn't under this intervention. |
+| POST | `/admin/interventions/{id}/tasks/{taskId}/delete` | — | Remove a checklist item. |
 | GET | `/admin/interventions/{id}/signature` | — | Stream the client signature PNG. |
 
 ### Users
@@ -119,8 +122,9 @@ Conventions:
 | Method | Path | Body / params | Description |
 |--------|------|---------------|-------------|
 | GET | `/worker` | `tab` = `today` (default) \| `upcoming` (open future/unscheduled) \| `done` (completed, last 14 days) | "My Tasks" list. |
-| GET | `/worker/interventions/{id}` | — | Task detail: materials, photos by type, signature pad, complete form. |
+| GET | `/worker/interventions/{id}` | — | Task detail: checklist, materials, photos by type, signature pad, complete form. |
 | POST | `/worker/interventions/{id}/status` | `to_status` ∈ `in_progress|on_hold|cancelled` | Quick transition. |
+| POST | `/worker/interventions/{id}/tasks/{taskId}/toggle` | `done` (1\|0) | Tick/untick a checklist item (offline-queued; absolute state, idempotent). Owner-scoped (404 otherwise). |
 | POST | `/worker/interventions/{id}/complete` | `qty_used[materialId]` for every material, `completion_notes` | §4.2 commit + §4.4 gate. Only from `in_progress`. 422 when a qty is missing/invalid or no `after` photo. |
 | POST | `/worker/interventions/{id}/signature` | `signature` = PNG data-URL (≤5 MB) | Store canvas signature. |
 | GET | `/worker/interventions/{id}/signature` | — | Stream saved signature PNG. |

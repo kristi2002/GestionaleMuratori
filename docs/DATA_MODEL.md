@@ -302,6 +302,16 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Intervention checklists (2026-07-19, migration 026)
+
+- `intervention_tasks` — checklist / punch-list items on an intervention: `intervention_id`
+  (FK → interventions, `ON DELETE CASCADE`), `label`, `is_done TINYINT(1)`, `position`,
+  `done_by` (FK → users, `SET NULL`), `done_at`, `created_by` (FK → users, `RESTRICT`).
+- `App\Models\InterventionTaskModel::setDone()` writes an **absolute** state (not a flip) so a
+  replayed offline-queued worker toggle is idempotent. Progress is exposed per-intervention and
+  batched (`progressForInterventions`) to avoid N+1 on list pages. Worker writes go through the
+  IndexedDB outbox; the owner guard (`InterventionOwnerGuard`) scopes toggles to the assignee.
+
 ## Addendum — Labor rate (2026-07-19, migration 025)
 
 - `users.hourly_rate` (nullable `DECIMAL(10,2)`) — a worker's pay/charge rate, €/hour.

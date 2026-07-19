@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 use App\Http\Middleware\AuthGuard;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
+use App\Models\InterventionTaskModel;
 use App\Models\PhotoModel;
 use App\Models\ProjectModel;
 use App\Models\UserModel;
@@ -313,7 +314,63 @@ final class InterventionController
             'materials'    => (new InterventionMaterialModel())->forIntervention((int) $id),
             'history'      => $model->statusHistory((int) $id),
             'photosByType' => $photosByType,
+            'tasks'        => (new InterventionTaskModel())->forIntervention((int) $id),
         ], 'layout'));
+    }
+
+    /** POST /admin/interventions/{id}/tasks — add a checklist item. */
+    public function addTask(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+        if ((new InterventionModel())->find((int) $id) === null) {
+            Response::fail(Lang::get('admin.interventions.not_found'), 404);
+            return;
+        }
+
+        $label = trim((string) $request->input('label', ''));
+        if ($label === '' || mb_strlen($label) > 255) {
+            Response::fail(Lang::get('admin.interventions.task_label_required'), 422);
+            return;
+        }
+
+        $taskId = (new InterventionTaskModel())->create([
+            'intervention_id' => (int) $id,
+            'label'           => $label,
+            'created_by'      => (int) Auth::id(),
+        ]);
+        Response::ok(['id' => $taskId]);
+    }
+
+    /** POST /admin/interventions/{id}/tasks/{taskId}/toggle — tick/untick a checklist item. */
+    public function toggleTask(Request $request, string $id, string $taskId): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new InterventionTaskModel();
+        $task  = $model->find((int) $taskId);
+        if ($task === null || (int) $task['intervention_id'] !== (int) $id) {
+            Response::fail(Lang::get('admin.interventions.not_found'), 404);
+            return;
+        }
+
+        $model->setDone((int) $taskId, (int) $request->input('done', 0) === 1, (int) Auth::id());
+        Response::ok();
+    }
+
+    /** POST /admin/interventions/{id}/tasks/{taskId}/delete — remove a checklist item. */
+    public function deleteTask(Request $request, string $id, string $taskId): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model = new InterventionTaskModel();
+        $task  = $model->find((int) $taskId);
+        if ($task === null || (int) $task['intervention_id'] !== (int) $id) {
+            Response::fail(Lang::get('admin.interventions.not_found'), 404);
+            return;
+        }
+
+        $model->delete((int) $taskId);
+        Response::ok();
     }
 
     /** GET /admin/interventions/{id}/signature — streams the client signature PNG. */

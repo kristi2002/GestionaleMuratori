@@ -63,11 +63,20 @@ echo View::render('partials/filter_pills', ['pills' => [
                         $timeLine = ['bi-clock', substr((string) $iv['scheduled_start_time'], 0, 5)];
                     }
                     ?>
-                    <?php if ($timeLine !== null): ?>
-                        <p class="small mb-0 app-card-meta">
-                            <i class="bi <?= $e($timeLine[0]) ?>" aria-hidden="true"></i> <?= $e($timeLine[1]) ?>
-                        </p>
-                    <?php endif; ?>
+                    <div class="d-flex align-items-center gap-3">
+                        <?php if ($timeLine !== null): ?>
+                            <p class="small mb-0 app-card-meta">
+                                <i class="bi <?= $e($timeLine[0]) ?>" aria-hidden="true"></i> <?= $e($timeLine[1]) ?>
+                            </p>
+                        <?php endif; ?>
+                        <?php $prog = $iv['task_progress'] ?? ['done' => 0, 'total' => 0]; ?>
+                        <?php if ((int) $prog['total'] > 0): ?>
+                            <p class="small mb-0 app-card-meta <?= (int) $prog['done'] === (int) $prog['total'] ? 'text-success' : '' ?>">
+                                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                <?= (int) $prog['done'] ?>/<?= (int) $prog['total'] ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </a>
         <?php endforeach; ?>

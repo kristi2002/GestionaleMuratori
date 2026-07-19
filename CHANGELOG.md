@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-19 — Intervention checklists / punch lists
+
+On-site task lists a worker ticks off as they go — the feature Fieldwire/Procore/Jobber are
+built around. Suite **650 passed, 0 failed**.
+
+- **New `intervention_tasks`** child table (migration 026). Admins add/remove items on the
+  intervention detail page; the assigned worker ticks them off from their portal.
+- **Offline-capable**: the worker toggle posts an **absolute** state (`{done:1|0}`), so a
+  replayed offline-queued write is idempotent (unlike a flip) — it rides the existing
+  IndexedDB outbox + Background Sync. `InterventionTaskModel::setDone()` stamps who/when.
+- **Progress everywhere**: an "X/Y done" badge on both detail pages and on the worker's job
+  cards (batched query, no N+1).
+- **RBAC/ownership**: workers can only toggle items on their own intervention (404 otherwise,
+  via `InterventionOwnerGuard`); a task id under the wrong intervention is rejected. New
+  `/admin/interventions/{id}/tasks[...]` and `/worker/interventions/{id}/tasks/{taskId}/toggle`
+  routes; `admin.interventions.checklist_*` / `worker.checklist` lang strings; sw → v34.
+
 ## 2026-07-19 — Labor-hours costing
 
 Turns the Badge di Cantiere timestamps into money: hours and labor cost per cantiere and
