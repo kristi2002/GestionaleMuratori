@@ -90,6 +90,8 @@ return [
         'quote_expired_body'        => 'Il preventivo "%s" ha superato la data di validità ed è stato marcato come scaduto.',
         'intervention_overdue'      => 'Intervento in ritardo: %s',
         'intervention_overdue_body' => 'Cantiere %s — previsto per il %s.',
+        'intervention_assigned'      => 'Nuovo intervento assegnato: %s',
+        'intervention_assigned_body' => 'Cantiere %s — previsto per il %s.',
         'low_stock'                 => 'Scorta bassa: %s',
         'low_stock_body'            => 'Giacenza %s %s (soglia %s).',
         'digest_subject'            => 'Riepilogo avvisi — %s',

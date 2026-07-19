@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-19 — Worker-targeted notifications + push
+
+Completes the Web Push feature: alerts now reach the field worker, not just admins and
+clients. Suite **619 passed, 0 failed**.
+
+- **Overdue interventions** now also notify their **assigned worker** on a user-scoped feed
+  (and push their devices), linking to the worker's own intervention page — not just the
+  admin/global alert. (`SchedulerService::generateOverdueInterventions`.)
+- **Dispatch reassignment** notifies the **newly-assigned worker** ("Nuovo intervento
+  assegnato"), firing only on a genuine change of worker. (`InterventionController::reassign`.)
+- New reusable `NotificationService::notifyUser()` (user-scoped create + best-effort push),
+  new `notifications.intervention_assigned[_body]` strings, and two e2e assertions in
+  `19_scheduler_notifications.php`.
+
 ## 2026-07-19 — Web Push notifications (VAPID, dependency-free)
 
 Alerts now reach a phone lock screen, not just the in-app bell. Suite **617 passed, 0 failed**.

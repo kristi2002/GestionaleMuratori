@@ -116,7 +116,7 @@ final class SchedulerService
     private function generateOverdueInterventions(string $today, array &$fresh): int
     {
         $stmt = Database::pdo()->prepare(
-            "SELECT i.id, i.title, i.scheduled_date, p.name AS project_name
+            "SELECT i.id, i.title, i.scheduled_date, i.assigned_worker_id, p.name AS project_name
              FROM interventions i JOIN projects p ON p.id = i.project_id
              WHERE i.status IN ('pending','in_progress','on_hold')
                AND i.scheduled_date IS NOT NULL AND i.scheduled_date < ?"
@@ -125,18 +125,32 @@ final class SchedulerService
 
         $count = 0;
         foreach ($stmt->fetchAll() as $iv) {
+            $title = sprintf(Lang::get('notifications.intervention_overdue'), (string) $iv['title']);
+            $body  = sprintf(
+                Lang::get('notifications.intervention_overdue_body'),
+                (string) $iv['project_name'],
+                (string) $iv['scheduled_date']
+            );
             $count += $this->push([
                 'type'      => 'intervention_overdue',
                 'severity'  => 'warning',
-                'title'     => sprintf(Lang::get('notifications.intervention_overdue'), (string) $iv['title']),
-                'body'      => sprintf(
-                    Lang::get('notifications.intervention_overdue_body'),
-                    (string) $iv['project_name'],
-                    (string) $iv['scheduled_date']
-                ),
+                'title'     => $title,
+                'body'      => $body,
                 'link'      => '/admin/interventions/' . $iv['id'],
                 'dedup_key' => 'intervention_overdue:' . $iv['id'] . ':' . $iv['scheduled_date'],
             ], $fresh);
+
+            // Also alert the assigned worker on their own feed (and push their devices).
+            if ($iv['assigned_worker_id'] !== null) {
+                NotificationService::notifyUser((int) $iv['assigned_worker_id'], [
+                    'type'      => 'intervention_overdue',
+                    'severity'  => 'warning',
+                    'title'     => $title,
+                    'body'      => $body,
+                    'link'      => '/worker/interventions/' . $iv['id'],
+                    'dedup_key' => 'intervention_overdue:worker:' . $iv['id'] . ':' . $iv['scheduled_date'],
+                ]);
+            }
         }
         return $count;
     }

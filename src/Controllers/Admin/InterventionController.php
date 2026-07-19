@@ -11,6 +11,7 @@ use App\Models\ProjectModel;
 use App\Models\UserModel;
 use App\Models\WarehouseItemModel;
 use App\Services\InterventionService;
+use App\Services\NotificationService;
 use App\Services\PhotoStreamService;
 use App\Support\Auth;
 use App\Support\Csv;
@@ -201,7 +202,8 @@ final class InterventionController
         AuthGuard::require($request, ['admin']);
 
         $model = new InterventionModel();
-        if ($model->find((int) $id) === null) {
+        $iv    = $model->find((int) $id);
+        if ($iv === null) {
             Response::fail(Lang::get('admin.interventions.not_found'), 404);
             return;
         }
@@ -216,6 +218,24 @@ final class InterventionController
         }
 
         $model->reassign((int) $id, $workerId > 0 ? $workerId : null);
+
+        // Alert the newly-assigned worker on their own feed (and push their devices).
+        // Only on an actual (re)assignment to a different worker — not on unassign.
+        if ($workerId > 0 && (int) ($iv['assigned_worker_id'] ?? 0) !== $workerId) {
+            NotificationService::notifyUser($workerId, [
+                'type'      => 'intervention_assigned',
+                'severity'  => 'info',
+                'title'     => sprintf(Lang::get('notifications.intervention_assigned'), (string) $iv['title']),
+                'body'      => sprintf(
+                    Lang::get('notifications.intervention_assigned_body'),
+                    (string) $iv['project_name'],
+                    $iv['scheduled_date'] !== null ? (string) $iv['scheduled_date'] : '—'
+                ),
+                'link'      => '/worker/interventions/' . $id,
+                'dedup_key' => 'intervention_assigned:' . $id . ':' . $workerId,
+            ]);
+        }
+
         Response::ok();
     }
 

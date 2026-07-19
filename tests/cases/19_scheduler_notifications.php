@@ -21,7 +21,19 @@ $run1 = (new SchedulerService())->run();
 T::ok($run1['total'] > 0, 'first run creates notifications from seed data');
 T::ok($run1['created']['compliance_expiry'] >= 2, 'compliance expiries detected (seed has expiring + expired)');
 T::ok($run1['created']['intervention_overdue'] >= 1, 'overdue intervention detected');
-T::equals($run1['total'], $notif->unreadCount(), 'all created notifications start unread');
+T::equals($run1['total'], $notif->unreadCount(), 'all created notifications start unread (global feed only)');
+
+// Overdue interventions also alert their assigned worker on the worker-scoped feed.
+$expectWorkerOverdue = (int) $pdo->query(
+    "SELECT COUNT(*) FROM interventions
+     WHERE status IN ('pending','in_progress','on_hold')
+       AND scheduled_date IS NOT NULL AND scheduled_date < CURDATE()
+       AND assigned_worker_id IS NOT NULL"
+)->fetchColumn();
+$actualWorkerOverdue = (int) $pdo->query(
+    "SELECT COUNT(*) FROM notifications WHERE type = 'intervention_overdue' AND user_id IS NOT NULL"
+)->fetchColumn();
+T::equals($expectWorkerOverdue, $actualWorkerOverdue, 'each overdue intervention with a worker notifies that worker');
 
 $run2 = (new SchedulerService())->run();
 T::equals(0, $run2['total'], 'second run is idempotent (no duplicates)');
@@ -169,9 +181,15 @@ $ivId         = (int) $pdo->query("SELECT id FROM interventions ORDER BY id LIMI
 $wId          = (int) $pdo->query("SELECT id FROM users WHERE role = 'worker' AND is_active = 1 ORDER BY id LIMIT 1")->fetchColumn();
 $clientUserId = (int) $pdo->query("SELECT id FROM users WHERE role = 'client' ORDER BY id LIMIT 1")->fetchColumn();
 
+$prevWorker = (int) $pdo->query("SELECT COALESCE(assigned_worker_id, 0) FROM interventions WHERE id = {$ivId}")->fetchColumn();
 $ra = $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $wId]);
 T::ok(($ra['json']['ok'] ?? false) === true, 'admin reassigns an intervention to a worker');
 T::equals($wId, (int) $pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn(), 'worker assignment persisted');
+// A notification is created only when the assignment actually changed worker.
+T::equals($prevWorker === $wId ? 0 : 1, (int) $pdo->query(
+    "SELECT COUNT(*) FROM notifications WHERE type = 'intervention_assigned' AND user_id = {$wId}
+     AND link = '/worker/interventions/{$ivId}'"
+)->fetchColumn(), 'a genuine (re)assignment notifies the newly-assigned worker');
 T::equals(422, $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => $clientUserId])['status'], 'cannot assign a non-worker user');
 $admin->post('/admin/interventions/' . $ivId . '/reassign', ['worker_id' => 0]);
 T::ok($pdo->query("SELECT assigned_worker_id FROM interventions WHERE id = {$ivId}")->fetchColumn() === null, 'worker_id 0 unassigns (NULL)');

@@ -41,4 +41,24 @@ final class NotificationService
         }
         return $created;
     }
+
+    /**
+     * Create one user-scoped notification and push it to that user's devices.
+     * Idempotent via dedup_key; returns true when a new row was created (and a push
+     * attempted). Best-effort push — a no-op when Web Push is unconfigured.
+     *
+     * @param array{type:string,severity?:string,title:string,body?:?string,link?:?string,dedup_key:string} $data
+     */
+    public static function notifyUser(int $userId, array $data): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+        $data['user_id'] = $userId;
+        if (!(new NotificationModel())->createIfAbsent($data)) {
+            return false;
+        }
+        PushService::sendToUser($userId);
+        return true;
+    }
 }
