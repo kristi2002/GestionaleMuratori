@@ -1116,6 +1116,37 @@
             });
         });
 
+        // Worker: start/stop a job timer, then reload to reflect the new state.
+        $(document).on('click', '.js-timer-toggle', function () {
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            Api.post($btn.data('url'), {}).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    $btn.prop('disabled', false);
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                $btn.prop('disabled', false);
+                Dialog.alert(failMessage(xhr));
+            });
+        });
+
+        // Live elapsed ticker for a running job timer. Increments from a server-provided
+        // seconds count, so there is no client/server clock-skew.
+        $(function () {
+            var el = document.querySelector('.js-timer-elapsed[data-elapsed]');
+            if (!el) { return; }
+            var s = parseInt(el.getAttribute('data-elapsed'), 10) || 0;
+            function fmt(n) {
+                var h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), x = n % 60;
+                return h + ':' + ('0' + m).slice(-2) + ':' + ('0' + x).slice(-2);
+            }
+            el.textContent = fmt(s);
+            window.setInterval(function () { s++; el.textContent = fmt(s); }, 1000);
+        });
+
         // --- Worker: photo upload (offline-friendly via the outbox) --------------
         // Compresses client-side before upload; on a network failure (offline —
         // distinct from a server-side validation rejection) the compressed photo is

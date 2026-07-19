@@ -8,6 +8,7 @@ use App\Http\Middleware\InterventionOwnerGuard;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
 use App\Models\InterventionTaskModel;
+use App\Models\InterventionTimeEntryModel;
 use App\Models\PhotoModel;
 use App\Services\InterventionService;
 use App\Services\PhotoStreamService;
@@ -72,13 +73,58 @@ final class TaskController
             $photosByType[$photo['type']][] = $photo;
         }
 
+        $timeModel = new InterventionTimeEntryModel();
+        $running   = $timeModel->runningForUser((int) Auth::id());
+        $timerHere = ($running !== null && (int) $running['intervention_id'] === (int) $id) ? $running : null;
+
         Response::html(View::render('worker/show', [
-            'title'        => $intervention['title'],
-            'intervention' => $intervention,
-            'materials'    => $materials,
-            'photosByType' => $photosByType,
-            'tasks'        => (new InterventionTaskModel())->forIntervention((int) $id),
+            'title'           => $intervention['title'],
+            'intervention'    => $intervention,
+            'materials'       => $materials,
+            'photosByType'    => $photosByType,
+            'tasks'           => (new InterventionTaskModel())->forIntervention((int) $id),
+            'timerHere'       => $timerHere,
+            'timerOtherTitle' => ($running !== null && $timerHere === null) ? (string) $running['intervention_title'] : null,
+            'timeTotal'       => $timeModel->totalSeconds((int) $id),
+            'timerElapsed'    => $timerHere !== null ? $timeModel->elapsedSeconds((int) $timerHere['id']) : 0,
         ], 'layout'));
+    }
+
+    /** POST /worker/interventions/{id}/timer/start — start a work timer on this job. */
+    public function startTimer(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['worker']);
+        $intervention = InterventionOwnerGuard::require($request, $id, (int) Auth::id());
+        if ($intervention === null) {
+            return;
+        }
+
+        $model   = new InterventionTimeEntryModel();
+        $running = $model->runningForUser((int) Auth::id());
+        if ($running !== null) {
+            if ((int) $running['intervention_id'] === (int) $id) {
+                Response::ok(); // already timing this job — no-op
+                return;
+            }
+            Response::fail(sprintf(Lang::get('worker.timer_busy'), (string) $running['intervention_title']), 422);
+            return;
+        }
+
+        $model->start((int) $id, (int) Auth::id());
+        Response::ok();
+    }
+
+    /** POST /worker/interventions/{id}/timer/stop — stop the running timer on this job. */
+    public function stopTimer(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['worker']);
+        $intervention = InterventionOwnerGuard::require($request, $id, (int) Auth::id());
+        if ($intervention === null) {
+            return;
+        }
+
+        (new InterventionTimeEntryModel())->stop((int) $id, (int) Auth::id());
+        Response::ok();
     }
 
     /** POST /worker/interventions/{id}/tasks/{taskId}/toggle — tick a checklist item. */

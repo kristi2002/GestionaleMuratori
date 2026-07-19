@@ -140,6 +140,7 @@ Conventions:
 | GET | `/worker/interventions/{id}` | — | Task detail: checklist, materials, photos by type, signature pad, complete form. |
 | POST | `/worker/interventions/{id}/status` | `to_status` ∈ `in_progress|on_hold|cancelled` | Quick transition. |
 | POST | `/worker/interventions/{id}/tasks/{taskId}/toggle` | `done` (1\|0) | Tick/untick a checklist item (offline-queued; absolute state, idempotent). Owner-scoped (404 otherwise). |
+| POST | `/worker/interventions/{id}/timer/start` \| `/stop` | — | Start/stop a work timer on this job. One running timer per worker (422 if starting while another job's timer runs). Owner-scoped. |
 | POST | `/worker/interventions/{id}/complete` | `qty_used[materialId]` for every material, `completion_notes` | §4.2 commit + §4.4 gate. Only from `in_progress`. 422 when a qty is missing/invalid or no `after` photo. |
 | POST | `/worker/interventions/{id}/signature` | `signature` = PNG data-URL (≤5 MB) | Store canvas signature. |
 | GET | `/worker/interventions/{id}/signature` | — | Stream saved signature PNG. |

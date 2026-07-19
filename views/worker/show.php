@@ -79,6 +79,48 @@ echo View::render('partials/page_head', [
 </div>
 
 <?php
+$fmtDur = static function (int $s): string {
+    $h = intdiv($s, 3600); $m = intdiv($s % 3600, 60);
+    return $h > 0 ? $h . 'h ' . $m . 'm' : $m . 'm';
+};
+$timerHere       = $timerHere ?? null;
+$timerOtherTitle = $timerOtherTitle ?? null;
+$timeTotal       = (int) ($timeTotal ?? 0);
+?>
+<div class="card app-record-card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h6 mb-1"><?= $e($t('worker.timer')) ?></h2>
+                <div class="small text-muted">
+                    <?= $e($t('worker.time_total')) ?>: <span class="fw-semibold"><?= $e($fmtDur($timeTotal)) ?></span>
+                    <?php if ($timerHere !== null): ?>
+                        · <span class="text-success"><i class="bi bi-record-circle" aria-hidden="true"></i>
+                            <span class="js-timer-elapsed" data-elapsed="<?= (int) ($timerElapsed ?? 0) ?>">—</span></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div>
+                <?php if ($timerHere !== null): ?>
+                    <button type="button" class="btn btn-danger js-timer-toggle"
+                            data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/timer/stop')) ?>">
+                        <i class="bi bi-stop-fill" aria-hidden="true"></i> <?= $e($t('worker.timer_stop')) ?>
+                    </button>
+                <?php else: ?>
+                    <button type="button" class="btn btn-success js-timer-toggle"
+                            data-url="<?= $e(Url::to('/worker/interventions/' . $intervention['id'] . '/timer/start')) ?>">
+                        <i class="bi bi-play-fill" aria-hidden="true"></i> <?= $e($t('worker.timer_start')) ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php if ($timerOtherTitle !== null): ?>
+            <div class="alert alert-warning mt-2 mb-0 small"><?= $e(sprintf($t('worker.timer_other'), $timerOtherTitle)) ?></div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<?php
 $tasks     = $tasks ?? [];
 $taskDone  = 0;
 foreach ($tasks as $task) { $taskDone += (int) $task['is_done'] === 1 ? 1 : 0; }

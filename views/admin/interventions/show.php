@@ -150,6 +150,50 @@ echo View::render('partials/page_head', [
             </div>
         <?php endif; ?>
 
+        <?php
+        $timeByWorker = $timeByWorker ?? [];
+        $fmtDur = static function (int $s): string { $h = intdiv($s, 3600); $m = intdiv($s % 3600, 60); return $h > 0 ? $h . 'h ' . $m . 'm' : $m . 'm'; };
+        $totSec = 0; $totCost = 0.0;
+        foreach ($timeByWorker as $w) {
+            $totSec  += (int) $w['seconds'];
+            $totCost += $w['rate'] !== null ? (int) $w['seconds'] / 3600 * (float) $w['rate'] : 0;
+        }
+        ?>
+        <?php if ($timeByWorker !== []): ?>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><?= $e($t('admin.interventions.time_logged')) ?></span>
+                <span class="small text-muted"><?= $e($fmtDur($totSec)) ?><?php if ($totCost > 0): ?> · <?= $e('€ ' . number_format($totCost, 2, ',', '.')) ?><?php endif; ?></span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><?= $e($t('admin.interventions.worker')) ?></th>
+                            <th class="text-end"><?= $e($t('admin.interventions.time')) ?></th>
+                            <th class="text-end"><?= $e($t('admin.interventions.estimated_cost')) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($timeByWorker as $w): $sec = (int) $w['seconds']; $cost = $w['rate'] !== null ? $sec / 3600 * (float) $w['rate'] : null; ?>
+                        <tr>
+                            <td>
+                                <?= $e((string) $w['name']) ?>
+                                <?php if ((int) $w['running'] === 1): ?>
+                                    <span class="badge bg-success-subtle text-success-emphasis"><?= $e($t('admin.interventions.timer_running')) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end"><?= $e($fmtDur($sec)) ?></td>
+                            <td class="text-end"><?= $cost !== null ? $e('€ ' . number_format($cost, 2, ',', '.')) : '<span class="text-muted">—</span>' ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer small text-muted"><?= $e($t('admin.interventions.time_note')) ?></div>
+        </div>
+        <?php endif; ?>
+
         <div class="card mb-3">
             <div class="card-header"><?= $e($t('admin.interventions.history')) ?></div>
             <div class="card-body">

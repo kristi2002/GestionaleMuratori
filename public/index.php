@@ -333,6 +333,8 @@ $router->get('/worker/interventions/{id}',                [TaskController::class
 $router->post('/worker/interventions/{id}/status',         [TaskController::class, 'status']);
 $router->post('/worker/interventions/{id}/complete',       [TaskController::class, 'complete']);
 $router->post('/worker/interventions/{id}/tasks/{taskId}/toggle', [TaskController::class, 'toggleTask']);
+$router->post('/worker/interventions/{id}/timer/start', [TaskController::class, 'startTimer']);
+$router->post('/worker/interventions/{id}/timer/stop',  [TaskController::class, 'stopTimer']);
 $router->post('/worker/interventions/{id}/signature',      [TaskController::class, 'saveSignature']);
 $router->get('/worker/interventions/{id}/signature',       [TaskController::class, 'signature']);
 $router->post('/worker/interventions/{id}/photos',         [PhotoController::class, 'upload']);

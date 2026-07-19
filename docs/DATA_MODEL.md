@@ -302,6 +302,17 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Job time entries (2026-07-19, migration 029)
+
+- `intervention_time_entries` — per-intervention work timers: `intervention_id` (FK →
+  interventions, `CASCADE`), `user_id` (FK → users, `SET NULL`), `started_at`, `ended_at`
+  (NULL = running), `created_at`. `App\Models\InterventionTimeEntryModel` enforces one running
+  timer per worker; totals sum `TIMESTAMPDIFF(started_at, COALESCE(ended_at, NOW()))`.
+- **Distinct from `site_attendance`**: this measures job-level duration (and, with the worker's
+  `hourly_rate`, a per-intervention labor estimate) and is intentionally **not** folded into
+  `FinancialsService` — the per-cantiere attendance clock-in remains the P&L labor source, so
+  there is no double-counting. Worker start/stop at `/worker/interventions/{id}/timer/*`.
+
 ## Addendum — Leads (2026-07-19, migration 028)
 
 - `leads` — public "request a job" submissions: `name`, `email`, `phone`, `message`, `source`,

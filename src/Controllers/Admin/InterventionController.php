@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\InterventionMaterialModel;
 use App\Models\InterventionModel;
 use App\Models\InterventionTaskModel;
+use App\Models\InterventionTimeEntryModel;
 use App\Models\PhotoModel;
 use App\Models\ProjectModel;
 use App\Models\UserModel;
@@ -315,6 +316,7 @@ final class InterventionController
             'history'      => $model->statusHistory((int) $id),
             'photosByType' => $photosByType,
             'tasks'        => (new InterventionTaskModel())->forIntervention((int) $id),
+            'timeByWorker' => (new InterventionTimeEntryModel())->perWorker((int) $id),
         ], 'layout'));
     }
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-07-19 — Job time tracking (start/stop timers)
+
+A per-intervention work timer the worker starts/stops on the job — the time-tracking staple
+of every field-service app. Suite **713 passed, 0 failed**.
+
+- **New `intervention_time_entries`** table (migration 029). On the worker's intervention
+  screen, a **Start/Stop timer** with a live elapsed counter; a worker can run only one timer
+  at a time (starting on another job is rejected while one is running).
+- **Admin sees it** on the intervention detail: total time logged per worker with a live
+  "in corso" badge, plus a **per-intervention labor estimate** (time × the worker's hourly rate).
+- **Deliberately separate from the P&L**: this is job-level duration/cost, distinct from the
+  per-cantiere `site_attendance` clock-in that feeds `FinancialsService` — so labor is **not**
+  double-counted. The card says so.
+- `worker.timer_*` / `admin.interventions.time_*` lang; sw → v36; model + endpoint/ownership/
+  single-running-timer tests.
+
 ## 2026-07-19 — Public lead capture ("request a job")
 
 A public request form that turns website visitors into leads in an admin inbox — how

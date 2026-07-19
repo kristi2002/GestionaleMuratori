@@ -334,6 +334,17 @@ T::equals(404, $admin->post("/admin/interventions/999999/tasks/{$taskId}/toggle"
 T::ok(($admin->post("/admin/interventions/{$e2eIvId}/tasks/{$taskId}/delete")['json']['ok'] ?? false) === true, 'admin deletes the checklist item');
 T::equals(0, (int) $pdo->query("SELECT COUNT(*) FROM intervention_tasks WHERE id = {$taskId}")->fetchColumn(), 'checklist item removed');
 
+// --- Intervention work timer (migration 029): start/stop + ownership --------
+T::section('Intervention timer: start/stop + ownership');
+T::equals(404, $worker1->post("/worker/interventions/{$e2eIvId}/timer/start")['status'], "non-owner worker can't start a timer");
+T::ok(($worker3->post("/worker/interventions/{$e2eIvId}/timer/start")['json']['ok'] ?? false) === true, 'owner starts the timer');
+T::equals(1, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId} AND ended_at IS NULL")->fetchColumn(), 'one running timer');
+T::ok(($worker3->post("/worker/interventions/{$e2eIvId}/timer/start")['json']['ok'] ?? false) === true, 're-start on the same job is a no-op');
+T::equals(1, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId} AND ended_at IS NULL")->fetchColumn(), 'still exactly one running timer');
+T::ok(($worker3->post("/worker/interventions/{$e2eIvId}/timer/stop")['json']['ok'] ?? false) === true, 'owner stops the timer');
+T::equals(0, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId} AND ended_at IS NULL")->fetchColumn(), 'no running timer after stop');
+T::equals(1, (int) $pdo->query("SELECT COUNT(*) FROM intervention_time_entries WHERE intervention_id = {$e2eIvId}")->fetchColumn(), 'one completed time entry recorded');
+
 $matId = (int) $pdo->query("SELECT id FROM intervention_materials WHERE intervention_id = {$e2eIvId}")->fetchColumn();
 $r = $worker3->post("/worker/interventions/{$e2eIvId}/complete", ["qty_used[{$matId}]" => '3']);
 T::equals(422, $r['status'], 'completion blocked without after photo');
