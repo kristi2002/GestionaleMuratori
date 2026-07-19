@@ -51,6 +51,9 @@ final class SchedulerService
 
         $total   = array_sum($created);
         $emailed = $total > 0 && $this->sendDigest($fresh, $today);
+        if ($total > 0) {
+            $this->pushAdmins();
+        }
 
         return ['created' => $created, 'total' => $total, 'emailed' => $emailed];
     }
@@ -222,6 +225,20 @@ final class SchedulerService
             . htmlspecialchars(Lang::get('app_name'), ENT_QUOTES) . '</p></div>';
 
         return Mailer::send($recipients, sprintf(Lang::get('notifications.digest_subject'), $today), $html);
+    }
+
+    /**
+     * Best-effort lock-screen push to every admin when new alerts were created. The
+     * admin's service worker then fetches the freshest alert from /push/pending (the
+     * global feed). No-op when push is unconfigured or no admin has subscribed.
+     */
+    private function pushAdmins(): void
+    {
+        $adminIds = [];
+        foreach ((new UserModel())->listByRole('admin') as $admin) {
+            $adminIds[] = (int) $admin['id'];
+        }
+        PushService::sendToUsers($adminIds);
     }
 
     /** @return array<int,string> */

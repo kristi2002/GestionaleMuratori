@@ -73,6 +73,9 @@ shows stack traces when debug is off.
   **Done (2026-07-19):** unified IndexedDB **outbox** replaces the localStorage queues,
   covering timbrature, intervention status/completion and photos; flushed on reconnect and
   via service-worker Background Sync (survives a closed tab). See CHANGELOG.
+- ~~Push notifications (PWA exists but no web-push).~~ **Done (2026-07-19):** dependency-free
+  VAPID Web Push (openssl only), contentless tickle + `/push/pending` fetch; wired to the
+  scheduler (admins) and client quote/invoice events. Opt-in on the Badge di Cantiere screen.
 - S3/object storage (StorageInterface ready).
 - Multi-tenancy, e-invoicing, cost/pricing module — out of original scope; would need
   client sign-off on schema changes first.

@@ -35,6 +35,8 @@ final class NotificationService
             $row['dedup_key'] = $data['dedup_key'] . ':u' . $userId;
             if ($model->createIfAbsent($row)) {
                 $created++;
+                // Best-effort lock-screen push; no-op when push is unconfigured.
+                PushService::sendToUser((int) $userId);
             }
         }
         return $created;

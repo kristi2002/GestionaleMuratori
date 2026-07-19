@@ -137,6 +137,22 @@ digests, set the `MAIL_*` variables (off by default) — see
 [CONFIGURATION.md](CONFIGURATION.md). Every configurable value (DB, sessions,
 company identity on PDFs, mail, weather) is documented there.
 
+## 6c. Web Push notifications (optional)
+
+Off by default. To push scheduler/quote/invoice alerts to workers' and clients'
+phone lock screens, generate a VAPID key pair once and set a contact subject:
+
+```bash
+# inside the app container (or drop the prefix bare-metal)
+docker compose exec -T app php scripts/vapid-keygen.php   # writes config/vapid_private.pem
+```
+
+Then set `VAPID_SUBJECT=mailto:admin@yourdomain` in `.env` and restart. The key file
+is git-ignored and must persist across deploys (it lives under `config/`, a mounted
+path) — regenerating it invalidates every existing subscription. Uses openssl only
+(no `ext-gmp`, no extra PHP extension). Users opt in via "Attiva notifiche" on the
+Badge di Cantiere screen. Serving over HTTPS is required for the browser Push API.
+
 ## 7. Updates / new releases
 
 ```bash

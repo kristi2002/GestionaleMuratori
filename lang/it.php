@@ -307,6 +307,15 @@ return [
         'outbox_relogin'       => 'Modifiche in attesa: accedi di nuovo per sincronizzarle.',
     ],
 
+    // Web Push (notifiche push). See App\Support\WebPush / App\Controllers\PushController.
+    'push' => [
+        'enable'              => 'Attiva notifiche',
+        'enabled'             => 'Notifiche attive',
+        'unsupported'         => 'Le notifiche non sono supportate su questo dispositivo o browser.',
+        'denied'              => 'Permesso notifiche negato. Puoi riattivarlo dalle impostazioni del browser.',
+        'invalid_subscription' => 'Iscrizione alle notifiche non valida.',
+    ],
+
     // Transactional e-mails (App\Services\MailService). Sent only when MAIL_ENABLED=true.
     'mail' => [
         'quote_sent_subject'     => 'Nuovo preventivo N. %s',

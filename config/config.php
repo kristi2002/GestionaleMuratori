@@ -97,4 +97,15 @@ return [
         // Comma-separated override; empty = every active admin's address.
         'digest_recipients' => Env::get('MAIL_DIGEST_RECIPIENTS', ''),
     ],
+    // Web Push (VAPID). DISABLED until configured: generate a key pair with
+    // `php scripts/vapid-keygen.php` (writes config/vapid_private.pem) and set
+    // VAPID_SUBJECT (a mailto: or https: contact). PUSH_ENABLED=false force-disables.
+    // Uses openssl only — no ext-gmp, no Composer web-push library.
+    'push' => [
+        'enabled'          => Env::bool('PUSH_ENABLED', true),
+        'subject'          => Env::get('VAPID_SUBJECT', ''),
+        'private_key_path' => Env::get('VAPID_PRIVATE_KEY_PATH', dirname(__DIR__) . '/config/vapid_private.pem'),
+        'ttl'              => (int) Env::get('PUSH_TTL', '2419200'),
+        'timeout'          => (int) Env::get('PUSH_TIMEOUT', '10'),
+    ],
 ];

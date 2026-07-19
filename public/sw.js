@@ -10,7 +10,7 @@
 // vendored Bootstrap/jQuery) — the `activate` handler deletes any cache whose
 // name differs, so a bump is what forces returning clients to fetch fresh assets
 // instead of serving the stale cache-first copy.
-var VERSION = 'gm-shell-v31';
+var VERSION = 'gm-shell-v32';
 var SCOPE = self.registration.scope; // e.g. https://host/  or  https://host/app/public/
 
 function scoped(path) {
@@ -170,22 +170,39 @@ self.addEventListener('message', function (event) {
 });
 
 // --- Web Push --------------------------------------------------------------
-// The backend (WebPushService) sends a JSON payload { title, body, url?, tag? };
-// clicking the notification focuses an existing matching tab or opens the URL.
+// The backend sends a contentless (tickle) push; we fetch the freshest alert from
+// GET /push/pending and show it. If a future build sends an encrypted JSON payload
+// instead, we use that directly. Clicking focuses a matching tab or opens the URL.
+function resolvePushContent(event) {
+    var payload = null;
+    if (event.data) {
+        try { payload = event.data.json(); } catch (e) { payload = null; }
+    }
+    if (payload) { return Promise.resolve(payload); }
+    return fetch(scoped('push/pending'), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (res) {
+        return res.ok ? res.json() : null;
+    }).then(function (json) {
+        return json && json.ok ? json.data : null;
+    }).catch(function () { return null; });
+}
+
 self.addEventListener('push', function (event) {
-    var data = {};
-    try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : '' }; }
-    var title = data.title || 'Gestionale Muratori';
-    var options = {
-        body: data.body || '',
-        icon: scoped('assets/icons/icon-192.png'),
-        badge: scoped('assets/icons/icon-192.png'),
-        tag: data.tag || undefined,
-        renotify: !!data.tag,
-        data: { url: data.url ? new URL(data.url, SCOPE).toString() : SCOPE },
-        requireInteraction: !!data.requireInteraction
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(
+        resolvePushContent(event).then(function (data) {
+            data = data || {};
+            return self.registration.showNotification(data.title || 'Gestionale Muratori', {
+                body: data.body || '',
+                icon: scoped('assets/icons/icon-192.png'),
+                badge: scoped('assets/icons/icon-192.png'),
+                tag: data.tag || undefined,
+                renotify: !!data.tag,
+                data: { url: data.url ? new URL(data.url, SCOPE).toString() : SCOPE }
+            });
+        })
+    );
 });
 
 self.addEventListener('notificationclick', function (event) {

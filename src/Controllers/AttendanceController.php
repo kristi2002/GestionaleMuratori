@@ -13,6 +13,7 @@ use App\Support\Request;
 use App\Support\Response;
 use App\Support\Validate;
 use App\Support\View;
+use App\Support\WebPush;
 
 /**
  * Badge di Cantiere Digitale (Decreto 332/2026): the on-site clock in/out screen
@@ -34,10 +35,11 @@ final class AttendanceController
         $monthEnd   = (new \DateTimeImmutable('last day of this month'))->format('Y-m-d');
         Response::html(View::render('attendance/index', [
             'title'    => Lang::get('attendance.title'),
-            'open'     => $model->openForUser((int) Auth::id()),
-            'projects' => $this->allowedProjects(),
-            'recent'   => $model->recentForUser((int) Auth::id()),
-            'stats'    => $model->monthlyStatsForUser((int) Auth::id(), $monthStart, $monthEnd),
+            'open'         => $model->openForUser((int) Auth::id()),
+            'projects'     => $this->allowedProjects(),
+            'recent'       => $model->recentForUser((int) Auth::id()),
+            'stats'        => $model->monthlyStatsForUser((int) Auth::id(), $monthStart, $monthEnd),
+            'push_enabled' => WebPush::isEnabled(),
         ], 'layout'));
     }
 

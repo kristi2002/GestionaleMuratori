@@ -1,5 +1,6 @@
 /vendor/
 /.env
+/config/vapid_private.pem
 /storage/uploads/*
 !/storage/uploads/.gitkeep
 /storage/tmp/

@@ -45,6 +45,7 @@ use App\Controllers\Client\QuoteController as ClientQuoteController;
 use App\Controllers\Client\ReportController as ClientReportController;
 use App\Controllers\AttendanceController;
 use App\Controllers\DashboardController;
+use App\Controllers\PushController;
 use App\Controllers\Sub\PhotoController as SubPhotoController;
 use App\Controllers\Sub\ProjectController as SubProjectController;
 use App\Controllers\Worker\PhotoController;
@@ -317,6 +318,12 @@ $router->get('/worker/photos/{id}/thumb',                  [PhotoController::cla
 $router->get('/attendance',       [AttendanceController::class, 'page']);
 $router->post('/attendance/in',   [AttendanceController::class, 'clockIn']);
 $router->post('/attendance/out',  [AttendanceController::class, 'clockOut']);
+
+// Web Push: any authenticated user manages their own device subscriptions.
+$router->get('/push/public-key',  [PushController::class, 'publicKey']);
+$router->post('/push/subscribe',  [PushController::class, 'subscribe']);
+$router->post('/push/unsubscribe', [PushController::class, 'unsubscribe']);
+$router->get('/push/pending',     [PushController::class, 'pending']);
 
 $router->get('/sub',                        [SubProjectController::class, 'index']);
 $router->get('/sub/projects/{id}',           [SubProjectController::class, 'show']);

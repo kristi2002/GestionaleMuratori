@@ -386,6 +386,9 @@ $gmI18n = [
     'js.outbox_pending_one'    => Lang::get('js.outbox_pending_one'),
     'js.outbox_pending_many'   => Lang::get('js.outbox_pending_many'),
     'js.outbox_relogin'        => Lang::get('js.outbox_relogin'),
+    'push.enabled'             => Lang::get('push.enabled'),
+    'push.unsupported'         => Lang::get('push.unsupported'),
+    'push.denied'              => Lang::get('push.denied'),
 ];
 ?>
 <script type="application/json" id="gm-i18n"><?= json_encode($gmI18n, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>

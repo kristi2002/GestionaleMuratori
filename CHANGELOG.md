@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-07-19 — Web Push notifications (VAPID, dependency-free)
+
+Alerts now reach a phone lock screen, not just the in-app bell. Suite **617 passed, 0 failed**.
+
+- **Dependency-free VAPID** (`App\Support\WebPush`) — openssl only, no `ext-gmp` and no
+  Composer web-push library (gmp is absent on the target hosts). ES256 JWT signing with a
+  DER→raw conversion, unit-tested to verify against the key. Disabled by default, exactly
+  like `Mailer`: turns on only once a key pair exists and `VAPID_SUBJECT` is set.
+- **Contentless ("tickle") push**: the service worker receives the push and fetches the
+  latest alert from `GET /push/pending`, sidestepping RFC 8291 payload encryption entirely
+  while still showing a real, titled notification. `push`/`notificationclick` handlers in `sw.js`.
+- **New endpoints** (any authenticated user, CSRF-guarded): `GET /push/public-key`,
+  `POST /push/subscribe`, `POST /push/unsubscribe`, `GET /push/pending`. New table
+  `push_subscriptions` (migration `024`), model `PushSubscriptionModel`, `PushService` fan-out.
+- **Wired in**: `NotificationService` pushes client portal users on quote/invoice events;
+  `SchedulerService` pushes admins when new alerts are generated. Best-effort and a no-op
+  when push is unconfigured, so nothing changes until you opt in.
+- **Opt-in**: an "Attiva notifiche" button on the Badge di Cantiere screen (shown only when
+  push is configured); dead endpoints (404/410) are pruned automatically.
+- New `scripts/vapid-keygen.php` (writes git-ignored `config/vapid_private.pem`), `push.*`
+  config + lang strings, `push_subscriptions` in the data model, and `/push/*` in the API docs.
+  Bumped the service worker to `gm-shell-v32` (app.js/sw.js changed).
+
 ## 2026-07-19 — Offline outbox (IndexedDB + Background Sync)
 
 Field-reliability work: writes made on a no-signal construction site are now durable and

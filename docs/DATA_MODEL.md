@@ -301,3 +301,16 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
 - Client-facing rows are fanned out by `App\Services\NotificationService::notifyClient()`,
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
+
+## Addendum — Web Push subscriptions (2026-07-19, migration 024)
+
+- `push_subscriptions` — one row per browser/device a user opts into push on. Columns:
+  `user_id` (FK → `users`, `ON DELETE CASCADE`), `endpoint` (UNIQUE — the push-service URL
+  we POST to; re-subscribing upserts), `p256dh` + `auth` (RFC 8291 client keys, stored for a
+  future encrypted-payload upgrade), `user_agent`, `created_at`, `last_used_at`.
+- Sends are contentless (RFC 8030 tickle): `App\Support\WebPush` signs a VAPID ES256 JWT
+  (openssl only — no `ext-gmp`, no Composer library) and POSTs an empty body; the service
+  worker fetches the notification text from `GET /push/pending`. Disabled until a key pair
+  (`scripts/vapid-keygen.php` → git-ignored `config/vapid_private.pem`) and `VAPID_SUBJECT`
+  exist. `App\Services\PushService` fans out to a user's devices and prunes any endpoint the
+  push service reports gone (404/410).

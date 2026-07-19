@@ -47,6 +47,11 @@ echo View::render('partials/page_head', [
 </div>
 
 <div class="alert alert-warning d-none js-offline-queue-banner" role="status"></div>
+<?php if (!empty($push_enabled)): ?>
+<button type="button" class="btn btn-outline-primary btn-sm mb-3 js-enable-push">
+    <i class="bi bi-bell"></i> <?= $e($t('push.enable')) ?>
+</button>
+<?php endif; ?>
 <div class="alert alert-danger d-none js-attendance-error" role="alert"></div>
 <div class="alert alert-info d-none js-attendance-geo" role="status"><?= $e($t('attendance.locating')) ?></div>
 

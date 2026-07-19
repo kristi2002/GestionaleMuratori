@@ -32,6 +32,12 @@ Conventions:
 | GET | `/password` | Change-password page (any authenticated role). |
 | POST | `/password` | Body: `current_password`, `new_password`, `new_password_confirm` (min 8). 422 on wrong current / short / mismatch. |
 | GET | `/health` | Readiness probe — checks DB connectivity. `{ok:true,data:{status:"ok"}}` or 500. |
+| GET | `/attendance` | Badge di Cantiere clock screen (roles `worker`, `subcontractor`). |
+| POST | `/attendance/in` \| `/attendance/out` | Clock in/out with optional GPS (`lat`,`lng`). Single open attendance enforced (422). |
+| GET | `/push/public-key` | VAPID application-server key for `pushManager.subscribe()`. → `{ok,data:{enabled,key}}`. |
+| POST | `/push/subscribe` | Body: `endpoint` (https), `p256dh`, `auth`. Upserts the caller's push subscription. 422 on invalid. |
+| POST | `/push/unsubscribe` | Body: `endpoint`. Removes one of the caller's subscriptions. |
+| GET | `/push/pending` | Latest notification for the caller (service-worker push content). → `{ok,data:{title,body,url,tag}}` or `data:null`. |
 
 ## Admin (role: `admin`)
 

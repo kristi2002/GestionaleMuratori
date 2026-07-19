@@ -239,6 +239,98 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { flushOutbox(); } });
     $(function () { migrateLegacyQueues().then(flushOutbox); updateOutboxBanner(); });
 
+    // --- Web Push opt-in -----------------------------------------------------
+    // The worker taps "Attiva notifiche" (.js-enable-push) to grant permission and
+    // subscribe; the subscription is POSTed to the server. If permission is already
+    // granted we re-sync silently on load so a reinstalled service worker re-registers.
+    var Push = (function () {
+        function supported() {
+            return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+        }
+        function urlB64ToUint8(base64) {
+            var pad = new Array((4 - base64.length % 4) % 4 + 1).join('=');
+            var b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+            var raw = window.atob(b64);
+            var out = new Uint8Array(raw.length);
+            for (var i = 0; i < raw.length; i++) { out[i] = raw.charCodeAt(i); }
+            return out;
+        }
+        function serverKey() {
+            return Api.get('/push/public-key').then(function (res) {
+                return res && res.ok && res.data && res.data.key ? res.data.key : null;
+            });
+        }
+        function saveSub(sub) {
+            var json = sub.toJSON();
+            return Api.post('/push/subscribe', {
+                endpoint: sub.endpoint,
+                p256dh: (json.keys && json.keys.p256dh) || '',
+                auth: (json.keys && json.keys.auth) || ''
+            });
+        }
+        function subscribe() {
+            return serverKey().then(function (key) {
+                if (!key) { return null; }
+                return navigator.serviceWorker.ready.then(function (reg) {
+                    return reg.pushManager.getSubscription().then(function (existing) {
+                        return existing || reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlB64ToUint8(key)
+                        });
+                    });
+                }).then(function (sub) {
+                    return sub ? saveSub(sub).then(function () { return sub; }) : null;
+                });
+            });
+        }
+        return {
+            supported: supported,
+            enable: function () {
+                if (!supported()) { return Promise.resolve('unsupported'); }
+                return Notification.requestPermission().then(function (perm) {
+                    if (perm !== 'granted') { return perm; }
+                    return subscribe().then(function (sub) { return sub ? 'granted' : 'unsupported'; });
+                });
+            },
+            resync: function () {
+                if (supported() && Notification.permission === 'granted') {
+                    subscribe().catch(function () { /* best-effort */ });
+                }
+            }
+        };
+    })();
+    window.GM_Push = Push;
+
+    function markPushEnabled($btn) {
+        $btn.prop('disabled', true)
+            .removeClass('btn-outline-primary')
+            .addClass('btn-success')
+            .html('<i class="bi bi-bell-fill"></i> ' + GM.t('push.enabled', 'Notifiche attive'));
+    }
+
+    $(document).on('click', '.js-enable-push', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        Push.enable().then(function (state) {
+            if (state === 'granted') {
+                markPushEnabled($btn);
+            } else if (state === 'unsupported') {
+                Dialog.alert(GM.t('push.unsupported', 'Le notifiche non sono supportate su questo dispositivo o browser.'));
+                $btn.prop('disabled', false);
+            } else {
+                Dialog.alert(GM.t('push.denied', 'Permesso notifiche negato. Puoi riattivarlo dalle impostazioni del browser.'));
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    $(function () {
+        Push.resync();
+        if (Push.supported() && window.Notification && Notification.permission === 'granted') {
+            $('.js-enable-push').each(function () { markPushEnabled($(this)); });
+        }
+    });
+
     // --- In-app dialogs -------------------------------------------------------
     // One reusable Bootstrap modal replacing the native window.alert/confirm
     // popups, so messages match the app's look. Callback-based since a modal
