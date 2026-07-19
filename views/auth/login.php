@@ -39,6 +39,10 @@ $showDemo = Config::get('app.env', 'local') !== 'production';
                 <button type="submit" class="btn btn-success btn-lg w-100" id="login-submit"><?= $e($t('auth.login_submit')) ?></button>
             </form>
 
+            <div class="text-center mt-3">
+                <a class="small app-login-forgot" href="<?= $e(Url::to('/request')) ?>"><?= $e($t('public.request.title')) ?></a>
+            </div>
+
             <?php if ($showDemo): ?>
                 <div class="app-login-demo">
                     <strong><?= $e($t('auth.login_demo')) ?></strong>

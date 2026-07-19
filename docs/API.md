@@ -32,6 +32,8 @@ Conventions:
 | GET | `/password` | Change-password page (any authenticated role). |
 | POST | `/password` | Body: `current_password`, `new_password`, `new_password_confirm` (min 8). 422 on wrong current / short / mismatch. |
 | GET | `/health` | Readiness probe — checks DB connectivity. `{ok:true,data:{status:"ok"}}` or 500. |
+| GET | `/request` | Public "request a job" form (unauthenticated). |
+| POST | `/request` | Body: `name`*, `email`, `phone`, `message`, `website` (honeypot). Needs email or phone. Creates a lead + notifies admins; 422 (re-rendered form) on invalid. |
 | GET | `/attendance` | Badge di Cantiere clock screen (roles `worker`, `subcontractor`). |
 | POST | `/attendance/in` \| `/attendance/out` | Clock in/out with optional GPS (`lat`,`lng`). Single open attendance enforced (422). |
 | GET | `/push/public-key` | VAPID application-server key for `pushManager.subscribe()`. → `{ok,data:{enabled,key}}`. |
@@ -59,6 +61,15 @@ Conventions:
 | POST | `/admin/clients` | `name`*, `vat_or_tax_id`, `email`, `phone`, `address`, `notes` | Create → `{ok,data:{id}}`. |
 | POST | `/admin/clients/{id}` | same | Update. |
 | POST | `/admin/clients/{id}/delete` | — | Delete (cascades to projects/interventions). |
+
+### Leads (public "request a job" inbox)
+| Method | Path | Body / params | Description |
+|--------|------|---------------|-------------|
+| GET | `/admin/leads` | `status` filter (`new\|contacted\|converted\|archived`) | Inbox list with per-status counts. |
+| GET | `/admin/leads/{id}` | — | Lead detail. |
+| POST | `/admin/leads/{id}/status` | `status` | Set the lead's status. 422 on an invalid status. |
+| POST | `/admin/leads/{id}/convert` | — | Create a client from the lead + link it. → `{ok,data:{redirect}}`; 422 if already converted. |
+| POST | `/admin/leads/{id}/delete` | — | Delete the lead. |
 
 ### Projects
 | Method | Path | Body / params | Description |

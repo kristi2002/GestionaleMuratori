@@ -698,6 +698,20 @@
             });
         });
 
+        // Lead inbox: set a lead's status (posts {status} from data-status).
+        $(document).on('click', '.js-lead-status', function () {
+            var $btn = $(this);
+            Api.post($btn.data('url'), { status: $btn.data('status') }).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                Dialog.alert(failMessage(xhr));
+            });
+        });
+
         // --- Project attendance register (Registro Presenze Cantiere) ----------
         // Absence-by-default day boxes: a click saves the toggle for that
         // project + worker + date and flips the cell between green (Lavorato)

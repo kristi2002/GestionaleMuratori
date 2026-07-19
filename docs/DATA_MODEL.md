@@ -302,6 +302,15 @@ is intentionally NOT written on receipt** — stock valuation stays manual for n
   one per active portal user of the client; the `dedup_key` is suffixed with the user id
   so the globally-UNIQUE dedup constraint de-duplicates **per recipient**.
 
+## Addendum — Leads (2026-07-19, migration 028)
+
+- `leads` — public "request a job" submissions: `name`, `email`, `phone`, `message`, `source`,
+  `status ENUM('new','contacted','converted','archived')`, `client_id` (FK → clients,
+  `SET NULL`; set on conversion), `ip`, `created_at`, `updated_at`. Captured unauthenticated
+  from `/request` (honeypot anti-spam; global CSRF gate applies). `App\Models\LeadModel` +
+  admin inbox at `/admin/leads`; converting a lead creates a `clients` row via
+  `ClientModel::create()` and links it. A new lead notifies admins (global notification + push).
+
 ## Addendum — Recurring interventions (2026-07-19, migration 027)
 
 - `recurring_interventions` — maintenance-plan templates: `project_id` (FK → projects,

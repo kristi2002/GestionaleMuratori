@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-19 — Public lead capture ("request a job")
+
+A public request form that turns website visitors into leads in an admin inbox — how
+Jobber/Housecall Pro capture work. Suite **695 passed, 0 failed**.
+
+- **Public form** at `GET/POST /request` (unauthenticated) — name + contact + message, with a
+  **honeypot** anti-spam field. The global CSRF gate already covers the POST (hidden `_token`).
+  Uses the same split/hero layout as the login/forgot pages; linked from the login screen.
+- **New `leads`** table (migration 028) + `LeadModel`; a submission creates a lead and
+  **notifies admins** (bell notification + Web Push).
+- **Admin inbox** at `/admin/leads` — status filter pills (new/contacted/converted/archived),
+  detail page with the message and mail-to/tel links, a small status workflow, and
+  **one-click convert to client** (creates a `clients` row, links it, audit-logged, redirects
+  to the new client). New "Richieste" nav item.
+- `public.request.*` / `admin.leads.*` / `lead_status` lang strings; sw → v35; full model +
+  public-form (honeypot/validation) + inbox-RBAC + convert e2e tests.
+
 ## 2026-07-19 — Recurring interventions (maintenance plans)
 
 Define a job that repeats; the scheduler materialises the occurrences automatically — the

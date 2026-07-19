@@ -452,6 +452,44 @@ $r = $admin->post('/admin/warehouse/10/reconcile');
 T::equals(200, $r['status'], 'cleanup: reconcile item 10');
 
 // ---------------------------------------------------------------------------
+T::section('E2E: public lead capture + admin inbox');
+// The public request form is reachable without authentication.
+$reqPage = $anon->get('/request', ['json' => false]);
+T::equals(200, $reqPage['status'], 'public /request form served to anonymous');
+if (preg_match('/name="csrf-token" content="([a-f0-9]+)"/', $reqPage['body'], $mLead)) {
+    $anon->csrf = $mLead[1];  // token the public form carries, for the POST
+}
+
+$leadsBefore = (int) $pdo->query('SELECT COUNT(*) FROM leads')->fetchColumn();
+// Honeypot filled → silently accepted, nothing stored.
+$anon->post('/request', ['name' => 'Bot', 'email' => 'bot@x.com', 'website' => 'http://spam']);
+T::equals($leadsBefore, (int) $pdo->query('SELECT COUNT(*) FROM leads')->fetchColumn(), 'honeypot submission stores no lead');
+// No contact method → 422.
+T::equals(422, $anon->post('/request', ['name' => 'Mario Rossi'])['status'], 'lead without email/phone rejected');
+// Valid submission stores a lead.
+T::equals(200, $anon->post('/request', ['name' => 'Mario Rossi', 'phone' => '3331234567', 'message' => 'Rifacimento facciata'])['status'], 'valid public request accepted');
+$leadId = (int) $pdo->query("SELECT id FROM leads WHERE name = 'Mario Rossi' ORDER BY id DESC LIMIT 1")->fetchColumn();
+T::ok($leadId > 0, 'lead stored');
+T::equals('new', (string) $pdo->query("SELECT status FROM leads WHERE id = {$leadId}")->fetchColumn(), 'new lead starts in status new');
+
+// Inbox is admin-only.
+T::equals(403, $worker3->get('/admin/leads')['status'], 'worker cannot open the lead inbox');
+T::equals(200, $admin->get('/admin/leads', ['json' => false])['status'], 'admin opens the lead inbox');
+T::ok(($admin->post("/admin/leads/{$leadId}/status", ['status' => 'contacted'])['json']['ok'] ?? false) === true, 'admin marks the lead contacted');
+T::equals('contacted', (string) $pdo->query("SELECT status FROM leads WHERE id = {$leadId}")->fetchColumn(), 'status persisted');
+T::equals(422, $admin->post("/admin/leads/{$leadId}/status", ['status' => 'bogus'])['status'], 'invalid status rejected');
+
+// Convert to a client.
+T::ok(($admin->post("/admin/leads/{$leadId}/convert")['json']['ok'] ?? false) === true, 'admin converts the lead to a client');
+$leadClientId = (int) $pdo->query("SELECT client_id FROM leads WHERE id = {$leadId}")->fetchColumn();
+T::ok($leadClientId > 0, 'lead linked to the created client');
+T::equals('Mario Rossi', (string) $pdo->query("SELECT name FROM clients WHERE id = {$leadClientId}")->fetchColumn(), 'client created from the lead');
+T::equals('converted', (string) $pdo->query("SELECT status FROM leads WHERE id = {$leadId}")->fetchColumn(), 'lead marked converted');
+T::equals(422, $admin->post("/admin/leads/{$leadId}/convert")['status'], 'an already-converted lead cannot reconvert');
+// Clean up the admin/global notification this created so later scheduler assertions stay exact.
+$pdo->exec("DELETE FROM notifications WHERE dedup_key = 'lead:{$leadId}'");
+
+// ---------------------------------------------------------------------------
 T::section('E2E: output hygiene');
 foreach ([['/login', $anon], ['/admin', $admin], ['/worker', $worker3], ['/client', $client1]] as [$path, $client]) {
     $r = $client->get($path, ['json' => false]);

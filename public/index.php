@@ -40,6 +40,8 @@ use App\Controllers\Admin\SubcontractorController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\WarehouseController;
 use App\Controllers\AuthController;
+use App\Controllers\Admin\LeadController;
+use App\Controllers\RequestController;
 use App\Controllers\Client\NotificationController as ClientNotificationController;
 use App\Controllers\Client\PhotoController as ClientPhotoController;
 use App\Controllers\Client\ProjectController as ClientProjectController;
@@ -130,6 +132,8 @@ $router->get('/forgot-password',  [AuthController::class, 'showForgot']);
 $router->post('/forgot-password', [AuthController::class, 'sendForgot']);
 $router->get('/reset-password',   [AuthController::class, 'showReset']);
 $router->post('/reset-password',  [AuthController::class, 'doReset']);
+$router->get('/request',  [RequestController::class, 'show']);   // public lead-capture form
+$router->post('/request', [RequestController::class, 'submit']);
 $router->post('/logout', [AuthController::class, 'logout']);
 $router->get('/password',  [AuthController::class, 'showPassword']);
 $router->post('/password', [AuthController::class, 'changePassword']);
@@ -142,6 +146,12 @@ $router->get('/admin/audit',      [AuditController::class, 'index']);
 $router->get('/health',  [DashboardController::class, 'health']);
 $router->get('/shortcuts', [DashboardController::class, 'shortcuts']);
 $router->post('/shortcuts', [DashboardController::class, 'saveShortcuts']);
+
+$router->get('/admin/leads',               [LeadController::class, 'index']);
+$router->get('/admin/leads/{id}',          [LeadController::class, 'show']);
+$router->post('/admin/leads/{id}/status',  [LeadController::class, 'setStatus']);
+$router->post('/admin/leads/{id}/convert', [LeadController::class, 'convert']);
+$router->post('/admin/leads/{id}/delete',  [LeadController::class, 'delete']);
 
 $router->get('/admin/clients',              [ClientController::class, 'index']);
 $router->get('/admin/clients/export',       [ClientController::class, 'exportCsv']);

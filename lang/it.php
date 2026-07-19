@@ -195,6 +195,13 @@ return [
         'closed'  => 'Chiuso',
     ],
 
+    'lead_status' => [
+        'new'       => 'Nuovo',
+        'contacted' => 'Contattato',
+        'converted' => 'Convertito',
+        'archived'  => 'Archiviato',
+    ],
+
     'sal_status' => [
         'draft'  => 'Bozza',
         'issued' => 'Emesso',
@@ -335,6 +342,26 @@ return [
         'test_sent'              => 'Email di prova inviata a %s.',
         'test_disabled'          => 'Invio email disattivato: configura le variabili MAIL_* per abilitarlo.',
         'test_failed'            => 'Invio non riuscito. Controlla la configurazione SMTP (MAIL_*).',
+    ],
+
+    'public' => [
+        'request' => [
+            'title'            => 'Richiedi un intervento',
+            'intro'            => 'Compila il modulo e ti ricontatteremo al più presto.',
+            'sent'             => 'Richiesta inviata! Ti contatteremo al più presto. Grazie.',
+            'back'             => 'Vai all\'accesso',
+            'name'             => 'Nome e cognome',
+            'email'            => 'Email',
+            'phone'            => 'Telefono',
+            'message'          => 'Descrivi il lavoro',
+            'contact_hint'     => 'Inserisci almeno email o telefono per essere ricontattato.',
+            'submit'           => 'Invia richiesta',
+            'have_account'     => 'Hai già un account? Accedi',
+            'name_required'    => 'Il nome è obbligatorio.',
+            'email_invalid'    => 'Indirizzo email non valido.',
+            'contact_required' => 'Inserisci almeno un\'email o un numero di telefono.',
+            'message_too_long' => 'Il messaggio è troppo lungo (max 2000 caratteri).',
+        ],
     ],
 
     'auth' => [
@@ -703,6 +730,32 @@ return [
             'doc_expiring'           => 'In scadenza',
             'doc_expired'            => 'Scaduto',
             'years_short'            => 'anni',
+        ],
+
+        'leads' => [
+            'title'             => 'Richieste',
+            'subtitle'          => 'Richieste di intervento dal modulo pubblico.',
+            'name'              => 'Nome',
+            'contact'           => 'Contatto',
+            'email'             => 'Email',
+            'phone'             => 'Telefono',
+            'message'           => 'Messaggio',
+            'received'          => 'Ricevuta',
+            'status'            => 'Stato',
+            'empty'             => 'Nessuna richiesta.',
+            'detail'            => 'Dettaglio richiesta',
+            'actions'           => 'Azioni',
+            'set_status'        => 'Imposta stato',
+            'convert'           => 'Converti in cliente',
+            'convert_confirm'   => 'Creare un cliente da questa richiesta?',
+            'converted_to'      => 'Convertita in cliente:',
+            'open_client'       => 'Apri cliente',
+            'delete_confirm'    => 'Eliminare questa richiesta?',
+            'not_found'         => 'Richiesta non trovata.',
+            'status_invalid'    => 'Stato non valido.',
+            'already_converted' => 'Richiesta già convertita in cliente.',
+            'notify_title'      => 'Nuova richiesta di intervento: %s',
+            'notify_body'       => 'Contatto: %s',
         ],
 
         'clients' => [
