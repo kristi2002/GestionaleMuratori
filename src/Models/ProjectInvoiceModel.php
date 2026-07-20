@@ -169,12 +169,15 @@ final class ProjectInvoiceModel
     {
         $stmt = Database::pdo()->prepare(
             'UPDATE project_invoices SET project_id = :project_id, number = :number,
+                cig = :cig, cup = :cup,
                 issue_date = :issue_date, amount = :amount, status = :status, note = :note
              WHERE id = :id'
         );
         return $stmt->execute([
             ':project_id' => $data['project_id'],
             ':number'     => $data['number'],
+            ':cig'        => $data['cig'] ?? null,
+            ':cup'        => $data['cup'] ?? null,
             ':issue_date' => $data['issue_date'],
             ':amount'     => $data['amount'],
             ':status'     => $data['status'],
@@ -186,12 +189,14 @@ final class ProjectInvoiceModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO project_invoices (project_id, number, issue_date, amount, status, note, created_by)
-             VALUES (:project_id, :number, :issue_date, :amount, :status, :note, :created_by)'
+            'INSERT INTO project_invoices (project_id, number, cig, cup, issue_date, amount, status, note, created_by)
+             VALUES (:project_id, :number, :cig, :cup, :issue_date, :amount, :status, :note, :created_by)'
         );
         $stmt->execute([
             ':project_id' => $data['project_id'],
             ':number'     => $data['number'],
+            ':cig'        => $data['cig'] ?? null,
+            ':cup'        => $data['cup'] ?? null,
             ':issue_date' => $data['issue_date'],
             ':amount'     => $data['amount'],
             ':status'     => $data['status'],

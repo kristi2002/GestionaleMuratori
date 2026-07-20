@@ -95,6 +95,21 @@ $selectedClientId = $isEdit ? (int) $project['client_id'] : (int) ($preselectedC
                 </div>
             </div>
 
+            <!-- Codici tracciabilità per commesse pubbliche (Legge 136/2010). -->
+            <div class="row">
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.projects.cig')) ?></label>
+                    <input type="text" class="form-control text-uppercase" name="cig" maxlength="10" value="<?= $e($value('cig')) ?>">
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.projects.cup')) ?></label>
+                    <input type="text" class="form-control text-uppercase" name="cup" maxlength="15" value="<?= $e($value('cup')) ?>">
+                </div>
+                <div class="col-12 col-md-6 mb-3 d-flex align-items-end">
+                    <div class="form-text mb-2"><?= $e($t('admin.projects.cig_cup_hint')) ?></div>
+                </div>
+            </div>
+
             <hr>
             <div class="mb-3">
                 <label class="form-label mb-1"><?= $e($t('admin.projects.workers')) ?></label>

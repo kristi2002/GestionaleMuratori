@@ -89,8 +89,8 @@ final class ProjectModel
     public function create(array $data): int
     {
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO projects (client_id, name, location, start_date, end_date, invoice_reference, status)
-             VALUES (:client_id, :name, :location, :start_date, :end_date, :invoice_reference, :status)'
+            'INSERT INTO projects (client_id, name, location, start_date, end_date, invoice_reference, cig, cup, status)
+             VALUES (:client_id, :name, :location, :start_date, :end_date, :invoice_reference, :cig, :cup, :status)'
         );
         $stmt->execute([
             ':client_id'         => $data['client_id'],
@@ -99,6 +99,8 @@ final class ProjectModel
             ':start_date'        => $data['start_date'],
             ':end_date'          => $data['end_date'],
             ':invoice_reference' => $data['invoice_reference'],
+            ':cig'               => $data['cig'] ?? null,
+            ':cup'               => $data['cup'] ?? null,
             ':status'            => $data['status'],
         ]);
         return (int) Database::pdo()->lastInsertId();
@@ -109,7 +111,7 @@ final class ProjectModel
         $stmt = Database::pdo()->prepare(
             'UPDATE projects SET client_id = :client_id, name = :name, location = :location,
                 start_date = :start_date, end_date = :end_date,
-                invoice_reference = :invoice_reference, status = :status
+                invoice_reference = :invoice_reference, cig = :cig, cup = :cup, status = :status
              WHERE id = :id'
         );
         return $stmt->execute([
@@ -119,6 +121,8 @@ final class ProjectModel
             ':start_date'        => $data['start_date'],
             ':end_date'          => $data['end_date'],
             ':invoice_reference' => $data['invoice_reference'],
+            ':cig'               => $data['cig'] ?? null,
+            ':cup'               => $data['cup'] ?? null,
             ':status'            => $data['status'],
             ':id'                => $id,
         ]);

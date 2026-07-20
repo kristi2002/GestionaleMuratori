@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 use App\Models\ClientModel;
 use App\Models\CompanySettingsModel;
+use App\Models\ProjectInvoiceModel;
+use App\Models\ProjectModel;
 use App\Support\Fiscal;
 
 /** @var PDO $pdo */
@@ -67,3 +69,37 @@ T::ok($c !== null, 'client created with fiscal fields');
 T::equals('ABC123', (string) $c['codice_destinatario'], 'client codice destinatario persisted');
 T::equals('RM', (string) $c['provincia'], 'client provincia persisted');
 T::equals('business', (string) $c['client_kind'], 'client kind persisted');
+
+T::section('Tracciabilità: CIG/CUP on project + invoice');
+
+$pm  = new ProjectModel();
+$pid = $pm->create([
+    'client_id'         => $cid,
+    'name'              => 'Commessa Pubblica Test',
+    'location'          => null,
+    'start_date'        => '2026-01-01',
+    'end_date'          => null,
+    'invoice_reference' => null,
+    'cig'               => '1234567890',
+    'cup'               => 'A12B34567890123',
+    'status'            => 'active',
+]);
+$proj = $pm->find($pid);
+T::equals('1234567890', (string) $proj['cig'], 'project CIG persisted');
+T::equals('A12B34567890123', (string) $proj['cup'], 'project CUP persisted');
+
+$adminId = (int) $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1")->fetchColumn();
+$im  = new ProjectInvoiceModel();
+$iid = $im->create([
+    'project_id' => $pid,
+    'number'     => '2026/TEST-CIG',
+    'cig'        => '1234567890',
+    'cup'        => 'A12B34567890123',
+    'issue_date' => '2026-02-01',
+    'amount'     => '1000.00',
+    'status'     => 'issued',
+    'note'       => null,
+    'created_by' => $adminId,
+]);
+$inv = $im->find($iid);
+T::equals('1234567890', (string) $inv['cig'], 'invoice CIG persisted');

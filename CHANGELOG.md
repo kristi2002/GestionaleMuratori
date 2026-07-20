@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-20 — Tracciabilità: CIG/CUP on projects & invoices
+
+Public-contract traceability codes (Legge 136/2010). Suite **776 passed, 0 failed**.
+
+- **CIG/CUP** (migration 033) on `projects` (the contract) and `project_invoices`. Project form
+  gains a validated CIG (10) / CUP (15) pair; the project detail shows them when set.
+- **Invoices inherit** the project's CIG/CUP when their own fields are left blank, so every
+  invoice for a public job carries the codes without re-keying. The FatturaPA builder will emit
+  them under DatiOrdineAcquisto/DatiContratto.
+
 ## 2026-07-20 — Fatturazione elettronica, phase 1: fiscal foundation
 
 First slice of in-house electronic invoicing (revisits ADR-0009). Puts in place the structured

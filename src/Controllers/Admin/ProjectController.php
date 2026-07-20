@@ -680,6 +680,18 @@ final class ProjectController
         $invoiceReference = trim((string) $request->input('invoice_reference', ''));
         $location          = trim((string) $request->input('location', ''));
 
+        // Codici tracciabilità (Legge 136/2010), optional — validated only if given.
+        $cig = strtoupper(str_replace(' ', '', (string) $request->input('cig', '')));
+        if ($cig !== '' && !preg_match('/^[A-Z0-9]{10}$/', $cig)) {
+            Response::fail(Lang::get('admin.projects.cig_invalid'), 422);
+            return null;
+        }
+        $cup = strtoupper(str_replace(' ', '', (string) $request->input('cup', '')));
+        if ($cup !== '' && !preg_match('/^[A-Z0-9]{15}$/', $cup)) {
+            Response::fail(Lang::get('admin.projects.cup_invalid'), 422);
+            return null;
+        }
+
         $workerIds = $request->input('worker_ids', []);
         $workerIds = is_array($workerIds) ? array_values(array_unique(array_map('intval', $workerIds))) : [];
         if ($workerIds !== []) {
@@ -702,6 +714,8 @@ final class ProjectController
             'start_date'        => $startDate,
             'end_date'          => $endDate,
             'invoice_reference' => $invoiceReference !== '' ? $invoiceReference : null,
+            'cig'               => $cig !== '' ? $cig : null,
+            'cup'               => $cup !== '' ? $cup : null,
             'status'            => $status,
             'worker_ids'        => $workerIds,
         ];

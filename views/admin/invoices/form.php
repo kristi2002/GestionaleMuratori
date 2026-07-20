@@ -82,6 +82,18 @@ $value     = static fn (string $key): string => (string) ($invoice[$key] ?? '');
                 </div>
             </div>
 
+            <!-- Codici tracciabilità (Legge 136/2010): default dal progetto se lasciati vuoti. -->
+            <div class="row">
+                <div class="col-6 col-md-4 mb-3">
+                    <label class="form-label"><?= $e($t('admin.projects.cig')) ?></label>
+                    <input type="text" class="form-control text-uppercase" name="cig" maxlength="10" value="<?= $e($value('cig')) ?>">
+                </div>
+                <div class="col-6 col-md-4 mb-3">
+                    <label class="form-label"><?= $e($t('admin.projects.cup')) ?></label>
+                    <input type="text" class="form-control text-uppercase" name="cup" maxlength="15" value="<?= $e($value('cup')) ?>">
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label"><?= $e($t('admin.projects.invoice_note')) ?></label>
                 <input type="text" class="form-control" name="note" value="<?= $e($value('note')) ?>"

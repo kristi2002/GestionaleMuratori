@@ -335,6 +335,13 @@ $fmtBytes  = static function (int $bytes): string {
                 <p class="small mb-3">
                     <span class="text-muted"><?= $e($t('admin.projects.invoice_reference_label')) ?>:</span>
                     <span class="fw-semibold"><?= $e($dash($project['invoice_reference'])) ?></span>
+                    <?php if (!empty($project['cig']) || !empty($project['cup'])): ?>
+                        <br>
+                        <span class="text-muted"><?= $e($t('admin.projects.cig')) ?>:</span>
+                        <span class="fw-semibold"><?= $e($dash($project['cig'] ?? null)) ?></span>
+                        <span class="text-muted ms-2"><?= $e($t('admin.projects.cup')) ?>:</span>
+                        <span class="fw-semibold"><?= $e($dash($project['cup'] ?? null)) ?></span>
+                    <?php endif; ?>
                 </p>
                 <form class="js-crud-form row g-2 align-items-end"
                       data-base-url="<?= $e(Url::to('/admin/projects/' . $projectId . '/invoices')) ?>">

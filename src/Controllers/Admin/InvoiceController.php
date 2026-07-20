@@ -192,7 +192,8 @@ final class InvoiceController
     private function validated(Request $request): ?array
     {
         $projectId = (int) $request->input('project_id', 0);
-        if ($projectId <= 0 || (new ProjectModel())->find($projectId) === null) {
+        $project   = $projectId > 0 ? (new ProjectModel())->find($projectId) : null;
+        if ($project === null) {
             Response::fail(Lang::get('admin.invoices.project_invalid'), 422);
             return null;
         }
@@ -228,9 +229,15 @@ final class InvoiceController
 
         $note = trim((string) $request->input('note', ''));
 
+        // CIG/CUP: use the invoice's own value if given, else inherit the project's.
+        $cig = strtoupper(str_replace(' ', '', (string) $request->input('cig', ''))) ?: (string) ($project['cig'] ?? '');
+        $cup = strtoupper(str_replace(' ', '', (string) $request->input('cup', ''))) ?: (string) ($project['cup'] ?? '');
+
         return [
             'project_id' => $projectId,
             'number'     => mb_substr($number, 0, 100),
+            'cig'        => $cig !== '' ? mb_substr($cig, 0, 15) : null,
+            'cup'        => $cup !== '' ? mb_substr($cup, 0, 15) : null,
             'issue_date' => $issueDate,
             'amount'     => $amount,
             'status'     => $status,
