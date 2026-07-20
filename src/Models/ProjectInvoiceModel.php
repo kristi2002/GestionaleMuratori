@@ -165,45 +165,156 @@ final class ProjectInvoiceModel
         return $row ?: null;
     }
 
-    public function update(int $id, array $data): bool
+    /** Fiscal columns (migration 035) shared by the INSERT/UPDATE column list. */
+    private const FISCAL_COLS = [
+        'cig', 'cup', 'document_type', 'imponibile', 'imposta', 'ritenuta_rate',
+        'ritenuta_amount', 'ritenuta_tipo', 'ritenuta_causale', 'bollo',
+        'split_payment', 'payment_method', 'payment_iban', 'payment_due',
+    ];
+
+    /** @return array<int,array<string,mixed>> Fiscal line items in display order. */
+    public function lines(int $invoiceId): array
     {
         $stmt = Database::pdo()->prepare(
-            'UPDATE project_invoices SET project_id = :project_id, number = :number,
-                cig = :cig, cup = :cup,
-                issue_date = :issue_date, amount = :amount, status = :status, note = :note
-             WHERE id = :id'
+            'SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY sort_order, id'
         );
-        return $stmt->execute([
-            ':project_id' => $data['project_id'],
-            ':number'     => $data['number'],
-            ':cig'        => $data['cig'] ?? null,
-            ':cup'        => $data['cup'] ?? null,
-            ':issue_date' => $data['issue_date'],
-            ':amount'     => $data['amount'],
-            ':status'     => $data['status'],
-            ':note'       => $data['note'],
-            ':id'         => $id,
-        ]);
+        $stmt->execute([$invoiceId]);
+        return $stmt->fetchAll();
     }
 
-    public function create(array $data): int
+    /**
+     * @param array<int,array<string,mixed>> $lines when non-empty, the invoice is
+     *        treated as a fiscal document: totals are computed and cached, and the
+     *        lines are stored. When empty, a plain invoice is created (legacy path).
+     */
+    public function create(array $data, array $lines = []): int
     {
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO project_invoices (project_id, number, cig, cup, issue_date, amount, status, note, created_by)
-             VALUES (:project_id, :number, :cig, :cup, :issue_date, :amount, :status, :note, :created_by)'
-        );
-        $stmt->execute([
-            ':project_id' => $data['project_id'],
-            ':number'     => $data['number'],
-            ':cig'        => $data['cig'] ?? null,
-            ':cup'        => $data['cup'] ?? null,
-            ':issue_date' => $data['issue_date'],
-            ':amount'     => $data['amount'],
-            ':status'     => $data['status'],
-            ':note'       => $data['note'],
-            ':created_by' => $data['created_by'],
+        $data = $this->withFiscalTotals($data, $lines);
+        $pdo  = Database::pdo();
+        $tx   = $lines !== [] && !$pdo->inTransaction();
+        if ($tx) {
+            $pdo->beginTransaction();
+        }
+        try {
+            $params = $this->rowParams($data) + [':created_by' => $data['created_by']];
+            $cols   = 'project_id, number, issue_date, amount, status, note, created_by, ' . implode(', ', self::FISCAL_COLS);
+            $vals   = ':project_id, :number, :issue_date, :amount, :status, :note, :created_by, :' . implode(', :', self::FISCAL_COLS);
+            $pdo->prepare("INSERT INTO project_invoices ($cols) VALUES ($vals)")->execute($params);
+            $id = (int) $pdo->lastInsertId();
+            if ($lines !== []) {
+                $this->replaceLines($id, $lines);
+            }
+            if ($tx) {
+                $pdo->commit();
+            }
+            return $id;
+        } catch (\Throwable $e) {
+            if ($tx) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /** @param array<int,array<string,mixed>> $lines empty leaves any existing lines untouched. */
+    public function update(int $id, array $data, array $lines = []): bool
+    {
+        $data = $this->withFiscalTotals($data, $lines);
+        $pdo  = Database::pdo();
+        $tx   = $lines !== [] && !$pdo->inTransaction();
+        if ($tx) {
+            $pdo->beginTransaction();
+        }
+        try {
+            $sets = 'project_id = :project_id, number = :number, issue_date = :issue_date,
+                     amount = :amount, status = :status, note = :note';
+            foreach (self::FISCAL_COLS as $c) {
+                $sets .= ", $c = :$c";
+            }
+            $params = $this->rowParams($data) + [':id' => $id];
+            $ok = $pdo->prepare("UPDATE project_invoices SET $sets WHERE id = :id")->execute($params);
+            if ($lines !== []) {
+                $this->replaceLines($id, $lines);
+            }
+            if ($tx) {
+                $pdo->commit();
+            }
+            return $ok;
+        } catch (\Throwable $e) {
+            if ($tx) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /** Named params for the shared invoice columns, with fiscal defaults. */
+    private function rowParams(array $data): array
+    {
+        $pos = static fn (string $k) => (isset($data[$k]) && (float) $data[$k] > 0) ? $data[$k] : null;
+        return [
+            ':project_id'       => $data['project_id'],
+            ':number'           => $data['number'],
+            ':issue_date'       => $data['issue_date'],
+            ':amount'           => $data['amount'],
+            ':status'           => $data['status'],
+            ':note'             => $data['note'] ?? null,
+            ':cig'              => $data['cig'] ?? null,
+            ':cup'              => $data['cup'] ?? null,
+            ':document_type'    => $data['document_type'] ?? 'TD01',
+            ':imponibile'       => $data['imponibile'] ?? null,
+            ':imposta'          => $data['imposta'] ?? null,
+            ':ritenuta_rate'    => $pos('ritenuta_rate'),
+            ':ritenuta_amount'  => $data['ritenuta_amount'] ?? null,
+            ':ritenuta_tipo'    => $data['ritenuta_tipo'] ?? null,
+            ':ritenuta_causale' => $data['ritenuta_causale'] ?? null,
+            ':bollo'            => $pos('bollo'),
+            ':split_payment'    => !empty($data['split_payment']) ? 1 : 0,
+            ':payment_method'   => $data['payment_method'] ?? 'MP05',
+            ':payment_iban'     => $data['payment_iban'] ?? null,
+            ':payment_due'      => $data['payment_due'] ?? null,
+        ];
+    }
+
+    /** Compute + cache imponibile/imposta/ritenuta/amount from lines (fiscal path only). */
+    private function withFiscalTotals(array $data, array $lines): array
+    {
+        if ($lines === []) {
+            return $data;
+        }
+        $totals = \App\Support\InvoiceTotals::compute($lines, [
+            'ritenuta_rate' => $data['ritenuta_rate'] ?? 0,
+            'bollo'         => $data['bollo'] ?? 0,
         ]);
-        return (int) Database::pdo()->lastInsertId();
+        $data['imponibile']      = number_format($totals['imponibile'], 2, '.', '');
+        $data['imposta']         = number_format($totals['imposta'], 2, '.', '');
+        $data['ritenuta_amount'] = $totals['ritenuta'] > 0 ? number_format($totals['ritenuta'], 2, '.', '') : null;
+        $data['amount']          = number_format($totals['total_document'], 2, '.', '');
+        return $data;
+    }
+
+    /** @param array<int,array<string,mixed>> $lines Replaces all existing lines. */
+    private function replaceLines(int $invoiceId, array $lines): void
+    {
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM invoice_lines WHERE invoice_id = ?')->execute([$invoiceId]);
+        $insert = $pdo->prepare(
+            'INSERT INTO invoice_lines (invoice_id, description, qty, unit, unit_price, vat_rate, natura, line_total, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        foreach (array_values($lines) as $i => $line) {
+            $insert->execute([
+                $invoiceId,
+                $line['description'],
+                $line['qty'],
+                $line['unit'] ?? null,
+                $line['unit_price'],
+                $line['vat_rate'],
+                ($line['natura'] ?? null) !== '' ? ($line['natura'] ?? null) : null,
+                \App\Support\InvoiceTotals::lineTotal($line['qty'], $line['unit_price']),
+                $i,
+            ]);
+        }
     }
 
     public function delete(int $id): bool

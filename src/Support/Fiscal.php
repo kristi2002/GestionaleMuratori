@@ -17,6 +17,26 @@ final class Fiscal
         'RF11', 'RF12', 'RF13', 'RF14', 'RF15', 'RF16', 'RF17', 'RF18', 'RF19',
     ];
 
+    /** TipoDocumento codes we support (FatturaPA). TD01 fattura, TD04 nota di credito. */
+    public const DOC_TYPES = ['TD01', 'TD04', 'TD24', 'TD25'];
+
+    /**
+     * Natura codes — required on a line whenever its VAT rate is 0 (why no VAT is due).
+     * The N6.x family is the domestic reverse charge (inversione contabile), N6.3/N6.7
+     * being the construction cases. Key => human label handled in the view via Lang.
+     */
+    public const NATURE = [
+        'N1', 'N2.1', 'N2.2', 'N3.1', 'N3.2', 'N3.3', 'N3.4', 'N3.5', 'N3.6',
+        'N4', 'N5', 'N6.1', 'N6.2', 'N6.3', 'N6.4', 'N6.5', 'N6.6', 'N6.7',
+        'N6.8', 'N6.9', 'N7',
+    ];
+
+    /** ModalitaPagamento codes (FatturaPA). MP05 bonifico, MP01 contanti, MP08 carta. */
+    public const PAYMENT_METHODS = ['MP01', 'MP05', 'MP08', 'MP12', 'MP23'];
+
+    /** TipoRitenuta: RT01 persone fisiche, RT02 persone giuridiche. */
+    public const RITENUTA_TIPI = ['RT01', 'RT02'];
+
     /**
      * Partita IVA: 11 digits with the standard Luhn-style check digit.
      * (The last digit validates the first ten.)
