@@ -9,6 +9,21 @@ declare(strict_types=1);
 return [
     'app_name' => 'Gestionale Muratori',
 
+    // FatturaPA TipoDocumento / ModalitaPagamento human labels (invoice form + PDF).
+    'invoice_doc_types' => [
+        'TD01' => 'Fattura',
+        'TD04' => 'Nota di credito',
+        'TD24' => 'Fattura differita',
+        'TD25' => 'Fattura differita (triangolazione)',
+    ],
+    'invoice_payment_methods' => [
+        'MP01' => 'Contanti',
+        'MP05' => 'Bonifico',
+        'MP08' => 'Carta di pagamento',
+        'MP12' => 'RIBA',
+        'MP23' => 'PagoPA',
+    ],
+
     // Global sidebar / navigation chrome (shared by the layout for every role).
     'nav' => [
         'menu'           => 'Menu',
@@ -476,6 +491,30 @@ return [
             'einvoice_soon'      => 'Fattura elettronica',
             'search_placeholder' => 'Cerca per numero, cantiere o cliente…',
             'section_main'       => 'Dati fattura',
+            'section_lines'      => 'Righe della fattura',
+            'section_fiscal'     => 'Dati fiscali e pagamento',
+            'lines_hint'         => 'Inserisci le righe con IVA per riga: i totali e la fattura elettronica si calcolano da qui. Lascia vuoto per registrare solo un importo.',
+            'document_type'      => 'Tipo documento',
+            'line_vat'           => 'IVA',
+            'line_natura'        => 'Natura',
+            'natura_hint'        => 'Per le righe con IVA 0% indica la Natura (es. N6.3 inversione contabile per subappalto edile).',
+            'natura_required'    => 'Indica la Natura per le righe con IVA 0% (es. N6.3 reverse charge).',
+            'line_vat_invalid'   => 'Aliquota IVA non valida.',
+            'line_add'           => 'Aggiungi riga',
+            'bollo'              => 'Bollo (€)',
+            'ritenuta_rate'      => 'Ritenuta (%)',
+            'ritenuta_tipo'      => 'Tipo ritenuta',
+            'ritenuta_causale'   => 'Causale',
+            'payment_method'     => 'Modalità pagamento',
+            'payment_iban'       => 'IBAN',
+            'payment_due'        => 'Scadenza pagamento',
+            'split_payment'      => 'Scissione dei pagamenti (split payment, PA)',
+            'summary_title'      => 'Riepilogo',
+            'total_document'     => 'Totale documento',
+            'ritenuta'           => 'Ritenuta',
+            'net_to_pay'         => 'Netto a pagare',
+            'amount_fallback'    => 'Importo (senza righe)',
+            'amount_fallback_hint' => 'Usato solo se non inserisci righe: registra la fattura come semplice importo.',
             'back_to_list'       => 'Torna alle fatture',
             'empty'              => 'Nessuna fattura trovata.',
             'project_invalid'    => 'Seleziona un progetto valido.',
@@ -1715,6 +1754,8 @@ return [
         'labor_cost'            => 'di cui costo manodopera',
         'safety_cost'           => 'di cui oneri sicurezza',
         'labor_safety_note'     => 'Costi non soggetti a ribasso (D.Lgs 36/2023 art. 41).',
+        'vat_summary'           => 'Riepilogo IVA',
+        'reverse_charge'        => 'inversione contabile',
         // Tessera di riconoscimento (worker badge)
         'badge_kicker'          => 'Tessera di riconoscimento',
         'badge_no_photo'        => 'Foto non disponibile',

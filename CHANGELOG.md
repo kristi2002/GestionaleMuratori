@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-20 — Fiscal invoice UI + PDF (phase 6b)
+
+The fiscal invoice from 6a is now usable end-to-end. Suite **817 passed, 0 failed**.
+
+- **Invoice form line editor** (`js-invoice-lines`): per-line description/qty/unit/price plus
+  **IVA rate + Natura** (Natura auto-toggles on/required for 0% lines — reverse charge N6.x),
+  with a live summary rail (imponibile, imposta, totale documento, ritenuta, netto a pagare).
+- **Fiscal panel**: TipoDocumento, ritenuta d'acconto (rate/tipo/causale), bollo, split payment,
+  modalità/IBAN/scadenza pagamento. `InvoiceController` validates lines + fiscal fields and keeps
+  the **legacy amount-only path** (leave lines empty → single amount, unchanged).
+- **Invoice PDF** now renders the line table + **Riepilogo IVA** (per aliquota/natura) + bollo,
+  ritenuta and netto a pagare for fiscal invoices; simple total for legacy ones.
+- Service worker bumped to `gm-shell-v39` (app.js changed).
+
 ## 2026-07-20 — Subcontractor DURC/patente assignment gate
 
 Refuses to assign a subcontractor to a jobsite when it is not compliant (D.Lgs 81/08 art. 27).

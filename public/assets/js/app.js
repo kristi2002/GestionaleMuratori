@@ -1478,6 +1478,67 @@
         recompute();
     });
 
+    // --- Invoices: dynamic fiscal line editor (Fatture form) -------------------
+    // Per-line VAT rate + natura (reverse charge). Live totals mirror InvoiceTotals:
+    // imponibile = Σ line totals, imposta grouped by rate, plus bollo/ritenuta.
+    $(function () {
+        var $editor = $('.js-invoice-lines');
+        if (!$editor.length) {
+            return;
+        }
+        var index = parseInt($editor.attr('data-next-index'), 10) || 0;
+
+        function euro(v) {
+            var p = v.toFixed(2).split('.');
+            return '€ ' + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + p[1];
+        }
+        function r2(v) { return Math.round(v * 100) / 100; }
+
+        function recompute() {
+            var imponibile = 0, buckets = {};
+            $editor.find('.js-invoice-line').each(function () {
+                var $row = $(this);
+                var qty = parseFloat($row.find('[data-role="qty"]').val()) || 0;
+                var price = parseFloat($row.find('[data-role="price"]').val()) || 0;
+                var rate = parseFloat($row.find('[data-role="vat"]').val()) || 0;
+                var lt = r2(qty * price);
+                $row.find('.js-invoice-line-total').text(lt > 0 ? euro(lt) : '—');
+                imponibile += lt;
+                buckets[rate] = (buckets[rate] || 0) + lt;
+                // Natura is only meaningful (and required) when the line carries no VAT.
+                var $nat = $row.find('[data-role="natura"]');
+                $nat.prop('disabled', rate !== 0);
+                if (rate !== 0) { $nat.val(''); }
+            });
+            var imposta = 0;
+            Object.keys(buckets).forEach(function (rate) {
+                imposta += r2(buckets[rate] * parseFloat(rate) / 100);
+            });
+            var bollo = parseFloat($('.js-invoice-bollo').val()) || 0;
+            var ritRate = parseFloat($('.js-invoice-ritenuta-rate').val()) || 0;
+            var ritenuta = ritRate > 0 ? r2(imponibile * ritRate / 100) : 0;
+            var totalDoc = r2(imponibile + imposta + bollo);
+            $('.js-invoice-imponibile').text(euro(imponibile));
+            $('.js-invoice-imposta').text(euro(imposta));
+            $('.js-invoice-total').text(euro(totalDoc));
+            $('.js-invoice-ritenuta').text(ritenuta > 0 ? '− ' + euro(ritenuta) : '—');
+            $('.js-invoice-net').text(euro(r2(totalDoc - ritenuta)));
+        }
+
+        $(document).on('click', '.js-invoice-add-line', function () {
+            var html = $editor.find('.js-invoice-line-template').html().replace(/__INDEX__/g, index++);
+            $editor.find('.js-invoice-lines-body').append(html);
+            recompute();
+        });
+        $(document).on('click', '.js-invoice-remove-line', function () {
+            $(this).closest('.js-invoice-line').remove();
+            recompute();
+        });
+        $(document).on('input change', '.js-invoice-lines input, .js-invoice-lines select, .js-invoice-bollo, .js-invoice-ritenuta-rate', recompute);
+
+        recompute();
+    });
+
     // --- Purchase orders: dynamic line editor (Buoni d'Ordine form) ------------
     // Same running-index line editor as quotes, with an extra item <select> per row:
     // picking a warehouse item fills the description/unit when they are still blank.
