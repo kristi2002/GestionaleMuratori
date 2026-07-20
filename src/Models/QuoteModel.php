@@ -189,20 +189,22 @@ final class QuoteModel
         $pdo->beginTransaction();
         try {
             $stmt = $pdo->prepare(
-                'INSERT INTO quotes (client_id, project_id, number, title, quote_date, valid_until, status, vat_rate, notes, created_by)
-                 VALUES (:client_id, :project_id, :number, :title, :quote_date, :valid_until, :status, :vat_rate, :notes, :created_by)'
+                'INSERT INTO quotes (client_id, project_id, number, title, quote_date, valid_until, status, vat_rate, costo_manodopera, oneri_sicurezza, notes, created_by)
+                 VALUES (:client_id, :project_id, :number, :title, :quote_date, :valid_until, :status, :vat_rate, :costo_manodopera, :oneri_sicurezza, :notes, :created_by)'
             );
             $stmt->execute([
-                ':client_id'   => $data['client_id'],
-                ':project_id'  => $data['project_id'],
-                ':number'      => $data['number'],
-                ':title'       => $data['title'],
-                ':quote_date'  => $data['quote_date'],
-                ':valid_until' => $data['valid_until'],
-                ':status'      => $data['status'],
-                ':vat_rate'    => $data['vat_rate'],
-                ':notes'       => $data['notes'],
-                ':created_by'  => $data['created_by'],
+                ':client_id'        => $data['client_id'],
+                ':project_id'       => $data['project_id'],
+                ':number'           => $data['number'],
+                ':title'            => $data['title'],
+                ':quote_date'       => $data['quote_date'],
+                ':valid_until'      => $data['valid_until'],
+                ':status'           => $data['status'],
+                ':vat_rate'         => $data['vat_rate'],
+                ':costo_manodopera' => $data['costo_manodopera'] ?? null,
+                ':oneri_sicurezza'  => $data['oneri_sicurezza'] ?? null,
+                ':notes'            => $data['notes'],
+                ':created_by'       => $data['created_by'],
             ]);
             $id = (int) $pdo->lastInsertId();
             $this->insertLines($id, $lines);
@@ -223,20 +225,23 @@ final class QuoteModel
             $stmt = $pdo->prepare(
                 'UPDATE quotes SET client_id = :client_id, project_id = :project_id, number = :number,
                     title = :title, quote_date = :quote_date, valid_until = :valid_until,
-                    status = :status, vat_rate = :vat_rate, notes = :notes
+                    status = :status, vat_rate = :vat_rate, costo_manodopera = :costo_manodopera,
+                    oneri_sicurezza = :oneri_sicurezza, notes = :notes
                  WHERE id = :id'
             );
             $stmt->execute([
-                ':client_id'   => $data['client_id'],
-                ':project_id'  => $data['project_id'],
-                ':number'      => $data['number'],
-                ':title'       => $data['title'],
-                ':quote_date'  => $data['quote_date'],
-                ':valid_until' => $data['valid_until'],
-                ':status'      => $data['status'],
-                ':vat_rate'    => $data['vat_rate'],
-                ':notes'       => $data['notes'],
-                ':id'          => $id,
+                ':client_id'        => $data['client_id'],
+                ':project_id'       => $data['project_id'],
+                ':number'           => $data['number'],
+                ':title'            => $data['title'],
+                ':quote_date'       => $data['quote_date'],
+                ':valid_until'      => $data['valid_until'],
+                ':status'           => $data['status'],
+                ':vat_rate'         => $data['vat_rate'],
+                ':costo_manodopera' => $data['costo_manodopera'] ?? null,
+                ':oneri_sicurezza'  => $data['oneri_sicurezza'] ?? null,
+                ':notes'            => $data['notes'],
+                ':id'               => $id,
             ]);
             $pdo->prepare('DELETE FROM quote_lines WHERE quote_id = ?')->execute([$id]);
             $this->insertLines($id, $lines);

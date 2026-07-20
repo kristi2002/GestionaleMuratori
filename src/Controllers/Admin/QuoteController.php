@@ -305,6 +305,18 @@ final class QuoteController
             return null;
         }
 
+        // Costo manodopera / oneri sicurezza (D.Lgs 36/2023): optional money amounts.
+        $laborRaw = str_replace(',', '.', trim((string) $request->input('costo_manodopera', '')));
+        if ($laborRaw !== '' && !Validate::isMoney($laborRaw)) {
+            Response::fail(Lang::get('admin.quotes.labor_invalid'), 422);
+            return null;
+        }
+        $safetyRaw = str_replace(',', '.', trim((string) $request->input('oneri_sicurezza', '')));
+        if ($safetyRaw !== '' && !Validate::isMoney($safetyRaw)) {
+            Response::fail(Lang::get('admin.quotes.safety_invalid'), 422);
+            return null;
+        }
+
         $notes = trim((string) $request->input('notes', ''));
 
         $lines    = [];
@@ -363,6 +375,8 @@ final class QuoteController
             'valid_until' => $validUntil !== '' ? $validUntil : null,
             'status'      => $status,
             'vat_rate'    => number_format((float) $vatRaw, 2, '.', ''),
+            'costo_manodopera' => $laborRaw !== '' ? number_format((float) $laborRaw, 2, '.', '') : null,
+            'oneri_sicurezza'  => $safetyRaw !== '' ? number_format((float) $safetyRaw, 2, '.', '') : null,
             'notes'       => $notes !== '' ? $notes : null,
         ], $lines];
     }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-20 — Preventivi: costo manodopera + oneri sicurezza
+
+Separate labour-cost and safety-charge fields on quotes (D.Lgs 36/2023 art. 41 c.14 — mandatory
+in public tenders, established practice in private ones; feeds DURC di congruità). Suite
+**778 passed, 0 failed**.
+
+- **`costo_manodopera` + `oneri_sicurezza`** (migration 034) on quotes, with a dedicated,
+  validated section on the quote form.
+- The **preventivo PDF** shows both under the totals, flagged as *non soggetti a ribasso*.
+
 ## 2026-07-20 — Tracciabilità: CIG/CUP on projects & invoices
 
 Public-contract traceability codes (Legge 136/2010). Suite **776 passed, 0 failed**.

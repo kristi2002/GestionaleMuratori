@@ -9,6 +9,7 @@ use App\Models\ClientModel;
 use App\Models\CompanySettingsModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
+use App\Models\QuoteModel;
 use App\Support\Fiscal;
 
 /** @var PDO $pdo */
@@ -103,3 +104,26 @@ $iid = $im->create([
 ]);
 $inv = $im->find($iid);
 T::equals('1234567890', (string) $inv['cig'], 'invoice CIG persisted');
+
+T::section('Preventivo: manodopera + oneri sicurezza breakout');
+
+$qm  = new QuoteModel();
+$qid = $qm->create([
+    'client_id'        => $cid,
+    'project_id'       => $pid,
+    'number'           => '2026/TEST-LS',
+    'title'            => 'Preventivo con costi sicurezza',
+    'quote_date'       => '2026-03-01',
+    'valid_until'      => null,
+    'status'           => 'draft',
+    'vat_rate'         => '22.00',
+    'costo_manodopera' => '3500.00',
+    'oneri_sicurezza'  => '450.00',
+    'notes'            => null,
+    'created_by'       => $adminId,
+], [
+    ['description' => 'Muratura', 'qty' => '1', 'unit' => 'corpo', 'unit_price' => '10000.00'],
+]);
+$q = $qm->find($qid);
+T::equals('3500.00', (string) $q['costo_manodopera'], 'quote costo manodopera persisted');
+T::equals('450.00', (string) $q['oneri_sicurezza'], 'quote oneri sicurezza persisted');

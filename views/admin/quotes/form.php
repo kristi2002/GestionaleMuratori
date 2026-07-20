@@ -209,6 +209,22 @@ $num       = static fn ($v): string => rtrim(rtrim((string) $v, '0'), '.');
                 </div>
             </div>
 
+            <!-- Costo manodopera e oneri della sicurezza (D.Lgs 36/2023 art. 41 c.14). -->
+            <h2 class="app-form-section"><?= $e($t('admin.quotes.section_labor_safety')) ?></h2>
+            <p class="text-muted small"><?= $e($t('admin.quotes.labor_safety_hint')) ?></p>
+            <div class="row">
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.quotes.costo_manodopera')) ?></label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="costo_manodopera"
+                           value="<?= $e($value('costo_manodopera')) ?>">
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <label class="form-label"><?= $e($t('admin.quotes.oneri_sicurezza')) ?></label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="oneri_sicurezza"
+                           value="<?= $e($value('oneri_sicurezza')) ?>">
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label"><?= $e($t('admin.quotes.notes')) ?></label>
                 <textarea class="form-control" name="notes" rows="3"

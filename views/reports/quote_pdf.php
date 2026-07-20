@@ -100,6 +100,18 @@ $vatAmount = $subtotal * (float) $quote['vat_rate'] / 100;
         <tr class="grand"><td><?= $e($t('report.total')) ?>:</td><td><?= $e($money($subtotal + $vatAmount)) ?></td></tr>
     </table>
 
+    <?php if (($quote['costo_manodopera'] ?? null) !== null || ($quote['oneri_sicurezza'] ?? null) !== null): ?>
+        <p class="muted" style="margin-top:8pt;">
+            <?php if (($quote['costo_manodopera'] ?? null) !== null): ?>
+                <?= $e($t('report.labor_cost')) ?>: <strong><?= $e($money((float) $quote['costo_manodopera'])) ?></strong>
+            <?php endif; ?>
+            <?php if (($quote['oneri_sicurezza'] ?? null) !== null): ?>
+                &nbsp;&nbsp;<?= $e($t('report.safety_cost')) ?>: <strong><?= $e($money((float) $quote['oneri_sicurezza'])) ?></strong>
+            <?php endif; ?>
+            <br><span style="font-size:8pt;"><?= $e($t('report.labor_safety_note')) ?></span>
+        </p>
+    <?php endif; ?>
+
     <?php if ($quote['notes']): ?>
         <h2><?= $e($t('report.notes_conditions')) ?></h2>
         <p><?= nl2br($e($quote['notes'])) ?></p>
