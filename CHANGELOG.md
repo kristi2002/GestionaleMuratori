@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-20 — Database-backed sessions (seamless deploys)
+
+Sessions now persist in the database instead of the container filesystem, so a
+redeploy/restart no longer logs everyone out. Suite **852 passed, 0 failed**.
+
+- **`sessions` table** (migration 037) + **`DatabaseSessionHandler`** (SessionHandlerInterface):
+  read/write/destroy/gc, each degrading gracefully (a DB hiccup or a not-yet-migrated table
+  asks the user to log in again rather than 500-ing).
+- Wired in `Session::start()` behind `SESSION_DRIVER` (default `database`; set `files` to revert).
+- Found during the live-site review: redeploys were bumping active users to the login screen.
+
 ## 2026-07-20 — E-invoice preparation: signing + lifecycle + conservazione (phase 8)
 
 Completes the in-house e-invoicing architecture (ADR-0009 revisited). Signing and transmission

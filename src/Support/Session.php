@@ -15,6 +15,12 @@ final class Session
         }
         if (PHP_SAPI !== 'cli') {
             ini_set('session.use_strict_mode', '1');
+            // DB-backed sessions survive container restarts (redeploys) — file
+            // sessions live in the container and are wiped on each deploy. Set
+            // SESSION_DRIVER=files to fall back to PHP's default handler.
+            if (Config::get('session.driver', 'database') === 'database') {
+                session_set_save_handler(new DatabaseSessionHandler(), true);
+            }
             session_set_cookie_params([
                 'httponly' => true,
                 'samesite' => 'Lax',

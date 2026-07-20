@@ -15,6 +15,9 @@ return [
         'debug' => Env::bool('APP_DEBUG', false),
     ],
     'session' => [
+        // Where sessions are stored: 'database' (default — survives redeploys) or
+        // 'files' (PHP default; wiped when the container restarts). See migration 037.
+        'driver' => Env::get('SESSION_DRIVER', 'database'),
         // Secure cookie flag: explicit SESSION_SECURE wins, otherwise inferred from APP_URL scheme.
         'secure' => Env::get('SESSION_SECURE') !== null
             ? Env::bool('SESSION_SECURE')
