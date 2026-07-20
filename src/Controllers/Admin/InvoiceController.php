@@ -39,10 +39,16 @@ final class InvoiceController
 
         // Real per-status counts drive the pill badges; summary() feeds the KPI cards.
         $statusCounts = $model->statusCounts();
+        $invoices     = $model->all($filters, $paginator->perPage, $paginator->offset);
+
+        // E-invoice lifecycle records for the visible page (status badge + links).
+        $einvoices = (new \App\Models\EInvoiceModel())->forInvoices(
+            array_map(static fn (array $i): int => (int) $i['id'], $invoices)
+        );
 
         Response::html(View::render('admin/invoices/index', [
             'title'        => Lang::get('admin.invoices.title'),
-            'invoices'     => $model->all($filters, $paginator->perPage, $paginator->offset),
+            'invoices'     => $invoices,
             'projects'     => (new ProjectModel())->all(),
             'filters'      => $filters,
             'statuses'     => self::STATUSES,
@@ -51,6 +57,8 @@ final class InvoiceController
             'summary'      => $model->summary(),
             'overdueDays'  => $model->overdueDays(),
             'paginator'    => $paginator,
+            'einvoices'    => $einvoices,
+            'einvoiceEnabled' => (bool) \App\Support\Config::get('einvoice.enabled', false),
         ], 'layout'));
     }
 
@@ -204,6 +212,43 @@ final class InvoiceController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Content-Length: ' . strlen($pdf));
         echo $pdf;
+    }
+
+    /** POST /admin/invoices/{id}/einvoice — validate, build, store (and sign if configured). */
+    public function einvoicePrepare(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $res = (new \App\Services\FatturaPA\EInvoiceService())->prepare((int) $id);
+        if (!empty($res['not_found'])) {
+            Response::fail(Lang::get('admin.invoices.not_found'), 404);
+            return;
+        }
+        if (!($res['ok'] ?? false)) {
+            Response::fail(implode(' ', $res['errors'] ?? []), 422);
+            return;
+        }
+        Response::ok(['status' => $res['record']['status'] ?? 'generated']);
+    }
+
+    /** GET /admin/invoices/{id}/einvoice/file/{kind} — stream the stored xml or signed .p7m. */
+    public function einvoiceFile(Request $request, string $id, string $kind): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $record = (new \App\Models\EInvoiceModel())->forInvoice((int) $id);
+        $rel    = $record === null ? null : ($kind === 'signed' ? ($record['signed_path'] ?? null) : ($record['xml_path'] ?? null));
+        $storage = \App\Support\Storage\Storage::disk();
+        if ($rel === null || !$storage->exists($rel)) {
+            Response::html(View::render('errors/404', ['title' => Lang::get('admin.invoices.not_found')], 'layout'), 404);
+            return;
+        }
+
+        $bytes = $storage->get($rel);
+        header('Content-Type: application/' . ($kind === 'signed' ? 'pkcs7-mime' : 'xml') . '; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . basename($rel) . '"');
+        header('Content-Length: ' . strlen($bytes));
+        echo $bytes;
     }
 
     /** GET /admin/invoices/{id}/xml — the FatturaPA electronic-invoice file. */

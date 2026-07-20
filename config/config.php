@@ -76,6 +76,22 @@ return [
         'phone'   => Env::get('COMPANY_PHONE', ''),
         'email'   => Env::get('COMPANY_EMAIL', ''),
     ],
+    // Fatturazione elettronica (SdI). The XML is always generatable; signing and
+    // transmission are OFF by default and require the firm's own certificate and
+    // SdI-provider account. 'manual' transmitter = the admin downloads the (signed)
+    // file and uploads it through their provider / the Agenzia delle Entrate portal.
+    // See docs/CONFIGURATION.md for what to supply to go fully in-house.
+    'einvoice' => [
+        'enabled'     => Env::bool('EINVOICE_ENABLED', false),
+        // CAdES signing: needs a qualified certificate (usually from the SdI provider
+        // or a firma-digitale device). Provide PEM cert + private key.
+        'sign'        => Env::bool('EINVOICE_SIGN', false),
+        'cert_path'   => Env::get('EINVOICE_CERT_PATH', ''),
+        'key_path'    => Env::get('EINVOICE_KEY_PATH', ''),
+        'key_pass'    => Env::get('EINVOICE_KEY_PASS', ''),
+        // Only 'manual' is wired today; API/PEC adapters plug in here (ADR-0009 revisit).
+        'transmitter' => Env::get('EINVOICE_TRANSMITTER', 'manual'),
+    ],
     // Scheduled automation (scripts/scheduler.php): how far ahead to alert on
     // expiring compliance documents.
     'scheduler' => [

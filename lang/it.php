@@ -23,6 +23,15 @@ return [
         'MP12' => 'RIBA',
         'MP23' => 'PagoPA',
     ],
+    // E-invoice lifecycle status (einvoice_documents.status).
+    'einvoice_status' => [
+        'generated' => 'XML generato',
+        'signed'    => 'Firmato',
+        'sent'      => 'Inviato allo SdI',
+        'delivered' => 'Consegnata',
+        'rejected'  => 'Scartata',
+        'error'     => 'Errore',
+    ],
 
     // Global sidebar / navigation chrome (shared by the layout for every role).
     'nav' => [
@@ -516,6 +525,7 @@ return [
             'amount_fallback'    => 'Importo (senza righe)',
             'amount_fallback_hint' => 'Usato solo se non inserisci righe: registra la fattura come semplice importo.',
             'xml_download'       => 'Fattura elettronica (XML)',
+            'einvoice_prepare'   => 'Prepara SdI',
             'xml_title'          => 'Fattura elettronica (FatturaPA)',
             'xml_not_ready'      => 'Non è ancora possibile generare la fattura elettronica: mancano alcuni dati obbligatori.',
             'xml_err_company'    => 'Completa i dati della tua azienda (denominazione, P.IVA o C.F., regime fiscale, indirizzo, CAP, comune, provincia) in «Dati Azienda».',

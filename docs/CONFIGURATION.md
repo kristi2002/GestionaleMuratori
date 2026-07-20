@@ -141,3 +141,41 @@ MAIL_USERNAME=alerts@example.com
 MAIL_PASSWORD=<smtp secret>
 MAIL_FROM_ADDRESS=alerts@example.com
 ```
+
+## Fatturazione elettronica (SdI)
+
+Generating the FatturaPA XML needs **no configuration** — fill in **Dati Azienda**
+(seller P.IVA/regime/sede) and the client's fiscal fields (P.IVA or C.F., Codice
+Destinatario or PEC, address), then download the XML from the Fatture list. Hand it
+to your commercialista or upload it through the Agenzia delle Entrate portal.
+
+To bring **signing + transmission** in-house (revisits ADR-0009), set the `EINVOICE_*`
+vars. All are **off by default**.
+
+```dotenv
+# Enable the in-house e-invoice preparation UI (Prepara SdI button + status ledger)
+EINVOICE_ENABLED=true
+
+# CAdES signing into a .p7m envelope. Requires a QUALIFIED certificate (firma
+# digitale / from your SdI provider). Provide PEM cert + private key readable by
+# the web-server user. Leave EINVOICE_SIGN=false to deliver the plain XML (many
+# providers sign on their side).
+EINVOICE_SIGN=true
+EINVOICE_CERT_PATH=/run/secrets/einvoice_cert.pem
+EINVOICE_KEY_PATH=/run/secrets/einvoice_key.pem
+EINVOICE_KEY_PASS=<key passphrase, if any>
+
+# Transmission adapter. Only 'manual' is wired today: the admin downloads the
+# (signed) file and uploads it via their provider / the AdE portal. API/PEC
+# adapters plug into App\Services\FatturaPA (see EInvoiceService).
+EINVOICE_TRANSMITTER=manual
+```
+
+**What is stored:** each prepared invoice keeps a row in `einvoice_documents`
+(format, progressivo, status, xml/signed file paths) and the files land on the
+Storage disk under `einvoice/` — the firm's durable record. Certified 10-year
+*conservazione sostitutiva a norma* remains the provider's service.
+
+**Caveat:** full SdI acceptance requires a CAdES-BES signature with a qualified
+certificate; the built-in signer produces a CMS/.p7m with the certificate you
+supply. Validate end-to-end with your provider before going live.

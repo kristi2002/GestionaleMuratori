@@ -178,6 +178,19 @@ echo View::render('partials/filter_pills', ['pills' => $pills], null);
                                title="<?= $e($t('admin.invoices.xml_download')) ?>">
                                 <i class="bi bi-file-earmark-code" aria-hidden="true"></i> XML
                             </a>
+                            <?php if (!empty($einvoiceEnabled)): ?>
+                                <?php $rec = $einvoices[(int) $inv['id']] ?? null; ?>
+                                <button type="button" class="btn btn-sm btn-outline-success js-einvoice-prepare"
+                                        data-url="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/einvoice')) ?>">
+                                    <i class="bi bi-shield-check" aria-hidden="true"></i> <?= $e($t('admin.invoices.einvoice_prepare')) ?>
+                                </button>
+                                <?php if ($rec !== null): ?>
+                                    <span class="badge text-bg-light border align-middle"><?= $e($t('einvoice_status.' . $rec['status'])) ?></span>
+                                    <?php if (!empty($rec['signed_path'])): ?>
+                                        <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/einvoice/file/signed')) ?>">.p7m</a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>

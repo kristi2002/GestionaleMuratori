@@ -763,6 +763,24 @@
             });
         });
 
+        // Fattura elettronica: prepare (build + store + sign) then reload to reveal
+        // the status badge and download links. A 422 lists the missing fiscal data.
+        $(document).on('click', '.js-einvoice-prepare', function () {
+            var $btn = $(this);
+            buttonLoading($btn);
+            Api.post($btn.data('url'), {}).done(function (res) {
+                if (res && res.ok) {
+                    window.location.reload();
+                } else {
+                    buttonReset($btn);
+                    Dialog.alert((res && res.error) || GM.t('common.unexpected_error', 'Errore imprevisto.'));
+                }
+            }).fail(function (xhr) {
+                buttonReset($btn);
+                Dialog.alert(failMessage(xhr));
+            });
+        });
+
         // Lead inbox: set a lead's status (posts {status} from data-status).
         $(document).on('click', '.js-lead-status', function () {
             var $btn = $(this);

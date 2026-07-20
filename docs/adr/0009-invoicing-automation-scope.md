@@ -51,5 +51,13 @@ Domain facts that shaped the decision:
 ## Revisit triggers
 
 - The client wants to issue e-invoices from this system → dedicated FatturaPA phase.
+
+> **Revisited 2026-07-20.** The "issue e-invoices from this system" trigger fired. A dedicated
+> FatturaPA phase was built: structured fiscal fields (company + client), a real fiscal invoice
+> (line items, IVA, natura/reverse charge, ritenuta, bollo, split), a FatturaPA v1.2 XML builder
+> + pre-flight validator, and an e-invoice preparation pipeline (store → optional CAdES sign →
+> lifecycle ledger). Signing and transmission are **off by default** and require the firm's
+> certificate + SdI provider (see docs/CONFIGURATION.md); XML generation needs no config. The
+> plain-XML-to-commercialista path this ADR chose remains valid and is still the default.
 - A billing pattern emerges that is genuinely periodic (e.g. maintenance contracts) →
   reconsider recurring invoices.

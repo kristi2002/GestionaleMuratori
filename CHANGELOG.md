@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-20 — E-invoice preparation: signing + lifecycle + conservazione (phase 8)
+
+Completes the in-house e-invoicing architecture (ADR-0009 revisited). Signing and transmission
+are **off by default** and require the firm's certificate + SdI provider. Suite **842 passed, 0 failed**.
+
+- **Lifecycle ledger** (`einvoice_documents`, migration 036): one row per invoice tracking format,
+  progressivo, status, and the stored XML / signed-file paths — the firm's durable record.
+- **`EInvoiceService`**: validate → build XML → store on the Storage disk → optional CAdES sign →
+  record status. Default 'manual' transmission leaves the (signed) file ready for provider upload.
+- **`CadesSigner`**: CMS/.p7m signing via openssl when a certificate is configured (works with the
+  supplied cert; qualified CAdES-BES cert needed for full SdI acceptance).
+- **UI**: when `EINVOICE_ENABLED`, the Fatture list gains a "Prepara SdI" action with a status badge
+  and a signed-file download; a 422 lists exactly which fiscal data is still missing.
+- `EINVOICE_*` config + docs/CONFIGURATION.md; sw.js → `gm-shell-v40`.
+
 ## 2026-07-20 — FatturaPA v1.2 XML generation (phase 7)
 
 Generates the legally-valid electronic-invoice file from a fiscal invoice. Suite
