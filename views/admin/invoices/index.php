@@ -37,8 +37,6 @@ $pillHref = static function (string $status) use ($filters): string {
 
 $actions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/invoices/create')) . '">'
     . '<i class="bi bi-plus-lg" aria-hidden="true"></i> ' . $e($t('admin.invoices.new')) . '</a>'
-    . '<button type="button" class="btn btn-outline-secondary" disabled title="' . $e($t('nav.coming_soon')) . '">'
-    . '<i class="bi bi-lightning-charge" aria-hidden="true"></i> ' . $e($t('admin.invoices.einvoice_soon')) . '</button>'
     . View::render('partials/back_button', ['href' => '/admin'], null);
 
 echo View::render('partials/page_head', [

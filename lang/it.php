@@ -497,7 +497,6 @@ return [
             'new'                => 'Nuova fattura',
             'edit'               => 'Modifica fattura',
             'print'              => 'Stampa',
-            'einvoice_soon'      => 'Fattura elettronica',
             'search_placeholder' => 'Cerca per numero, cantiere o cliente…',
             'section_main'       => 'Dati fattura',
             'section_lines'      => 'Righe della fattura',
