@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-20 — Subcontractor DURC/patente assignment gate
+
+Refuses to assign a subcontractor to a jobsite when it is not compliant (D.Lgs 81/08 art. 27).
+Suite **785 passed, 0 failed**.
+
+- **`ComplianceDocumentModel::subcontractorGate()`** flags a blocking issue when the newest DURC
+  is expired or the latest patente a crediti is below 15 credits (superseded documents ignored).
+- `SubcontractorController::assignProjects` enforces the gate on assignment; a per-modal
+  **override checkbox** (force=1) lets an admin proceed under their responsibility, recorded as
+  a `compliance_override` audit entry.
+
 ## 2026-07-20 — Tessera di riconoscimento (worker badge)
 
 Printable site badge required on cantieri (Art. 18 c.1 lett. u D.Lgs 81/2008, L. 136/2010 art. 5).

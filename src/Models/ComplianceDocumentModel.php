@@ -111,6 +111,44 @@ final class ComplianceDocumentModel
      *
      * @return array{expired:int,exp30:int,exp90:int,valid:int}
      */
+    /**
+     * Compliance gate for assigning work to a subcontractor. Flags a blocking issue
+     * when the newest DURC is expired, or the most recent patente a crediti sits
+     * below the legal operating floor of 15 credits (D.Lgs 81/08 art. 27). Older,
+     * superseded documents are ignored — only the latest of each type counts.
+     *
+     * @return array{blocked:bool,issues:array<int,string>} issue codes for the view
+     */
+    public function subcontractorGate(int $subcontractorId): array
+    {
+        $pdo    = Database::pdo();
+        $issues = [];
+
+        $durc = $pdo->prepare(
+            "SELECT MAX(expiry_date) FROM compliance_documents
+             WHERE subject_type = 'subcontractor' AND subject_id = ? AND doc_type = 'DURC'"
+        );
+        $durc->execute([$subcontractorId]);
+        $latestDurc = $durc->fetchColumn();
+        if ($latestDurc !== null && $latestDurc !== false && (string) $latestDurc < date('Y-m-d')) {
+            $issues[] = 'durc_expired';
+        }
+
+        $pat = $pdo->prepare(
+            "SELECT credits FROM compliance_documents
+             WHERE subject_type = 'subcontractor' AND subject_id = ?
+               AND doc_type = 'patente_crediti' AND credits IS NOT NULL
+             ORDER BY id DESC LIMIT 1"
+        );
+        $pat->execute([$subcontractorId]);
+        $credits = $pat->fetchColumn();
+        if ($credits !== false && $credits !== null && (int) $credits < 15) {
+            $issues[] = 'patente_low';
+        }
+
+        return ['blocked' => $issues !== [], 'issues' => $issues];
+    }
+
     public function bucketCounts(): array
     {
         $stmt = Database::pdo()->query(

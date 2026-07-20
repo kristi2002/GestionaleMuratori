@@ -172,6 +172,15 @@ echo View::render('partials/page_head', [
                                 </label>
                             </div>
                         <?php endforeach; ?>
+
+                        <?php /* Override for the DURC/patente compliance gate (server-enforced). */ ?>
+                        <div class="form-check mt-3 pt-3 border-top">
+                            <input class="form-check-input" type="checkbox" name="force" value="1"
+                                   id="force-<?= $e((string) $s['id']) ?>">
+                            <label class="form-check-label small text-muted" for="force-<?= $e((string) $s['id']) ?>">
+                                <?= $e($t('admin.subcontractors.gate_override')) ?>
+                            </label>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= $e($t('common.cancel')) ?></button>

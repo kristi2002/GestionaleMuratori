@@ -9,7 +9,9 @@ use App\Models\ClientModel;
 use App\Models\CompanySettingsModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
+use App\Models\ComplianceDocumentModel;
 use App\Models\QuoteModel;
+use App\Models\SubcontractorModel;
 use App\Services\Report\BadgePdfBuilder;
 use App\Support\Fiscal;
 
@@ -140,3 +142,43 @@ $badgePdf = (new BadgePdfBuilder())->build([
 ]);
 T::ok(str_starts_with($badgePdf, '%PDF'), 'worker badge renders as a PDF');
 T::ok(strlen($badgePdf) > 800, 'badge PDF has real content');
+
+T::section('Subappalto: DURC/patente compliance gate');
+
+$sm    = new SubcontractorModel();
+$subId = $sm->create([
+    'name'          => 'Subappaltatore Gate',
+    'vat_or_tax_id' => null,
+    'email'         => null,
+    'phone'         => null,
+    'notes'         => null,
+    'hourly_rate'   => null,
+]);
+$comp = new ComplianceDocumentModel();
+$mkDoc = static function (array $over) use ($comp, $subId, $adminId): void {
+    $comp->create(array_merge([
+        'subject_type' => 'subcontractor',
+        'subject_id'   => $subId,
+        'doc_type'     => 'DURC',
+        'reference'    => null,
+        'issue_date'   => null,
+        'expiry_date'  => null,
+        'credits'      => null,
+        'notes'        => null,
+        'created_by'   => $adminId,
+    ], $over));
+};
+
+T::ok(!$comp->subcontractorGate($subId)['blocked'], 'no docs → gate open');
+
+$mkDoc(['doc_type' => 'DURC', 'expiry_date' => '2000-01-01']);
+$g = $comp->subcontractorGate($subId);
+T::ok($g['blocked'] && in_array('durc_expired', $g['issues'], true), 'expired DURC blocks assignment');
+
+// A newer, valid DURC supersedes the expired one → gate reopens (DURC-wise).
+$mkDoc(['doc_type' => 'DURC', 'expiry_date' => date('Y-m-d', strtotime('+120 days'))]);
+T::ok(!in_array('durc_expired', $comp->subcontractorGate($subId)['issues'], true), 'newer valid DURC clears the block');
+
+$mkDoc(['doc_type' => 'patente_crediti', 'credits' => 10, 'expiry_date' => date('Y-m-d', strtotime('+1 year'))]);
+$g2 = $comp->subcontractorGate($subId);
+T::ok($g2['blocked'] && in_array('patente_low', $g2['issues'], true), 'patente < 15 credits blocks assignment');

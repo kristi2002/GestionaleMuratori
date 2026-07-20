@@ -141,7 +141,29 @@ final class SubcontractorController
             $projectIds = [];
         }
 
+        // Compliance gate: refuse to assign a subcontractor to a site when its DURC
+        // is expired or its patente a crediti is below 15 — unless the admin
+        // explicitly overrides (force=1), which is recorded in the audit trail.
+        $force = (string) $request->input('force', '') === '1';
+        if ($projectIds !== [] && !$force) {
+            $gate = (new ComplianceDocumentModel())->subcontractorGate((int) $id);
+            if ($gate['blocked']) {
+                $labels = array_map(
+                    static fn (string $code): string => Lang::get('admin.subcontractors.gate_' . $code),
+                    $gate['issues']
+                );
+                Response::fail(
+                    sprintf(Lang::get('admin.subcontractors.gate_blocked'), implode(', ', $labels)),
+                    422
+                );
+                return;
+            }
+        }
+
         (new ProjectSubcontractorModel())->syncProjects((int) $id, $projectIds);
+        if ($force) {
+            \App\Support\AuditLog::record('compliance_override', 'subcontractor', (int) $id, '');
+        }
         Response::ok();
     }
 
