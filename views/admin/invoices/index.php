@@ -173,6 +173,12 @@ echo View::render('partials/filter_pills', ['pills' => $pills], null);
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/print')) ?>">
                             <i class="bi bi-printer" aria-hidden="true"></i> <?= $e($t('admin.invoices.print')) ?>
                         </a>
+                        <?php if (!empty($inv['imponibile'])): ?>
+                            <a class="btn btn-sm btn-outline-primary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/xml')) ?>"
+                               title="<?= $e($t('admin.invoices.xml_download')) ?>">
+                                <i class="bi bi-file-earmark-code" aria-hidden="true"></i> XML
+                            </a>
+                        <?php endif; ?>
                         <a class="btn btn-sm btn-outline-secondary" href="<?= $e(Url::to('/admin/invoices/' . $inv['id'] . '/edit')) ?>">
                             <?= $e($t('common.edit')) ?>
                         </a>

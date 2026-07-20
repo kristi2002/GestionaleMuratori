@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-20 — FatturaPA v1.2 XML generation (phase 7)
+
+Generates the legally-valid electronic-invoice file from a fiscal invoice. Suite
+**832 passed, 0 failed**.
+
+- **`FatturaPaBuilder`** (DOMDocument, auto-escaped): emits the full FatturaPA 1.2 —
+  DatiTrasmissione (FPR12/FPA12, CodiceDestinatario/PEC routing), CedentePrestatore
+  (regime, sede, IscrizioneREA), CessionarioCommittente, DatiGeneraliDocumento (ritenuta,
+  bollo, CIG/CUP under DatiOrdineAcquisto), DettaglioLinee, DatiRiepilogo per aliquota/natura
+  (esigibilità/split), and DatiPagamento. SdI filename `IT{piva}_{progressivo}.xml`.
+- **`FatturaPaValidator`**: pre-flight check that reports missing fiscal data (seller profile,
+  client P.IVA/C.F., address, SdI routing, natura on 0% lines) as readable Italian problems.
+- **Download** at `/admin/invoices/{id}/xml` (button on fiscal invoices); when data is missing
+  it shows a fix-it page linking to Dati Azienda / the invoice instead of emitting a bad file.
+
 ## 2026-07-20 — Fiscal invoice UI + PDF (phase 6b)
 
 The fiscal invoice from 6a is now usable end-to-end. Suite **817 passed, 0 failed**.

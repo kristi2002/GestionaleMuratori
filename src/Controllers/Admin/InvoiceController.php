@@ -206,6 +206,41 @@ final class InvoiceController
         echo $pdf;
     }
 
+    /** GET /admin/invoices/{id}/xml — the FatturaPA electronic-invoice file. */
+    public function xml(Request $request, string $id): void
+    {
+        AuthGuard::require($request, ['admin']);
+
+        $model   = new ProjectInvoiceModel();
+        $invoice = $model->findWithDetails((int) $id);
+        if ($invoice === null) {
+            Response::html(View::render('errors/404', ['title' => Lang::get('admin.invoices.not_found')], 'layout'), 404);
+            return;
+        }
+
+        $company = (new \App\Models\CompanySettingsModel())->get();
+        $client  = (new \App\Models\ClientModel())->find((int) $invoice['client_id']) ?? [];
+        $lines   = $model->lines((int) $id);
+
+        $errors = \App\Services\FatturaPA\FatturaPaValidator::validate($company, $client, $invoice, $lines);
+        if ($errors !== []) {
+            Response::html(View::render('admin/invoices/xml_errors', [
+                'title'   => Lang::get('admin.invoices.xml_title'),
+                'invoice' => $invoice,
+                'errors'  => $errors,
+            ], 'layout'), 422);
+            return;
+        }
+
+        $xml      = (new \App\Services\FatturaPA\FatturaPaBuilder())->build($company, $client, $invoice, $lines);
+        $filename = \App\Services\FatturaPA\FatturaPaBuilder::filename($company, (int) $id);
+
+        header('Content-Type: application/xml; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($xml));
+        echo $xml;
+    }
+
     /**
      * @return array{0:array<string,mixed>,1:array<int,array<string,mixed>>}|null
      *   [invoice fields, fiscal line items] — lines empty for a legacy amount-only

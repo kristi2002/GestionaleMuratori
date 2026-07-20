@@ -260,6 +260,7 @@ $router->get('/admin/invoices',               [InvoiceController::class, 'index'
 $router->get('/admin/invoices/create',        [InvoiceController::class, 'create']);
 $router->get('/admin/invoices/{id}/edit',     [InvoiceController::class, 'edit']);
 $router->get('/admin/invoices/{id}/print',    [InvoiceController::class, 'print']);
+$router->get('/admin/invoices/{id}/xml',      [InvoiceController::class, 'xml']);
 $router->post('/admin/invoices',              [InvoiceController::class, 'store']);
 $router->post('/admin/invoices/{id}',         [InvoiceController::class, 'update']);
 $router->post('/admin/invoices/{id}/delete',  [InvoiceController::class, 'destroy']);
