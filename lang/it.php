@@ -739,6 +739,7 @@ return [
             'rate_invalid'           => 'Paga oraria non valida.',
             'view_profile'           => 'Profilo',
             'edit_profile'           => 'Modifica profilo',
+            'print_badge'            => 'Stampa tessera',
             'tenure'                 => 'Anni di esperienza',
             'hours_month'            => 'Ore questo mese',
             'presences'              => 'Presenze',
@@ -1710,6 +1711,12 @@ return [
         'labor_cost'            => 'di cui costo manodopera',
         'safety_cost'           => 'di cui oneri sicurezza',
         'labor_safety_note'     => 'Costi non soggetti a ribasso (D.Lgs 36/2023 art. 41).',
+        // Tessera di riconoscimento (worker badge)
+        'badge_kicker'          => 'Tessera di riconoscimento',
+        'badge_no_photo'        => 'Foto non disponibile',
+        'badge_hire_date'       => 'Data assunzione',
+        'badge_employer_vat'    => 'P.IVA datore',
+        'badge_legal'           => 'Tessera ai sensi dell\'art. 18 c.1 lett. u) D.Lgs 81/2008 e L. 136/2010. Da esporre in cantiere.',
         'notes_conditions'      => 'Note e condizioni',
         // Purchase order PDF
         'order_number'          => 'Buono d\'Ordine n. %s',

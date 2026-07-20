@@ -10,6 +10,7 @@ use App\Models\CompanySettingsModel;
 use App\Models\ProjectInvoiceModel;
 use App\Models\ProjectModel;
 use App\Models\QuoteModel;
+use App\Services\Report\BadgePdfBuilder;
 use App\Support\Fiscal;
 
 /** @var PDO $pdo */
@@ -127,3 +128,15 @@ $qid = $qm->create([
 $q = $qm->find($qid);
 T::equals('3500.00', (string) $q['costo_manodopera'], 'quote costo manodopera persisted');
 T::equals('450.00', (string) $q['oneri_sicurezza'], 'quote oneri sicurezza persisted');
+
+T::section('Tessera di riconoscimento: badge PDF');
+
+$worker = $pdo->query("SELECT * FROM users WHERE role = 'worker' ORDER BY id LIMIT 1")->fetch();
+T::ok($worker !== false, 'a seeded worker exists');
+$badgePdf = (new BadgePdfBuilder())->build([
+    'worker'  => $worker,
+    'company' => $cs->get(),
+    'photo'   => null,
+]);
+T::ok(str_starts_with($badgePdf, '%PDF'), 'worker badge renders as a PDF');
+T::ok(strlen($badgePdf) > 800, 'badge PDF has real content');

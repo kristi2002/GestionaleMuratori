@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-20 — Tessera di riconoscimento (worker badge)
+
+Printable site badge required on cantieri (Art. 18 c.1 lett. u D.Lgs 81/2008, L. 136/2010 art. 5).
+Suite **781 passed, 0 failed**.
+
+- **Badge PDF** at `/admin/users/{id}/badge` (button on the user profile for on-site roles):
+  a 90×120mm lanyard card with the worker's photo, name, mansione, hire date, and the
+  employer (company profile) + P.IVA, plus the legal reference. Built entirely from existing
+  user data; the avatar is inlined from permission-checked storage.
+
 ## 2026-07-20 — Preventivi: costo manodopera + oneri sicurezza
 
 Separate labour-cost and safety-charge fields on quotes (D.Lgs 36/2023 art. 41 c.14 — mandatory

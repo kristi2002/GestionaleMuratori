@@ -52,8 +52,13 @@ $docStatus = static function (?string $expiry) use ($today, $t): array {
 ?>
 <?php
 $showActions = '<a class="btn btn-success" href="' . $e(Url::to('/admin/users/' . $record['id'] . '/edit')) . '">'
-    . '<i class="bi bi-pencil" aria-hidden="true"></i> ' . $e($t('admin.users.edit_profile')) . '</a>'
-    . View::render('partials/back_button', ['href' => '/admin/users'], null);
+    . '<i class="bi bi-pencil" aria-hidden="true"></i> ' . $e($t('admin.users.edit_profile')) . '</a>';
+// Tessera di riconoscimento: only for on-site roles (operai / titolare).
+if (in_array((string) $record['role'], ['worker', 'admin'], true)) {
+    $showActions .= '<a class="btn btn-outline-secondary" href="' . $e(Url::to('/admin/users/' . $record['id'] . '/badge')) . '">'
+        . '<i class="bi bi-person-vcard" aria-hidden="true"></i> ' . $e($t('admin.users.print_badge')) . '</a>';
+}
+$showActions .= View::render('partials/back_button', ['href' => '/admin/users'], null);
 
 echo View::render('partials/page_head', [
     'title'    => (string) $record['name'],
