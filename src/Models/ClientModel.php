@@ -54,31 +54,42 @@ final class ClientModel
         return $row ?: null;
     }
 
+    /** Fiscal columns (migration 032) written alongside the basic contact fields. */
+    private const FISCAL_FIELDS = [
+        'client_kind', 'partita_iva', 'codice_fiscale', 'codice_destinatario',
+        'pec', 'cap', 'comune', 'provincia', 'nazione',
+    ];
+
     public function create(array $data): int
     {
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO clients (name, vat_or_tax_id, email, phone, address, notes)
-             VALUES (:name, :vat, :email, :phone, :address, :notes)'
-        );
-        $stmt->execute([
+        $cols   = ['name', 'vat_or_tax_id', 'email', 'phone', 'address', 'notes'];
+        $params = [
             ':name'    => $data['name'],
             ':vat'     => $data['vat_or_tax_id'],
             ':email'   => $data['email'],
             ':phone'   => $data['phone'],
             ':address' => $data['address'],
             ':notes'   => $data['notes'],
-        ]);
+        ];
+        foreach (self::FISCAL_FIELDS as $f) {
+            if (array_key_exists($f, $data)) {
+                $cols[]        = $f;
+                $params[":$f"] = $data[$f];
+            }
+        }
+        $placeholders = array_map(static fn (string $c): string => $c === 'vat_or_tax_id' ? ':vat' : ":$c", $cols);
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO clients (' . implode(', ', $cols) . ') VALUES (' . implode(', ', $placeholders) . ')'
+        );
+        $stmt->execute($params);
         return (int) Database::pdo()->lastInsertId();
     }
 
     public function update(int $id, array $data): bool
     {
-        $stmt = Database::pdo()->prepare(
-            'UPDATE clients SET name = :name, vat_or_tax_id = :vat, email = :email,
-                phone = :phone, address = :address, notes = :notes
-             WHERE id = :id'
-        );
-        return $stmt->execute([
+        $sets   = ['name = :name', 'vat_or_tax_id = :vat', 'email = :email',
+                   'phone = :phone', 'address = :address', 'notes = :notes'];
+        $params = [
             ':name'    => $data['name'],
             ':vat'     => $data['vat_or_tax_id'],
             ':email'   => $data['email'],
@@ -86,7 +97,15 @@ final class ClientModel
             ':address' => $data['address'],
             ':notes'   => $data['notes'],
             ':id'      => $id,
-        ]);
+        ];
+        foreach (self::FISCAL_FIELDS as $f) {
+            if (array_key_exists($f, $data)) {
+                $sets[]        = "$f = :$f";
+                $params[":$f"] = $data[$f];
+            }
+        }
+        $stmt = Database::pdo()->prepare('UPDATE clients SET ' . implode(', ', $sets) . ' WHERE id = :id');
+        return $stmt->execute($params);
     }
 
     public function delete(int $id): bool

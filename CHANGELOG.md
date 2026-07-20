@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-07-20 — Fatturazione elettronica, phase 1: fiscal foundation
+
+First slice of in-house electronic invoicing (revisits ADR-0009). Puts in place the structured
+fiscal identity FatturaPA/SdI requires, before the invoice rework and XML builder. Suite
+**773 passed, 0 failed**.
+
+- **Seller profile "Dati Azienda"** (`company_settings`, single row; migration 032): denominazione,
+  P.IVA / C.F., **regime fiscale**, sede legale (indirizzo/civico/CAP/comune/provincia/nazione),
+  contatti + PEC + IBAN, and **Iscrizione REA** (obbligatoria per società di capitali). Admin page
+  at `/admin/company`, with a completeness banner gating readiness to e-invoice. Legacy `COMPANY_*`
+  env values remain as fallback for the PDF header.
+- **Client fiscal fields** (`clients`, migration 032): `client_kind` (azienda/privato/PA),
+  `partita_iva` + `codice_fiscale` split out from the legacy free-text field, **codice destinatario
+  (SdI)** and PEC for routing, and CAP/comune/provincia/nazione for the CessionarioCommittente
+  address. Legacy `vat_or_tax_id` values auto-backfilled into the split columns.
+- **`App\Support\Fiscal`**: format+checksum validation for Partita IVA (Luhn check digit), Codice
+  Fiscale (16-char control char + numeric form), Codice Destinatario, and province — reused by the
+  client/company forms now and the XML builder later. Validation is soft (only clearly-malformed
+  values are rejected).
+
 ## 2026-07-19 — Performance pass (indexes, pagination, N+1, asset caching)
 
 Targeted fixes from a performance audit — the schema was already well-indexed and the heavy

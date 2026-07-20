@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthGuard;
 use App\Models\ClientModel;
 use App\Support\AuditLog;
 use App\Support\Csv;
+use App\Support\Fiscal;
 use App\Support\Lang;
 use App\Support\Paginator;
 use App\Support\Request;
@@ -170,13 +171,59 @@ final class ClientController
             return null;
         }
 
+        $pec = trim((string) $request->input('pec', ''));
+        if ($pec !== '' && filter_var($pec, FILTER_VALIDATE_EMAIL) === false) {
+            Response::fail(Lang::get('admin.clients.pec_invalid'), 422);
+            return null;
+        }
+
+        // Fiscal identifiers are optional, but if given must be well-formed —
+        // the FatturaPA builder relies on these being clean.
+        $piva = strtoupper(str_replace(' ', '', (string) $request->input('partita_iva', '')));
+        if ($piva !== '' && !Fiscal::isPartitaIva($piva)) {
+            Response::fail(Lang::get('admin.clients.piva_invalid'), 422);
+            return null;
+        }
+        $cf = strtoupper(str_replace(' ', '', (string) $request->input('codice_fiscale', '')));
+        if ($cf !== '' && !Fiscal::isCodiceFiscale($cf)) {
+            Response::fail(Lang::get('admin.clients.cf_invalid'), 422);
+            return null;
+        }
+        $sdi = strtoupper(trim((string) $request->input('codice_destinatario', '')));
+        if ($sdi !== '' && !Fiscal::isCodiceDestinatario($sdi)) {
+            Response::fail(Lang::get('admin.clients.sdi_invalid'), 422);
+            return null;
+        }
+        $prov = strtoupper(trim((string) $request->input('provincia', '')));
+        if ($prov !== '' && !Fiscal::isProvincia($prov)) {
+            Response::fail(Lang::get('admin.clients.provincia_invalid'), 422);
+            return null;
+        }
+        $kind = (string) $request->input('client_kind', 'business');
+        if (!in_array($kind, ['business', 'private', 'pa'], true)) {
+            $kind = 'business';
+        }
+        $naz = strtoupper(trim((string) $request->input('nazione', 'IT')));
+        if (!preg_match('/^[A-Z]{2}$/', $naz)) {
+            $naz = 'IT';
+        }
+
         return [
-            'name'          => $name,
-            'vat_or_tax_id' => $this->nullableInput($request, 'vat_or_tax_id'),
-            'email'         => $email !== '' ? $email : null,
-            'phone'         => $this->nullableInput($request, 'phone'),
-            'address'       => $this->nullableInput($request, 'address'),
-            'notes'         => $this->nullableInput($request, 'notes'),
+            'name'                => $name,
+            'client_kind'         => $kind,
+            'vat_or_tax_id'       => $this->nullableInput($request, 'vat_or_tax_id'),
+            'partita_iva'         => $piva !== '' ? $piva : null,
+            'codice_fiscale'      => $cf !== '' ? $cf : null,
+            'codice_destinatario' => $sdi !== '' ? $sdi : null,
+            'pec'                 => $pec !== '' ? $pec : null,
+            'email'               => $email !== '' ? $email : null,
+            'phone'               => $this->nullableInput($request, 'phone'),
+            'address'             => $this->nullableInput($request, 'address'),
+            'cap'                 => $this->nullableInput($request, 'cap'),
+            'comune'              => $this->nullableInput($request, 'comune'),
+            'provincia'           => $prov !== '' ? $prov : null,
+            'nazione'             => $naz,
+            'notes'               => $this->nullableInput($request, 'notes'),
         ];
     }
 

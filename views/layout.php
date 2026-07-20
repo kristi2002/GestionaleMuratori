@@ -66,6 +66,7 @@ if ($user !== null) {
             [Lang::get('admin.warehouse.title'),      '/admin/warehouse',     'bi-box-seam'],
             [Lang::get('admin.exports.title'),        '/admin/exports',       'bi-download'],
             [Lang::get('admin.users.title'),          '/admin/users',         'bi-person-gear'],
+            [Lang::get('admin.company.title'),        '/admin/company',       'bi-building-gear'],
             [Lang::get('admin.audit.title'),          '/admin/audit',         'bi-clock-history'],
         ],
         'worker' => [

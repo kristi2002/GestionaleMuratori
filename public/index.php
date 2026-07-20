@@ -27,6 +27,7 @@ use App\Controllers\Admin\ProjectController;
 use App\Controllers\Admin\RecurringInterventionController;
 use App\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Controllers\Admin\AuditController;
+use App\Controllers\Admin\CompanySettingsController;
 use App\Controllers\Admin\ComplianceController;
 use App\Controllers\Admin\DailyLogController;
 use App\Controllers\Admin\ExportController;
@@ -315,6 +316,9 @@ $router->get('/admin/compliance/{id}/edit',          [ComplianceController::clas
 $router->post('/admin/compliance',                   [ComplianceController::class, 'store']);
 $router->post('/admin/compliance/{id}',              [ComplianceController::class, 'update']);
 $router->post('/admin/compliance/{id}/delete',       [ComplianceController::class, 'destroy']);
+
+$router->get('/admin/company',                       [CompanySettingsController::class, 'edit']);
+$router->post('/admin/company',                      [CompanySettingsController::class, 'save']);
 
 $router->get('/admin/exports',                       [ExportController::class, 'index']);
 $router->get('/admin/exports/accountant',            [ExportController::class, 'accountant']);
